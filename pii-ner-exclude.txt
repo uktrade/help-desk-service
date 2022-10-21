@@ -69,3 +69,4 @@ Jim Example
 Postcode
 Email
 django.contrib import
+DEFAULT_PERMISSION_CLASSES
