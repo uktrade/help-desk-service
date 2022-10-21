@@ -1,0 +1,18 @@
+FROM python:3.10
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV POETRY_VIRTUALENVS_CREATE=false
+
+WORKDIR /app
+
+RUN apt-get update -y
+
+RUN pip install --upgrade pip
+RUN pip install poetry
+
+COPY poetry.lock pyproject.toml /app/
+
+RUN poetry install --with dev,testing --without production
+
+COPY . /app/

@@ -1,0 +1,5 @@
+applications:
+- name: help-desk-service
+  memory: 512M
+  buildpacks:
+  - python_buildpack

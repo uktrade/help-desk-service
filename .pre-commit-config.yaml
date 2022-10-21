@@ -1,0 +1,50 @@
+repos:
+-   repo: https://github.com/uktrade/pii-secret-check-hooks
+    rev: 0.0.0.34
+    hooks:
+    -   id: pii_secret_filename
+        files: ''
+        language: python
+        language_version: python3.10
+        pass_filenames: true
+        require_serial: true
+    -   id: pii_secret_file_content
+        files: ''
+        language: python
+        language_version: python3.10
+        pass_filenames: true
+        require_serial: true
+    -   id: pii_secret_file_content_ner
+        files: ''
+        language: python
+        language_version: python3.10
+        # args: [--ner_output_file=ner_output_file.txt] # uncomment to output NER entities
+        pass_filenames: true
+        require_serial: true
+    -   id: hooks_version_check
+        name: Checking local hooks against latest release
+        verbose: true
+        require_serial: true
+-   repo: https://github.com/ambv/black
+    rev: 22.10.0
+    hooks:
+    - id: black
+    language_version: python3.10
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+    - id: flake8
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    - id: isort
+-   repo: https://github.com/rtts/djhtml
+    rev: v1.5.2
+    hooks:
+    - id: djhtml
+    - id: djcss
+    - id: djjs
+-   repo: https://github.com/Riverside-Healthcare/djLint
+    rev: v1.19.2
+    hooks:
+    - id: djlint-django

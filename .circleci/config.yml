@@ -1,0 +1,37 @@
+version: 2.1
+orbs:
+    codecov: codecov/codecov@3.2.2 # /PS-IGNORE
+jobs:
+    build:
+        machine:
+            image: ubuntu-2004:202101-01
+        steps:
+            - checkout
+            - run:
+                  name: Check for fixme comments
+                  command: make check-fixme
+            - run:
+                  name: Copy env file
+                  command: cp .env.example .env
+            - run:
+                  name: build containers
+                  command: make build
+            - run:
+                  name: launch containers
+                  command: make up-detached
+            - run:
+                  name: check for missing migrations
+                  command: make checkmigrations
+            - run:
+                  name: run black (code formatting check)
+                  command: make black
+            - run:
+                  name: run flake8 (coding standards compliance test)
+                  command: make flake8
+            - run:
+                  name: run tests
+                  command: make pytest
+            - codecov/upload
+            - run:
+                  name: stop containers
+                  command: make down

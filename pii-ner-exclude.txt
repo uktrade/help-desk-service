@@ -1,0 +1,71 @@
+python:3.10
+0.0.0.34
+ner_output_file.txt
+rev
+v1.5.2
+Zendesk
+Zendesk ID
+Transform Zendesk
+updated_at
+Transform HelpDesk
+HelpDeskUser
+3.5.2
+Classes Without Boilerplate"
+0.4.3
+4.1.2
+0.9.0
+3.14.0
+5.10.1
+A Python
+0.7.0
+2.5.2
+2.5.0
+3.0.9
+TOML
+Backported and Experimental Type Hints for Python 3.7+
+707484919a5f70a0311d36dd8f229ed3121b25c38c546f7a2d34ec1a8f5cbe1c
+PYTHONPATH
+DLL
+var/
+PyInstaller
+# Installer
+pip-delete-this-directory.txt
+local_settings.py
+Scrapy
+Sphinx
+PyBuilder
+Jupyter Notebook
+#   
+PEP 582
+Celery
+env/
+ENV/
+# Rope
+dmypy.json
+Pyre
+PyCharm
+PII
+0.1.0
+Ross Miller
+MIT
+^0.9.0"
+Home 2
+Home.as_view
+WSGI
+Django 4.1.2
+DjangoTemplates
+DIRS
+OPTIONS
+NAME
+Dockerfile.dev
+Halo ITSM
+Index](/docs
+Variables](/docs
+COLOUR_GREEN=\033[32;01
+COLOUR_YELLOW=\033[33;01
+migrate$(COLOUR_NONE
+Zendesk API
+Jim Example
+Postcode
+Email
+django.contrib import
