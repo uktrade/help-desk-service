@@ -122,9 +122,7 @@ class FakeApi(object):
         self.results = tickets
         self._users: dict[int, FakeUser] = dict([(user.id, user) for user in users])
         self.users = self.FakeUsers(self, me=me)
-        self._tickets: dict[int, FakeTicket] = dict(
-            [(ticket.id, ticket) for ticket in tickets]
-        )
+        self._tickets: dict[int, FakeTicket] = dict([(ticket.id, ticket) for ticket in tickets])
         self.tickets = self.FakeTicketCRUD(self, ticket_audit)
 
         for ticket in tickets:
@@ -314,9 +312,7 @@ class TestZenDesk(unittest.TestCase):
 
         fake_ticket = FakeTicket(ticket_id=12345)
         fake_ticket_audit = FakeTicketAudit(fake_ticket)
-        zendesk_manager.client = FakeApi(
-            tickets=[fake_ticket], ticket_audit=fake_ticket_audit
-        )
+        zendesk_manager.client = FakeApi(tickets=[fake_ticket], ticket_audit=fake_ticket_audit)
 
         actualticket = zendesk_manager.get_ticket(ticket_id=12345)
         assert actualticket.id == ticket.id
@@ -335,9 +331,7 @@ class TestZenDesk(unittest.TestCase):
 
         fake_ticket = FakeTicket(ticket_id=12345)
         fake_ticket_audit = FakeTicketAudit(fake_ticket)
-        zendesk_manager.client = FakeApi(
-            tickets=[fake_ticket], ticket_audit=fake_ticket_audit
-        )
+        zendesk_manager.client = FakeApi(tickets=[fake_ticket], ticket_audit=fake_ticket_audit)
 
         with self.assertRaises(HelpDeskTicketNotFoundException):
             zendesk_manager.get_ticket(ticket_id=54321)
@@ -535,9 +529,7 @@ class TestZenDesk(unittest.TestCase):
 
         fake_ticket = FakeTicket(ticket_id=12345)
         fake_ticket_audit = FakeTicketAudit(fake_ticket)
-        zendesk_manager.client = FakeApi(
-            tickets=[fake_ticket], ticket_audit=fake_ticket_audit
-        )
+        zendesk_manager.client = FakeApi(tickets=[fake_ticket], ticket_audit=fake_ticket_audit)
 
         with self.assertRaises(HelpDeskTicketNotFoundException):
             zendesk_manager.close_ticket(ticket_id=54321)
@@ -559,10 +551,8 @@ class TestZenDesk(unittest.TestCase):
 
         zendesk_manager = ZendeskManager()
 
-        help_desk_user = (
-            zendesk_manager._ZendeskManager__transform_zendesk_user_to_help_desk_user(
-                zendesk_user,
-            )
+        help_desk_user = zendesk_manager._ZendeskManager__transform_zendesk_user_to_help_desk_user(
+            zendesk_user,
         )
 
         assert help_desk_user.groups[0].name == "test group"

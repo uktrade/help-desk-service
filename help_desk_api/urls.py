@@ -1,7 +1,7 @@
-# from django.urls import path
+from django.urls import path
 
-# from help_desk_api import TicketView
+from help_desk_api.views import TicketView
 
-# urlpatterns = [
-#     path("/v2/tickets.json", TicketView.as_view(), name="ticket"),
-# ]
+urlpatterns = [
+    path("v2/tickets.json", TicketView.as_view(), name="ticket"),
+]

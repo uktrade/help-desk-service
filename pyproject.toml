@@ -22,3 +22,9 @@ mypy = "^0.982"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py37']
+include = '\.pyi?$'
+# 'extend-exclude' excludes files or directories in addition to the defaults
