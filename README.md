@@ -18,10 +18,9 @@ A service for interacting with help desks such as Zendesk and Halo ITSM.
 
 ## Project documentation
 
-- [Index](/docs/index.md)
-    - [Environment Variables](/docs/environment-variables.md)
+- [Environment Variables](/docs/environment-variables.md)
 
 ## Project structure
 
 - `config/` - Django settings and top-level project config
-- `help_desk_api/` - Common code and integrations with external systems
+- `help_desk_api/` - API for help desk ticket management
