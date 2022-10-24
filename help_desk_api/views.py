@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from help_desk_api.serializers import TicketContainer
+
 
 class TicketView(APIView):
     """
@@ -17,4 +19,9 @@ class TicketView(APIView):
         """
         Create a ticket
         """
+        ticket_serializer = TicketContainer(data=request.data)
+
+        if ticket_serializer.is_valid(raise_exception=True):
+            ticket_serializer.save()
+
         return Response()

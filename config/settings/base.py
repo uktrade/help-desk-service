@@ -139,9 +139,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "help_desk_api.auth.ZenpyAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+# Help desk interface
+HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
+HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})

@@ -1,6 +1,8 @@
-# help-desk-service
+# Help Desk Service
 
 A service for interacting with help desks such as Zendesk and Halo ITSM.
+
+The service provides an API that should be used for ticket management and creation.
 
 ## Setup
 
@@ -10,7 +12,7 @@ A service for interacting with help desks such as Zendesk and Halo ITSM.
     - `make build`
     - `make migrate` or `make first-use` 
 - Start the local docker instance `make up`
-- Open a browser at `http://localhost:8000/`
+- The service will be available at: `http://localhost:8000/`
 
 ## Update requirements files
 
@@ -19,6 +21,7 @@ A service for interacting with help desks such as Zendesk and Halo ITSM.
 ## Project documentation
 
 - [Environment Variables](/docs/environment-variables.md)
+- [Connecting the project to Zendesk](/docs/zendesk.md)
 
 ## Project structure
 

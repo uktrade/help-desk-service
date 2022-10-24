@@ -73,7 +73,7 @@ bash:
 	docker-compose run --rm help-desk-service bash
 
 all-requirements:
-	poetry export -f requirements.txt --output requirements.txt --without-hashes --with production --without dev,testing
+	docker-compose run --rm help-desk-service poetry export -f requirements.txt --output requirements.txt --without-hashes --with production --without dev,testing
 
 pytest:
 	docker-compose run --rm help-desk-service pytest --cov --cov-report xml --ds=config.settings.test -raP --capture=sys --ignore=node_modules --ignore=front_end --ignore=features --ignore=staticfiles -n 4
