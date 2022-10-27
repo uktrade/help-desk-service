@@ -62,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

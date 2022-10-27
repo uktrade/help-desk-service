@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from help_desk_api.serializers import TicketContainer
+from help_desk_api.utils import http_verb
 
 
 class TicketView(APIView):
@@ -9,12 +10,7 @@ class TicketView(APIView):
     View for interaction with tickets
     """
 
-    def get(self, request, format=None):
-        """
-        Return a list of all tickets.
-        """
-        return Response()
-
+    @http_verb(verb="POST")
     def post(self, request, format=None):
         """
         Create a ticket

@@ -76,3 +76,5 @@ HELP_DESK_CREDS=
 # Help Desk Service
 Zendesk](/docs/zendesk.md
 HELP_DESK_INTERFACE  | None
+HTTP
+zendesk_api_proxy
