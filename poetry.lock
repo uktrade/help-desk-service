@@ -132,6 +132,17 @@ python-versions = "*"
 Django = ">=2.0.1"
 
 [[package]]
+name = "django-multiselectfield"
+version = "0.1.12"
+description = "Django multiple select field"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+django = ">=1.4"
+
+[[package]]
 name = "djangorestframework"
 version = "3.14.0"
 description = "Web APIs for Django, made easy."
@@ -437,7 +448,7 @@ six = ">=1.14.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.x"
-content-hash = "6de40f3a87921432856602685179d8155c49992e0423356b2992d0a8d24bef10"
+content-hash = "c494a5645f6f48280535e46be773a9543f8fb5e75358534f5c0d95cd6a2d0a16"
 
 [metadata.files]
 asgiref = []
@@ -451,6 +462,7 @@ colorama = []
 django = []
 django-environ = []
 django-model-utils = []
+django-multiselectfield = []
 djangorestframework = []
 flake8 = []
 idna = []
