@@ -78,3 +78,10 @@ Zendesk](/docs/zendesk.md
 HELP_DESK_INTERFACE  | None
 HTTP
 zendesk_api_proxy
+Username
+DRF
+Zendesk MUST
+id>/comments.json
+help_desk_api.views
+Content-Type
+F401

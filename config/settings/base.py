@@ -46,9 +46,11 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
+    "multiselectfield",
 ]
 
 SERVICE_APPS = [
+    "dit_team",
     "help_desk_api",
 ]
 
@@ -150,3 +152,5 @@ REST_FRAMEWORK = {
 # Help desk interface
 HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
 HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
+
+AUTH_USER_MODEL = "dit_team.DITTeam"
