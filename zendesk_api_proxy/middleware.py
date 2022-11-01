@@ -42,11 +42,17 @@ def has_endpoint(path, method):
     return False
 
 
-def proxy_zendesk(request, subdomain, email, token):
+def proxy_zendesk(request, subdomain, email, token, query_string):
     if not has_endpoint(request.path, request.method.upper()):
         print("Raise Sentry error")
 
     url = f"https://{subdomain}.zendesk.com{request.path}"
+
+    if query_string:
+        url = f"{url}?{query_string}"
+
+    print(url)
+
     creds = f"{email}/token:{token}"
     encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
 
@@ -69,7 +75,7 @@ def proxy_zendesk(request, subdomain, email, token):
             },
         )
 
-        return zendesk_response
+    return zendesk_response
 
 
 class ZendeskAPIProxyMiddleware:
@@ -107,6 +113,7 @@ class ZendeskAPIProxyMiddleware:
                 help_desk_creds.zendesk_subdomain,
                 help_desk_creds.zendesk_email,
                 token,
+                request.GET.urlencode(),
             )
 
             zendesk_response = HttpResponse(
