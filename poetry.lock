@@ -286,6 +286,14 @@ testing = ["pytest-benchmark", "pytest"]
 dev = ["tox", "pre-commit"]
 
 [[package]]
+name = "psycopg2"
+version = "2.9.5"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "py"
 version = "1.11.0"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
@@ -448,7 +456,7 @@ six = ">=1.14.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.x"
-content-hash = "c494a5645f6f48280535e46be773a9543f8fb5e75358534f5c0d95cd6a2d0a16"
+content-hash = "061ca1b5050f2fdc6b38fddea2e22876b7e4d2a87ef03352ba58ad89e6123aad"
 
 [metadata.files]
 asgiref = []
@@ -476,6 +484,7 @@ packaging = []
 pathspec = []
 platformdirs = []
 pluggy = []
+psycopg2 = []
 py = []
 pycodestyle = []
 pyflakes = []

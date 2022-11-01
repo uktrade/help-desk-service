@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 import environ
@@ -50,8 +51,8 @@ THIRD_PARTY_APPS = [
 ]
 
 SERVICE_APPS = [
-    "dit_team",
     "help_desk_api",
+    "user",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + SERVICE_APPS
@@ -87,17 +88,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+if "postgres" in VCAP_SERVICES:
+    DATABASE_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
+DATABASES = {"default": env.db()}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -153,4 +149,4 @@ REST_FRAMEWORK = {
 HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
 HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
 
-AUTH_USER_MODEL = "dit_team.DITTeam"
+AUTH_USER_MODEL = "user.User"

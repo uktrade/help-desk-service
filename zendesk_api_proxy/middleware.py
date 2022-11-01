@@ -1,23 +1,26 @@
+import base64
 import inspect
+import json
 import sys
 
 import requests
-from dit_team.models import HALO, ZENDESK
-from django.http import HttpResponse
-from rest_framework.authtoken.models import Token
+from django.contrib.auth.hashers import check_password
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse, HttpResponseServerError
 from rest_framework.views import APIView
 
 # Needed for inspect
 from help_desk_api import views  # noqa F401
+from help_desk_api.models import HALO, ZENDESK, HelpDeskCreds
 from help_desk_api.urls import urlpatterns as api_url_patterns
-from help_desk_api.utils import get_request_token
+from help_desk_api.utils import get_zenpy_request_vars
 
 
-def has_endpoint(url, method):
+def has_endpoint(path, method):
     view_class = None
 
     for url_pattern in api_url_patterns:
-        if url_pattern.pattern.match(url.replace("api/", "")):
+        if url_pattern.pattern.match(path.replace("api/", "")):
             view_class = url_pattern.lookup_str
 
     if not view_class:
@@ -39,27 +42,34 @@ def has_endpoint(url, method):
     return False
 
 
-def proxy_zendesk(request):
-    if not has_endpoint(request.url, request.method.upper()):
+def proxy_zendesk(request, subdomain, email, token):
+    if not has_endpoint(request.path, request.method.upper()):
         print("Raise Sentry error")
 
-    token = get_request_token(request)
+    url = f"https://{subdomain}.zendesk.com{request.path}"
+    creds = f"{email}/token:{token}"
+    encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
 
-    # Do the HTTP get request
-    if request.method == "get":
-        zendesk_response = requests.get(request.url, headers={"Authorization": f"Bearer {token}"})
-    elif request.method == "post":
+    # Make request to Zendesk API
+    if request.method == "GET":  # /PS-IGNORE
+        zendesk_response = requests.get(
+            url,
+            headers={
+                "Authorization": f"Basic {encoded_creds.decode('ascii')}",  # /PS-IGNORE
+                "Content-Type": "application/json",
+            },
+        )
+    elif request.method == "POST":
         zendesk_response = requests.post(
-            request.url, json=request.body, headers={"Authorization": f"Bearer {token}"}
+            url,
+            data=request.body.decode("utf8"),
+            headers={
+                "Authorization": f"Basic {encoded_creds.decode('ascii')}",
+                "Content-Type": "application/json",
+            },
         )
 
-    # Check for HTTP codes other than 200
-    if zendesk_response.status_code != 200:
-        print("Status:", zendesk_response.status_code, "Problem with the request. Exiting.")
-        # TODO specific error
-        Exception("Non 200 back from Zendesk API")
-    else:
-        return zendesk_response.json()
+        return zendesk_response
 
 
 class ZendeskAPIProxyMiddleware:
@@ -72,27 +82,43 @@ class ZendeskAPIProxyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        token_string = get_request_token(request)
-        team_token = Token.objects.get(key=token_string)
+        try:
+            # Get out of proxy logic if there's an issue with the token
+            token, email = get_zenpy_request_vars(request)
+        except Exception:
+            return self.get_response(request)
+
+        help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
+
+        if not check_password(token, help_desk_creds.zendesk_token):
+            return HttpResponseServerError()
 
         zendesk_response = None
         django_response = None
 
         # TODO check how token is wired up to custom user model
-        if ZENDESK in team_token.user.help_desk.choices:
+        if ZENDESK in help_desk_creds.help_desk:
             # Don't need to call the below in Halo because error will be raised anyway
-            if not has_endpoint(request.url, request.method.upper()):
+            if not has_endpoint(request.path, request.method.upper()):
                 print("Raise Sentry error")
 
-            zendesk_response_json = proxy_zendesk(request)
+            proxy_response = proxy_zendesk(
+                request,
+                help_desk_creds.zendesk_subdomain,
+                help_desk_creds.zendesk_email,
+                token,
+            )
+
             zendesk_response = HttpResponse(
-                zendesk_response_json,
+                json.dumps(proxy_response.json(), cls=DjangoJSONEncoder),
                 headers={
                     "Content-Type": "application/json",
                 },
+                status=proxy_response.status_code,
             )
+            # status, location, copy dict
 
-        if HALO in team_token.user.help_desk.choices:
+        if HALO in help_desk_creds.help_desk:
             django_response = self.get_response(request)
 
         return zendesk_response or django_response
