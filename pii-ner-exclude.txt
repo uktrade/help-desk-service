@@ -85,3 +85,7 @@ id>/comments.json
 help_desk_api.views
 Content-Type
 F401
+is_superuser
+unique_sso_legacy_user_id
+validated_data
+E722
