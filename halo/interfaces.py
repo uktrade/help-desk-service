@@ -112,6 +112,10 @@ class HelpDeskBase(ABC):
     def update_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
+        raise NotImplementedError
+
 
 class HelpDeskStubbed(HelpDeskBase):
     def __init__(self, *args, **kwargs) -> None:
@@ -119,11 +123,17 @@ class HelpDeskStubbed(HelpDeskBase):
         self._next_ticket_id = 2
         self._tickets: Dict[int, HelpDeskTicket] = {}
         self._users: Dict[int, HelpDeskUser] = {}
+        self._comments: Dict[int, List[HelpDeskComment]] = {}
         self._next_user_id = 1
 
     def get_or_create_user(self, user: HelpDeskUser) -> HelpDeskUser:
-
-        if user.id:
+        if not user:
+            user_id = self._next_user_id
+            self._next_user_id += 1
+            self._users[user_id] = HelpDeskUser(
+                id=user_id, full_name="Token Agent", email="jim@example.com"  # /PS-IGNORE
+            )
+        elif user.id:
             user_id = user.id
         else:
             user_id = self._next_user_id
@@ -140,6 +150,9 @@ class HelpDeskStubbed(HelpDeskBase):
         ticket.id = self._next_ticket_id
 
         self._next_ticket_id += 1
+
+        if ticket.comment:
+            self._comments[ticket.id] = [ticket.comment]
 
         return ticket
 
@@ -171,6 +184,18 @@ class HelpDeskStubbed(HelpDeskBase):
         if self._tickets.get(ticket.id):
             self._tickets[ticket.id] = ticket
             self._tickets[ticket.id].updated_at = datetime.datetime.now()
+
+            if ticket.comment:
+                if self._comments[ticket.id]:
+                    self._comments[ticket.id].append(ticket.comment)
+                else:
+                    self._comments[ticket.id] = [ticket.comment]
             return self._tickets[ticket.id]
+        else:
+            raise HelpDeskTicketNotFoundException
+
+    def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
+        if self._comments.get(ticket_id):
+            return self._comments.get(ticket_id)
         else:
             raise HelpDeskTicketNotFoundException

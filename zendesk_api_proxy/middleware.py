@@ -20,7 +20,7 @@ def has_endpoint(path, method):
     view_class = None
 
     for url_pattern in api_url_patterns:
-        if url_pattern.pattern.match(path.replace("api/", "")):
+        if url_pattern.pattern.match(path.replace("/api/", "")):
             view_class = url_pattern.lookup_str
 
     if not view_class:
@@ -30,10 +30,6 @@ def has_endpoint(path, method):
         try:
             if issubclass(obj, APIView):
                 if class_name in view_class:
-                    # print(f"url us {url}")
-                    # print(f"class is {class_name}")
-                    # print(f"allowed methods are {obj().allowed_methods}")
-
                     if method in obj().allowed_methods:
                         return True
         except TypeError:
@@ -43,15 +39,10 @@ def has_endpoint(path, method):
 
 
 def proxy_zendesk(request, subdomain, email, token, query_string):
-    if not has_endpoint(request.path, request.method.upper()):
-        print("Raise Sentry error")
-
     url = f"https://{subdomain}.zendesk.com{request.path}"
 
     if query_string:
         url = f"{url}?{query_string}"
-
-    print(url)
 
     creds = f"{email}/token:{token}"
     encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
@@ -102,11 +93,12 @@ class ZendeskAPIProxyMiddleware:
         zendesk_response = None
         django_response = None
 
-        # TODO check how token is wired up to custom user model
+        supported_endpoint = has_endpoint(request.path, request.method.upper())
+
         if ZENDESK in help_desk_creds.help_desk:
             # Don't need to call the below in Halo because error will be raised anyway
-            if not has_endpoint(request.path, request.method.upper()):
-                print("Raise Sentry error")
+            if not supported_endpoint:
+                print("TODO raise Sentry error...")
 
             proxy_response = proxy_zendesk(
                 request,
@@ -126,6 +118,8 @@ class ZendeskAPIProxyMiddleware:
             # status, location, copy dict
 
         if HALO in help_desk_creds.help_desk:
-            django_response = self.get_response(request)
+            if supported_endpoint:
+                setattr(request, "help_desk_creds", help_desk_creds)
+                django_response = self.get_response(request)
 
         return zendesk_response or django_response

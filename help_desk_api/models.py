@@ -42,6 +42,18 @@ class HelpDeskCreds(models.Model):
             ),
         ]
 
+    halo_client_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    halo_client_secret = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
     zendesk_email = models.EmailField()
 
     zendesk_token = models.CharField(
@@ -60,7 +72,7 @@ class HelpDeskCreds(models.Model):
 
     # Needs at least one choice, enforced by not having null=True on the field
     help_desk = MultiSelectField(
-        max_length=7,
+        max_length=12,
         max_choices=2,
         choices=HELP_DESK_CHOICES,
         default=ZENDESK,
