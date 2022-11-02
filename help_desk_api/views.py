@@ -1,10 +1,26 @@
+from halo.halo_manager import HaloManager
+from halo.interfaces import HelpDeskTicket, HelpDeskUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from help_desk_api.serializers import TicketContainer
 
 
-class UserView(APIView):
+class HaloBaseView(APIView):
+    """
+    Base view for Halo interaction
+    """
+
+    def initial(self, request, *args, **kwargs):
+        request.help_desk_creds
+
+        self.halo_manager = HaloManager(
+            client_id=request.help_desk_creds.halo_client_id,
+            client_secret=request.help_desk_creds.halo_client_secret,
+        )
+
+
+class UserView(HaloBaseView):
     """
     View for interaction with tickets
     """
@@ -26,7 +42,7 @@ class UserView(APIView):
         return Response()
 
 
-class MeView(APIView):
+class MeView(HaloBaseView):
     """
     View for interaction with tickets
     """
@@ -40,7 +56,7 @@ class MeView(APIView):
         return Response()
 
 
-class CommentView(APIView):
+class CommentView(HaloBaseView):
     """
     View for interaction with tickets
     """
@@ -54,11 +70,7 @@ class CommentView(APIView):
         return Response()
 
 
-class TicketView(APIView):
-    """
-    View for interaction with tickets
-    """
-
+class TicketView(HaloBaseView):
     def get(self, request, id, format=None):
         """
         Return a ticket
@@ -87,6 +99,21 @@ class TicketView(APIView):
         ticket_serializer = TicketContainer(data=request.data)
 
         if ticket_serializer.is_valid(raise_exception=True):
-            ticket_serializer.save()
+            help_desk_user = HelpDeskUser(
+                id=36,
+            )
 
-        return Response()
+            ticket = HelpDeskTicket(
+                subject=ticket_serializer.validated_data["ticket"]["subject"],
+                description=ticket_serializer.validated_data["ticket"]["description"],
+                # priority=ticket_serializer.validated_data["ticket"]["priority"],
+                user=help_desk_user,
+            )
+            result = self.halo_manager.create_ticket(
+                ticket,
+            )
+
+            print("RESULT")
+            print(result)
+
+        return Response("success")

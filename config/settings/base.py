@@ -51,6 +51,7 @@ THIRD_PARTY_APPS = [
 ]
 
 SERVICE_APPS = [
+    "halo",
     "help_desk_api",
     "user",
 ]
@@ -94,6 +95,17 @@ else:
     DATABASE_URL = os.getenv("DATABASE_URL")
 
 DATABASES = {"default": env.db()}
+
+# Redis
+if "redis" in VCAP_SERVICES:
+    credentials = VCAP_SERVICES["redis"][0]["credentials"]
+    REDIS_URL = "rediss://:{}@{}:{}/0?ssl_cert_reqs=required".format(
+        credentials["password"],
+        credentials["host"],
+        credentials["port"],
+    )
+else:
+    REDIS_URL = os.environ.get("REDIS_URL", "")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -150,3 +162,12 @@ HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
 HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
 
 AUTH_USER_MODEL = "user.User"
+
+HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+    }
+}
