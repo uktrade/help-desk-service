@@ -149,3 +149,4 @@ REST_FRAMEWORK = {
 # Help desk interface
 HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
 HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
+HALO_SUBDOMAIN = env("HALO_SUBDOMAIN", default="")
