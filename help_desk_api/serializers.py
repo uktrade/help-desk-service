@@ -1,8 +1,4 @@
-from django.conf import settings
 from rest_framework import serializers
-
-from help_desk_client import get_help_desk_interface
-from help_desk_client.interfaces import HelpDeskTicket
 
 TICKET_PRIORITIES = (
     ("new", "New"),
@@ -11,9 +7,6 @@ TICKET_PRIORITIES = (
     ("on-hold", "On-hold"),
     ("solved", "Solved"),
 )
-
-help_desk_interface = get_help_desk_interface(settings.HELP_DESK_INTERFACE)
-help_desk = help_desk_interface(credentials=settings.HELP_DESK_CREDS)
 
 
 class CommentSerializer(serializers.Serializer):
@@ -36,10 +29,20 @@ class TicketContainer(serializers.Serializer):
     ticket = TicketSerializer()
 
     def create(self, validated_data):
-        ticket = HelpDeskTicket(
-            subject=validated_data["ticket"]["subject"],
-            description=validated_data["ticket"]["description"],
-            priority=validated_data["ticket"]["priority"],
-        )
-        help_desk.create_ticket(ticket)
-        return validated_data
+        pass
+        # ticket = HelpDeskTicket(
+        #     subject=validated_data["ticket"]["subject"],
+        #     description=validated_data["ticket"]["description"],
+        #     priority=validated_data["ticket"]["priority"],
+        # )
+        # help_desk.create_ticket(ticket)
+        # return validated_data
+
+
+class UserSerializer(serializers.Serializer):
+    id=serializers.IntegerField()
+    name=serializers.CharField(max_length=200)
+    email=serializers.CharField(max_length=200)
+
+class UserContainer(serializers.Serializer):
+    user = UserSerializer()

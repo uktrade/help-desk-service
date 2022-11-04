@@ -55,7 +55,36 @@ class HaloManager(HelpDeskBase):
             client_secret=kwargs.get("credentials")["client_secret"],
         )
 
-    def get_or_create_user(self, user: HelpDeskUser = None) -> HelpDeskUser:
+    def get_current_user(self) -> HelpDeskUser:
+        agent = self.client.get(path="Agent/me")
+
+        get_user = self.client.get(
+            path=f"Users", 
+            params={"search":agent.get("email")
+        })["users"][-1]
+        
+        return self.__transform_halo_user_to_helpdesk_user(
+            get_user
+        )
+
+    def get_user(self, user: HelpDeskUser) -> HelpDeskUser:
+        transformed_user = self.__transform_helpdesk_user_to_halo_user(user)
+        get_user = None
+
+        if transformed_user.get("id"):
+            get_user = self.client.get(path=f"Users/{transformed_user['id']}")
+        elif transformed_user.get("email"):
+            get_user = self.client.get(
+                path=f"Users", 
+                params={"search":transformed_user.get("email")
+                })["users"][-1]
+        
+        if get_user:
+            return self.__transform_halo_user_to_helpdesk_user(get_user)
+        else:
+            return None
+
+    def create_or_update_user(self, user: HelpDeskUser) -> HelpDeskUser:
         """Get or Create a new Halo user.   /PS-IGNORE
 
         :param HelpDeskUser
@@ -64,28 +93,8 @@ class HaloManager(HelpDeskBase):
 
         :returns: HelpDeskUser instance representing Halo user.
         """
-        if user is not None:
-            transformed_user = self.__transform_helpdesk_user_to_halo_user(user)
-            if transformed_user.get("id"):
-                halo_user = self.client.get(path=f"Users/{transformed_user['id']}")
-                if halo_user and transformed_user.get("email"):
-                    logger.error("update user")
-                    halo_user = self.client.post(path="Users", payload=transformed_user)
-                    logger.error(halo_user)
-            else:
-                halo_user = self.client.post(path="Users", payload=transformed_user)
-        else:
-            transformed_user = self.client.get(path="agent/me")
-            halo_user = {
-                "id": transformed_user["id"],
-                "name": transformed_user["name"],
-                "emailaddress": transformed_user["email"],
-            }
-
-        if halo_user is None:
-            message = f"No Halo user found for {transformed_user}"  # Error log /PS-IGNORE,
-            logger.debug(message)
-            raise HelpDeskException(message)
+        transformed_user = self.__transform_helpdesk_user_to_halo_user(user)
+        halo_user = self.client.post(path="Users", payload=transformed_user)
         return self.__transform_halo_user_to_helpdesk_user(halo_user)
 
     def create_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
@@ -184,10 +193,14 @@ class HaloManager(HelpDeskBase):
         return self.__transform_object_to_helpdesk_ticket(updated_ticket)
 
     def get_comments(self, ticket_id: int)-> List[HelpDeskComment]:
-        # actions = self.client.get(
-        #     path="Actions", params={ticket_id:ticket_id}
-        # )
-        raise NotImplementedError
+        actions = self.client.get(
+            path="Actions", params={"ticket_id":ticket_id}
+        )
+        return [
+            self.__transform_halo_action_to_comment(action)
+            for action in actions["actions"]
+            if action["outcome"] == "comment"
+            ]
 
     def __transform_comment_to_halo_action(self, ticket_id: int, comment: HelpDeskComment):
         """Transform from HelpDeskComment to halo comment format.
@@ -202,6 +215,7 @@ class HaloManager(HelpDeskBase):
             "note": comment.body,
             "ticket_id": ticket_id,
             "hiddenfromuser": not comment.public,
+            #TODO author_id equivilant how to set, needed?
             #"who_agentid": comment.author_id,
             "outcome": "comment",
         }
@@ -226,36 +240,40 @@ class HaloManager(HelpDeskBase):
 
         :returns: halo ticket object.
         """
-        # custom_fields = None
+        custom_fields = None
 
-        ticket_user = self.get_or_create_user(ticket.user)
+        ticket_user = None
+        if ticket.user:
+            ticket_user = self.get_user(ticket.user)
+            if not ticket_user:
+                ticket_user = self.create_or_update_user(ticket.user)
 
-        # if ticket.custom_fields:
-        #     custom_fields = [
-        #         {'id':custom_field.id, 'value':custom_field.value}
-        #         for custom_field in ticket.custom_fields
-        #     ]
+        if ticket.custom_fields:
+            custom_fields = [
+                {'id':custom_field.id, 'value':custom_field.value}
+                for custom_field in ticket.custom_fields
+            ]
 
         return {
             "id": ticket.id,
             "status_id": STATUS_MAPPING[ticket.status] if ticket.status else None,
             "priority_id": PRIORITY_MAPPING[ticket.ticket_type][ticket.priority] if 
                 (ticket.ticket_type and ticket.priority) else None,
-            #"emailcclist": [ticket.recipient_email], #correct?
+            #"emailcclist": [ticket.recipient_email], #correct? - Nope find correct transformation
             "summary": ticket.subject,
             "details": ticket.description,
-            "user_id": ticket_user.id,
+            "user_id": ticket_user.id if ticket_user else None,
             "agent_id": ticket.assignee_id,
             "team_id": ticket.group_id,
             "ticket_tags": ", ".join(ticket.tags) if ticket.tags else None,
-            # ticket.service_name field be determined
+            # ticket.service_name field be determined Custom field?
             "third_party_id": ticket.external_id,  # /PS-IGNORE
-            # TODO 'custom_fields':custom_fields, #+ [{'id':144,'name': 'CFemailAddress', 'value': ticket.recipient_email }],
+            "custom_fields":custom_fields, #+ [{'id':144,'name': 'CFemailAddress', 'value': ticket.recipient_email }],
             "tickettype_id": TICKET_TYPE_MAPPING[ticket.ticket_type] if 
                 ticket.ticket_type else None,
             "comment": self.__transform_comment_to_halo_action(ticket.id, ticket.comment) if 
                 ticket.id and ticket.comment else None,
-            "category_1": "Standard Applications>Adobe",
+            "category_1": "Standard Applications>Adobe", #remove hard coding
         }
 
     def __transform_object_to_helpdesk_ticket(self, ticket: object) -> HelpDeskTicket:
@@ -276,11 +294,11 @@ class HaloManager(HelpDeskBase):
         elif ticket.get("user_id"):
             ticket_user = HelpDeskUser(id=ticket["user_id"])
 
-        # if getattr(ticket, "custom_fields", None):
-        #     custom_fields = [
-        #         HelpDeskCustomField(id=custom_field.id, value=custom_field.value)
-        #         for custom_field in ticket.custom_fields
-        #     ]
+        if ticket.get("custom_fields"):
+            custom_fields = [
+                HelpDeskCustomField(id=custom_field["id"], value=custom_field["value"])
+                for custom_field in ticket["custom_fields"]
+            ]
 
         # Get ticket comments if comments set latest comment
         ticket_actions = self.client.get(
@@ -308,9 +326,10 @@ class HaloManager(HelpDeskBase):
             group_id=ticket.get("team_id", None),
             external_id=ticket.get("third_party_id", None),  # /PS-IGNORE
             tags=(ticket.get("ticket_tags",[])).split(", "),
-            # custom_fields=custom_fields,
+            custom_fields=custom_fields,
             comment=comment,
-            ticket_type=TICKET_TYPE_MAPPING[ticket["tickettype_id"]] if ticket.get("tickettype_id") else None
+            ticket_type=TICKET_TYPE_MAPPING[ticket["tickettype_id"]] if
+                ticket.get("tickettype_id") else None
         )
         return helpdesk_ticket
 

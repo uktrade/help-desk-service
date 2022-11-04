@@ -76,3 +76,29 @@ HELP_DESK_CREDS=
 # Help Desk Service
 Zendesk](/docs/zendesk.md
 HELP_DESK_INTERFACE  | None
+HTTP
+zendesk_api_proxy
+Username
+DRF
+Zendesk MUST
+id>/comments.json
+help_desk_api.views
+Content-Type
+F401
+is_superuser
+unique_sso_legacy_user_id
+validated_data
+E722
+halo_client_secret
+Halo ID
+Halo Action
+priority_id
+agent_id"
+"Transform Halo
+HelpDeskCustomField(id
+priority_id
+agent_id"
+Halo User
+Halo
+"Transform Halo
+HelpDesk

@@ -88,8 +88,17 @@ class HelpDeskTicketNotFoundException(Exception):
 
 
 class HelpDeskBase(ABC):
+
     @abstractmethod
-    def get_or_create_user(self, user: HelpDeskUser) -> HelpDeskUser:
+    def get_current_user(self)-> HelpDeskUser:
+        ...
+
+    @abstractmethod
+    def get_user(self, user: HelpDeskUser)-> HelpDeskUser:
+        ...
+
+    @abstractmethod
+    def create_or_update_user(self, user: HelpDeskUser) -> HelpDeskUser:
         raise NotImplementedError
 
     @abstractmethod
@@ -113,7 +122,7 @@ class HelpDeskBase(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_comments(self,ticket_id: int) -> List[HelpDeskComment]:
+    def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
         raise NotImplementedError
 
 
@@ -126,17 +135,20 @@ class HelpDeskStubbed(HelpDeskBase):
         self._comments: Dict[int, List[HelpDeskComment]] = {}
         self._next_user_id = 1
 
-    def get_or_create_user(self, user: HelpDeskUser) -> HelpDeskUser:
+    def get_current_user(self)-> HelpDeskUser:
+        self._users[self._next_ticket_id] = HelpDeskUser(
+                id=self._next_ticket_id, full_name="Token Agent", email="jim@example.com"  # /PS-IGNORE
+            )
+        self._next_ticket_id +=1
+        return self._users[self._next_ticket_id] 
 
-        if not user:
-            user_id = self._next_user_id
-            self._next_user_id += 1
-            self._users[user_id] = HelpDeskUser(
-                id=user_id,
-                full_name="Token Agent",
-                email= "jim@example.com"
-                )
-        elif user.id:
+    def get_user(self, user: HelpDeskUser) -> HelpDeskUser:
+        if not self._users[user.id]:
+            self._users[user.id] = user
+        return user
+
+    def create_or_update_user(self, user: HelpDeskUser) -> HelpDeskUser:
+        if user.id:
             user_id = user.id
         else:
             user_id = self._next_user_id

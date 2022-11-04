@@ -12,6 +12,8 @@ djangorestframework = "^3.14.0"
 Markdown = "^3.4.1"
 django-model-utils = "^4.2.0"
 zenpy = "^2.0.25"
+django-multiselectfield = "^0.1.12"
+psycopg2 = "^2.9.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

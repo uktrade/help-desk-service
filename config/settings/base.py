@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 import environ
@@ -46,10 +47,13 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
+    "multiselectfield",
 ]
 
 SERVICE_APPS = [
+    "halo",
     "help_desk_api",
+    "user",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + SERVICE_APPS
@@ -62,6 +66,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -84,17 +89,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+if "postgres" in VCAP_SERVICES:
+    DATABASE_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+DATABASES = {"default": env.db()}
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
+# Redis
+if "redis" in VCAP_SERVICES:
+    credentials = VCAP_SERVICES["redis"][0]["credentials"]
+    REDIS_URL = "rediss://:{}@{}:{}/0?ssl_cert_reqs=required".format(
+        credentials["password"],
+        credentials["host"],
+        credentials["port"],
+    )
+else:
+    REDIS_URL = os.environ.get("REDIS_URL", "")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -150,3 +161,25 @@ REST_FRAMEWORK = {
 HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
 HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
 HALO_SUBDOMAIN = env("HALO_SUBDOMAIN", default="")
+
+AUTH_USER_MODEL = "user.User"
+
+HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+    }
+}
+
+AUTH_USER_MODEL = "user.User"
+
+HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache_table",
+    }
+}

@@ -132,6 +132,17 @@ python-versions = "*"
 Django = ">=2.0.1"
 
 [[package]]
+name = "django-multiselectfield"
+version = "0.1.12"
+description = "Django multiple select field"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+django = ">=1.4"
+
+[[package]]
 name = "djangorestframework"
 version = "3.14.0"
 description = "Web APIs for Django, made easy."
@@ -273,6 +284,14 @@ python-versions = ">=3.6"
 [package.extras]
 testing = ["pytest-benchmark", "pytest"]
 dev = ["tox", "pre-commit"]
+
+[[package]]
+name = "psycopg2"
+version = "2.9.5"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.6"
 
 [[package]]
 name = "py"
@@ -437,7 +456,7 @@ six = ">=1.14.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.x"
-content-hash = "6de40f3a87921432856602685179d8155c49992e0423356b2992d0a8d24bef10"
+content-hash = "061ca1b5050f2fdc6b38fddea2e22876b7e4d2a87ef03352ba58ad89e6123aad"
 
 [metadata.files]
 asgiref = []
@@ -451,6 +470,7 @@ colorama = []
 django = []
 django-environ = []
 django-model-utils = []
+django-multiselectfield = []
 djangorestframework = []
 flake8 = []
 idna = []
@@ -464,6 +484,7 @@ packaging = []
 pathspec = []
 platformdirs = []
 pluggy = []
+psycopg2 = []
 py = []
 pycodestyle = []
 pyflakes = []

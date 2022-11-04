@@ -65,7 +65,6 @@ class HaloAPIClient:
         return response_data["access_token"]
 
     def get(self, path, params = {}):
-        logger.error(f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
         response = requests.get(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             params=params,
@@ -73,10 +72,10 @@ class HaloAPIClient:
                 "Authorization": f"Bearer {self.access_token}",
             },
         )
-        # TODO error handling
+        # TODO error handling Handle 400s & 401 (normally token expired)
         if response.status_code != 200:
             logger.error(f"{response.status_code} response from get endpoint")
-            raise HaloClientNotFoundException()
+            raise HaloRecordNotFoundException()
         return response.json()
 
     def post(self, path, payload):
@@ -90,9 +89,9 @@ class HaloAPIClient:
                 "Content-Type": "application/json",
             },
         )
-        logger.error(response)
         if response.status_code != 201:
             logger.error(f"{response.status_code} response from get endpoint")
             logger.error(response.json())
+            #TODO update handling
             raise HaloClientNotFoundException()
         return response.json()
