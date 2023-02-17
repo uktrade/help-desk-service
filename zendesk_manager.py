@@ -1,13 +1,6 @@
 import logging
 
-from zenpy import Zenpy
-from zenpy.lib import exception
-from zenpy.lib.api_objects import Comment as ZendeskComment
-from zenpy.lib.api_objects import CustomField as ZendeskCustomField
-from zenpy.lib.api_objects import Ticket as ZendeskTicket
-from zenpy.lib.api_objects import User as ZendeskUser
-
-from help_desk_client.interfaces import (
+from interfaces import (
     HelpDeskBase,
     HelpDeskComment,
     HelpDeskCustomField,
@@ -18,6 +11,12 @@ from help_desk_client.interfaces import (
     HelpDeskUser,
     Status,
 )
+from zenpy import Zenpy
+from zenpy.lib import exception
+from zenpy.lib.api_objects import Comment as ZendeskComment
+from zenpy.lib.api_objects import CustomField as ZendeskCustomField
+from zenpy.lib.api_objects import Ticket as ZendeskTicket
+from zenpy.lib.api_objects import User as ZendeskUser
 
 logger = logging.getLogger(__name__)
 
