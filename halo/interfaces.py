@@ -171,7 +171,6 @@ class HelpDeskStubbed(HelpDeskBase):
             raise HelpDeskTicketNotFoundException
 
     def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
-
         if self._tickets.get(ticket_id):
             self._tickets[ticket_id].status = Status.CLOSED
             self._tickets[ticket_id].updated_at = datetime.datetime.now()
@@ -180,7 +179,6 @@ class HelpDeskStubbed(HelpDeskBase):
             raise HelpDeskTicketNotFoundException
 
     def update_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
-
         if self._tickets.get(ticket.id):
             self._tickets[ticket.id] = ticket
             self._tickets[ticket.id].updated_at = datetime.datetime.now()
