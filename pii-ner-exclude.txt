@@ -102,3 +102,5 @@ Halo User
 Halo
 "Transform Halo
 HelpDesk
+"Add a comment
+"Transform from HelpDeskTicket to Zendesk ticket instance
