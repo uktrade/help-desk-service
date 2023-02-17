@@ -5,7 +5,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("help_desk_api", "0002_helpdeskcreds_halo_client_id_and_more"),
     ]
