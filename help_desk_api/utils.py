@@ -5,6 +5,8 @@ from rest_framework import authentication, exceptions
 
 def get_zenpy_request_vars(request):
     encoded_auth = authentication.get_authorization_header(request)
+    if not encoded_auth:
+        raise exceptions.NotAuthenticated("No Authorization header found")
     auth_parts = encoded_auth.decode("utf-8").split(" ")
 
     auth_header = base64.b64decode(auth_parts[1])  # /PS-IGNORE
