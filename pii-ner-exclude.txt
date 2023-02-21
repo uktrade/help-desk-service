@@ -57,12 +57,15 @@ DjangoTemplates
 DIRS
 OPTIONS
 NAME
+SHELL
 Dockerfile.dev
 Halo ITSM
 Index](/docs
 Variables](/docs
 COLOUR_GREEN=\033[32;01
 COLOUR_YELLOW=\033[33;01
+COLOUR_NONE=\033[0m
+Run Django
 migrate$(COLOUR_NONE
 Zendesk API
 Jim Example
@@ -104,3 +107,7 @@ Halo
 HelpDesk
 "Add a comment
 "Transform from HelpDeskTicket to Zendesk ticket instance
+API
+https://github.com/uktrade/pii-secret-check-hooks
+config/` - Django
+help_desk_api/` - API
