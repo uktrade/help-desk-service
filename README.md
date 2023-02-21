@@ -18,6 +18,10 @@ The service provides an API that should be used for ticket management and creati
 
 `make all-requirements`
 
+## Initialise the Django cache
+
+`make createcachetable`
+
 ## Project documentation
 
 - [Environment Variables](/docs/environment-variables.md)
