@@ -16,6 +16,7 @@ help:
 	@echo -e "$(COLOUR_YELLOW)check-fixme$(COLOUR_NONE) : Check for fixme comments"
 	@echo -e "$(COLOUR_YELLOW)make migrations$(COLOUR_NONE) : Run Django makemigrations"
 	@echo -e "$(COLOUR_YELLOW)make migrate$(COLOUR_NONE) : Run Django migrate"
+	@echo -e "$(COLOUR_YELLOW)make createcachetable?$(COLOUR_NONE) : Create the DB table used by the Django cache"
 	@echo -e "$(COLOUR_YELLOW)make shell$(COLOUR_NONE) : Run a Django shell"
 	@echo -e "$(COLOUR_YELLOW)make flake8$(COLOUR_NONE) : Run flake8 checks"
 	@echo -e "$(COLOUR_YELLOW)make black$(COLOUR_NONE) : Run black"
@@ -80,3 +81,6 @@ pytest:
 
 superuser:
 	docker-compose run --rm help-desk-service python manage.py createsuperuser
+
+createcachetable:
+	docker-compose run --rm help-desk-service python manage.py createcachetable
