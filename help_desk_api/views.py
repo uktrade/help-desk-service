@@ -22,7 +22,7 @@ class HaloBaseView(APIView):
 
 class UserView(HaloBaseView):
     """
-    View for interaction with tickets
+    View for interaction with user
     """
 
     def get(self, request, format=None):
@@ -44,7 +44,7 @@ class UserView(HaloBaseView):
 
 class MeView(HaloBaseView):
     """
-    View for interaction with tickets
+    View for interaction with self
     """
 
     def get(self, request, format=None):
@@ -58,7 +58,7 @@ class MeView(HaloBaseView):
 
 class CommentView(HaloBaseView):
     """
-    View for interaction with tickets
+    View for interaction with comment
     """
 
     def get(self, request, format=None):
