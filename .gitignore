@@ -142,3 +142,6 @@ env
 
 # OS X
 .DS_Store
+
+# Docker DB data
+.db/*
