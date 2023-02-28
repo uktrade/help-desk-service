@@ -34,3 +34,6 @@ line-length = 100
 target-version = ['py37']
 include = '\.pyi?$'
 # 'extend-exclude' excludes files or directories in addition to the defaults
+
+[tool.djlint]
+ignore="H017,H030,H031"
