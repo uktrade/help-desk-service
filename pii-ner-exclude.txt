@@ -111,3 +111,24 @@ API
 https://github.com/uktrade/pii-secret-check-hooks
 config/` - Django
 help_desk_api/` - API
+0.0.0.0:8000
+Docker DB
+db.sqlite3-journal
+db.sqlite3
+.cache
+htmlcov/
+Installer
+parts/
+github.com/David-OConnor/pyflow
+" Django settings for help_desk_api project.
+BASE_DIR
+VCAP_SERVICES
+SessionMiddleware
+django.middleware.common
+CommonMiddleware
+AuthenticationMiddleware
+MessageMiddleware
+BACKEND
+BigAutoField
+django.core.cache.backends.db.
+DatabaseCache
