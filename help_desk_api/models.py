@@ -5,12 +5,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from multiselectfield import MultiSelectField
 
-ZENDESK = "zendesk"
-HALO = "halo"
-HELP_DESK_CHOICES = [
-    (ZENDESK, "Zendesk"),
-    (HALO, "Halo"),
-]
+# ZENDESK = "zendesk"
+# HALO = "halo"
+# HELP_DESK_CHOICES = [
+#     (ZENDESK, "Zendesk"),
+#     (HALO, "Halo"),
+# ]
 
 
 class HelpDeskCreds(models.Model):
@@ -18,6 +18,10 @@ class HelpDeskCreds(models.Model):
     Username and password are Halo username and password
     DRF token should be set to Zendesk token
     """
+
+    class HelpDeskChoices(models.TextChoices):
+        ZENDESK = "zendesk", "Zendesk"
+        HALO = "halo", "Halo"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -74,8 +78,8 @@ class HelpDeskCreds(models.Model):
     help_desk = MultiSelectField(
         max_length=12,
         max_choices=2,
-        choices=HELP_DESK_CHOICES,
-        default=ZENDESK,
+        choices=HelpDeskChoices.choices,
+        default=HelpDeskChoices.ZENDESK,
     )
 
     last_modified = models.DateTimeField(auto_now=True)
@@ -84,7 +88,7 @@ class HelpDeskCreds(models.Model):
         super().clean_fields(exclude=exclude)
 
         # self.help_desk.choices:
-        if ZENDESK not in self.help_desk:
+        if self.HelpDeskChoices.ZENDESK not in self.help_desk:
             raise ValidationError(
                 {
                     "help_desk": "You must have Zendesk chosen until go system go live",

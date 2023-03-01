@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 # Needed for inspect
 from help_desk_api import views  # noqa F401
-from help_desk_api.models import HALO, ZENDESK, HelpDeskCreds
+from help_desk_api.models import HelpDeskCreds
 from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
@@ -126,12 +126,12 @@ class ZendeskAPIProxyMiddleware:
 
         supported_endpoint = has_endpoint(request.path, request.method.upper())
 
-        if ZENDESK in help_desk_creds.help_desk:
+        if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             zendesk_response = make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
             )
 
-        if HALO in help_desk_creds.help_desk:
+        if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             django_response = make_halo_request(help_desk_creds, request, supported_endpoint)
 
         return zendesk_response or django_response
