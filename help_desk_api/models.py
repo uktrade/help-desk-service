@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -88,7 +89,7 @@ class HelpDeskCreds(models.Model):
         super().clean_fields(exclude=exclude)
 
         # self.help_desk.choices:
-        if self.HelpDeskChoices.ZENDESK not in self.help_desk:
+        if settings.REQUIRE_ZENDESK and (self.HelpDeskChoices.ZENDESK not in self.help_desk):
             raise ValidationError(
                 {
                     "help_desk": "You must have Zendesk chosen until go system go live",

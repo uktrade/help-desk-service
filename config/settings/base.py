@@ -171,3 +171,5 @@ CACHES = {
         "LOCATION": "django_cache_table",
     }
 }
+
+REQUIRE_ZENDESK = env("REQUIRE_ZENDESK", default=False)
