@@ -132,3 +132,4 @@ BACKEND
 BigAutoField
 django.core.cache.backends.db.
 DatabaseCache
+"test@example.com
