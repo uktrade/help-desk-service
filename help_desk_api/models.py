@@ -27,6 +27,7 @@ class HelpDeskCreds(models.Model):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # We need to know if this has been updated so we can hash it if it has
+        self.set_token(self.zendesk_token)
         self._zendesk_token = self.zendesk_token
 
     # If performing object creation without calling save use this to set token
