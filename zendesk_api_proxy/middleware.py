@@ -1,12 +1,14 @@
 import base64
 import inspect
 import json
+import logging
 import sys
 
 import requests
 from django.contrib.auth.hashers import check_password
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseServerError
+from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
 # Needed for inspect
@@ -14,6 +16,8 @@ from help_desk_api import views  # noqa F401
 from help_desk_api.models import HelpDeskCreds
 from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
+
+logger = logging.getLogger(__name__)
 
 
 def has_endpoint(path, method):
@@ -113,11 +117,12 @@ class ZendeskAPIProxyMiddleware:
         try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
-        except Exception:
+        except APIException:
             return self.get_response(request)
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
+        logger.debug(f"{token}, {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
