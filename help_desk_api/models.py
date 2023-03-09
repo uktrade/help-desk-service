@@ -6,13 +6,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from multiselectfield import MultiSelectField
 
-# ZENDESK = "zendesk"
-# HALO = "halo"
-# HELP_DESK_CHOICES = [
-#     (ZENDESK, "Zendesk"),
-#     (HALO, "Halo"),
-# ]
-
 
 class HelpDeskCreds(models.Model):
     """
@@ -26,13 +19,14 @@ class HelpDeskCreds(models.Model):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        # We need to know if this has been updated so we can hash it if it has
-        self.set_token(self.zendesk_token)
-        self._zendesk_token = self.zendesk_token
+        if self.zendesk_token:
+            # Ensure the token will be encrypted when this instance is saved
+            self._zendesk_token = self.zendesk_token[1:]
 
     # If performing object creation without calling save use this to set token
     def set_token(self, raw_token):
         self.zendesk_token = make_password(raw_token)
+        self._zendesk_token = self.zendesk_token
 
     is_cleaned = False
 
@@ -89,7 +83,6 @@ class HelpDeskCreds(models.Model):
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
 
-        # self.help_desk.choices:
         if settings.REQUIRE_ZENDESK and (self.HelpDeskChoices.ZENDESK not in self.help_desk):
             raise ValidationError(
                 {
@@ -103,8 +96,9 @@ class HelpDeskCreds(models.Model):
         if not self.is_cleaned:
             self.clean_fields()
 
-        # Should always have a value so crap out if not
-        assert self.zendesk_token
+        if settings.REQUIRE_ZENDESK:
+            # Should always have a value so crap out if not
+            assert self.zendesk_token
 
         if self._zendesk_token != self.zendesk_token:
             self.set_token(self.zendesk_token)
