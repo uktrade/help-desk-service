@@ -50,6 +50,9 @@ def zendesk_and_halo_creds(db, zendesk_email, zendesk_token):
 def halo_creds_only(db, zendesk_email, zendesk_token):
     return HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
+        # TODO: what about a new service with no Zendesk token?
+        # TODO: Is this really the same as the actual Zendesk token?
+        zendesk_token=zendesk_token,
         halo_client_id="test_halo_client_id",
         halo_client_secret="test_halo_client_secret",
         help_desk=[
