@@ -1,8 +1,11 @@
 from unittest import mock
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
+from django.test import Client
+from django.urls import reverse
 
 from help_desk_api.models import HelpDeskCreds
 
@@ -14,6 +17,7 @@ class TestZendeskRequiredSetting:
         with pytest.raises(ValidationError):
             HelpDeskCreds.objects.create(
                 zendesk_email="test@example.com",  # /PS-IGNORE
+                zendesk_token="ABC123",
                 halo_client_id="test_halo_client_id",
                 halo_client_secret="test_halo_client_secret",
                 help_desk=[
@@ -38,8 +42,15 @@ class TestZendeskRequiredSetting:
 
 
 class TestZendeskTokenEncryption:
+    """
+    Some of these tests exist because an earlier implementation of `HelpDeskCreds`
+    attempted to encrypt `zendesk_token`. This responsibility is now on clients of the class
+    which should call `set_token` on the newly-created instance.
+    At an application level, token encryption is performed by the admin forms.
+    """
+
     @mock.patch("help_desk_api.models.HelpDeskCreds.set_token")
-    def test_set_token_called_on_queryset_create(
+    def test_set_token_not_called_on_queryset_create(
         self, set_token: mock.MagicMock, zendesk_required_settings
     ):
         expected_token = "test_zendesk_token"
@@ -50,49 +61,9 @@ class TestZendeskTokenEncryption:
                 HelpDeskCreds.HelpDeskChoices.ZENDESK,
             ],
         )
-        set_token.assert_called_once_with(expected_token)
+        set_token.assert_not_called()
 
-    def test_zendesk_token_encrypted_on_queryset_create(self, zendesk_required_settings):
-        expected_token = "test_zendesk_token"
-        help_desk_creds = HelpDeskCreds.objects.create(
-            zendesk_email="test@example.com",  # /PS-IGNORE
-            zendesk_token=expected_token,
-            help_desk=[
-                HelpDeskCreds.HelpDeskChoices.ZENDESK,
-            ],
-        )
-        assert check_password(expected_token, help_desk_creds.zendesk_token)
-
-    def test_set_token_not_called_on_queryset_get(self, zendesk_required_settings):
-        expected_token = "test_zendesk_token"
-        help_desk_creds = HelpDeskCreds.objects.create(
-            zendesk_email="test@example.com",  # /PS-IGNORE
-            zendesk_token=expected_token,
-            help_desk=[
-                HelpDeskCreds.HelpDeskChoices.ZENDESK,
-            ],
-        )
-        pk = help_desk_creds.pk
-        with mock.patch("help_desk_api.models.HelpDeskCreds.set_token") as set_token:
-            HelpDeskCreds.objects.get(pk=pk)
-            set_token.assert_not_called()
-
-    def test_zendesk_token_correct_on_queryset_get(self, zendesk_required_settings):
-        expected_token = "test_zendesk_token"
-        help_desk_creds = HelpDeskCreds.objects.create(
-            zendesk_email="test@example.com",  # /PS-IGNORE
-            zendesk_token=expected_token,
-            help_desk=[
-                HelpDeskCreds.HelpDeskChoices.ZENDESK,
-            ],
-        )
-        pk = help_desk_creds.pk
-
-        db_help_desk_creds = HelpDeskCreds.objects.get(pk=pk)
-
-        assert check_password(expected_token, db_help_desk_creds.zendesk_token)
-
-    def test_zendesk_token_matches_initial_token_on_queryset_get(self, zendesk_required_settings):
+    def test_zendesk_token_not_encrypted_on_model_save(self, zendesk_required_settings):
         expected_token = "test_zendesk_token"
         help_desk_creds = HelpDeskCreds.objects.create(
             zendesk_email="test@example.com",  # /PS-IGNORE
@@ -103,35 +74,42 @@ class TestZendeskTokenEncryption:
         )
         pk = help_desk_creds.pk
         db_help_desk_creds = HelpDeskCreds.objects.get(pk=pk)
-        assert check_password(expected_token, db_help_desk_creds.zendesk_token)
+        assert expected_token == db_help_desk_creds.zendesk_token
 
-    def test_zendesk_token_encrypted_on_model_save(self, zendesk_required_settings):
-        initial_token = "test_zendesk_token"
-        help_desk_creds = HelpDeskCreds.objects.create(
-            zendesk_email="test@example.com",  # /PS-IGNORE
-            zendesk_token=initial_token,
-            help_desk=[
-                HelpDeskCreds.HelpDeskChoices.ZENDESK,
-            ],
+    @mock.patch("help_desk_api.models.HelpDeskCreds.set_token")
+    def test_help_desk_creds_admin_calls_set_token(self, set_token: mock.MagicMock, client: Client):
+        user_model = get_user_model()
+        user_password = "dumb_password"
+        user = user_model.objects.create_superuser(
+            username="superuser", password=user_password, email="test@example.com"  # /PS-IGNORE
         )
-        new_token = "test_zendesk_token_changed"
+        client.login(username=user.username, password=user_password)
+        data = {
+            "zendesk_token": "test_zendesk_token",
+            "zendesk_email": "test@example.com",  # /PS-IGNORE
+            "help_desk": HelpDeskCreds.HelpDeskChoices.ZENDESK.value,
+            "_save": "Save",
+        }
+        url = reverse(f"admin:{HelpDeskCreds._meta.app_label}_{HelpDeskCreds._meta.model_name}_add")
+        client.post(url, data=data)
+        set_token.assert_called_once_with(data["zendesk_token"])
 
-        help_desk_creds.zendesk_token = new_token
-        with mock.patch("help_desk_api.models.HelpDeskCreds.set_token") as set_token:
-            help_desk_creds.save()
-
-        set_token.assert_called_once_with(new_token)
-
-    def test_zendesk_token_encrypted_on_constructed_instance_save(self, zendesk_required_settings):
-        initial_token = "test_zendesk_token"
-        help_desk_creds = HelpDeskCreds(
-            zendesk_email="test@example.com",  # /PS-IGNORE
-            zendesk_token=initial_token,
-            help_desk=[
-                HelpDeskCreds.HelpDeskChoices.ZENDESK,
-            ],
+    def test_help_desk_creds_admin_encrypts_zendesk_token(self, client: Client):
+        user_model = get_user_model()
+        user_password = "dumb_password"
+        user = user_model.objects.create_superuser(
+            username="superuser", password=user_password, email="test@example.com"  # /PS-IGNORE
         )
-        with mock.patch("help_desk_api.models.HelpDeskCreds.set_token") as set_token:
-            help_desk_creds.save()
-
-        set_token.assert_called_once_with(initial_token)
+        client.login(username=user.username, password=user_password)
+        zendesk_email = "test@example.com"  # /PS-IGNORE
+        zendesk_token = "test_zendesk_token"
+        data = {
+            "zendesk_token": zendesk_token,
+            "zendesk_email": zendesk_email,
+            "help_desk": HelpDeskCreds.HelpDeskChoices.ZENDESK.value,
+            "_save": "Save",
+        }
+        url = reverse(f"admin:{HelpDeskCreds._meta.app_label}_{HelpDeskCreds._meta.model_name}_add")
+        client.post(url, data=data)
+        credentials = HelpDeskCreds.objects.get(zendesk_email=zendesk_email)
+        assert check_password(zendesk_token, credentials.zendesk_token)
