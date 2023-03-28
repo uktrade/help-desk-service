@@ -1,5 +1,3 @@
-from typing import Any
-
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
@@ -17,16 +15,11 @@ class HelpDeskCreds(models.Model):
         ZENDESK = "zendesk", "Zendesk"
         HALO = "halo", "Halo"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        if self.zendesk_token:
-            # Ensure the token will be encrypted when this instance is saved
-            self._zendesk_token = self.zendesk_token[1:]
-
-    # If performing object creation without calling save use this to set token
-    def set_token(self, raw_token):
+    # If performing object creation use this to set token
+    def set_token(self, raw_token=None):
+        if raw_token is None:
+            raw_token = self.zendesk_token
         self.zendesk_token = make_password(raw_token)
-        self._zendesk_token = self.zendesk_token
 
     is_cleaned = False
 
@@ -99,9 +92,6 @@ class HelpDeskCreds(models.Model):
         if settings.REQUIRE_ZENDESK:
             # Should always have a value so crap out if not
             assert self.zendesk_token
-
-        if self._zendesk_token != self.zendesk_token:
-            self.set_token(self.zendesk_token)
 
         super().save(*args, **kwargs)
 
