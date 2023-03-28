@@ -33,8 +33,8 @@ def zendesk_authorization_header(zendesk_email, zendesk_token):
 
 
 @pytest.fixture()
-def zendesk_and_halo_creds(db, zendesk_email, zendesk_token):
-    return HelpDeskCreds.objects.create(
+def zendesk_and_halo_creds(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
+    credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         zendesk_token=zendesk_token,
         halo_client_id="test_halo_client_id",
@@ -44,11 +44,14 @@ def zendesk_and_halo_creds(db, zendesk_email, zendesk_token):
             HelpDeskCreds.HelpDeskChoices.HALO,
         ],
     )
+    credentials.set_token()
+    credentials.save()
+    return credentials
 
 
 @pytest.fixture()
-def halo_creds_only(db, zendesk_email, zendesk_token):
-    return HelpDeskCreds.objects.create(
+def halo_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
+    credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         # TODO: what about a new service with no Zendesk token?
         # TODO: Is this really the same as the actual Zendesk token?
@@ -59,14 +62,20 @@ def halo_creds_only(db, zendesk_email, zendesk_token):
             HelpDeskCreds.HelpDeskChoices.HALO,
         ],
     )
+    credentials.set_token()
+    credentials.save()
+    return credentials
 
 
 @pytest.fixture()
-def zendesk_creds_only(db, zendesk_email, zendesk_token):
-    return HelpDeskCreds.objects.create(
+def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
+    credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         zendesk_token=zendesk_token,
         help_desk=[
             HelpDeskCreds.HelpDeskChoices.ZENDESK,
         ],
     )
+    credentials.set_token()
+    credentials.save()
+    return credentials
