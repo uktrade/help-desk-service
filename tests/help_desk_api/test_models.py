@@ -115,4 +115,5 @@ class TestZendeskTokenEncryption:
         assert check_password(zendesk_token, credentials.zendesk_token)
 
     def test_just_to_see_if_circleci_is_working(self):
-        assert False
+        foo = False
+        assert foo
