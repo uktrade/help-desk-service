@@ -16,7 +16,6 @@ django-multiselectfield = "^0.1.12"
 psycopg2 = "^2.9.5"
 pytest-cov = "^4.0.0"
 pytest-django = "^4.5.2"
-environ = "^1.0"
 gunicorn = "^20.1.0"
 
 [tool.poetry.dev-dependencies]
