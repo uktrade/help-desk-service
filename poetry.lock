@@ -1097,6 +1097,21 @@ secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "p
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
+name = "whitenoise"
+version = "6.4.0"
+description = "Radically simplified static file serving for WSGI applications"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "whitenoise-6.4.0-py3-none-any.whl", hash = "sha256:599dc6ca57e48929dfeffb2e8e187879bfe2aed0d49ca419577005b7f2cc930b"},
+    {file = "whitenoise-6.4.0.tar.gz", hash = "sha256:a02d6660ad161ff17e3042653c8e3f5ecbb2a2481a006bde125b9efb9a30113a"},
+]
+
+[package.extras]
+brotli = ["Brotli"]
+
+[[package]]
 name = "zenpy"
 version = "2.0.25"
 description = "Python wrapper for the Zendesk API"
@@ -1184,4 +1199,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.x"
-content-hash = "b62b10afa1d1ac0f932e3db3d8148a05dfb1757c3b225dbcde3c94d31e949744"
+content-hash = "5f5882c0d65f398cbfaae89e0da6f4d3f34d5c22ae06adde307b7cb268a48823"
