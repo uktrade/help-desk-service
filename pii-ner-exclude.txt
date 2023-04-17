@@ -134,3 +134,10 @@ django.core.cache.backends.db.
 DatabaseCache
 "test@example.com
 flake8
+Default
+Notes
+DEBUG
+HELP_DESK_INTERFACE
+HELP_DESK_CREDS
+REQUIRE_ZENDESK
+Control
