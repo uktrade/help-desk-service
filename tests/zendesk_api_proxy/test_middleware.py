@@ -8,8 +8,8 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class TestNonApiRoutes:
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_non_api_call_passed_through(
         self,
         make_halo_request: mock.MagicMock,
@@ -27,8 +27,8 @@ class TestNonApiRoutes:
 
 
 class TestZendeskOnly:
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_zendesk_request_calls_make_zendesk_request(
         self,
         make_halo_request: mock.MagicMock,
@@ -55,8 +55,8 @@ class TestZendeskOnly:
 
         make_zendesk_request.assert_called_once()
 
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_zendesk_request_does_not_call_make_halo_request(
         self,
         make_halo_request: mock.MagicMock,
@@ -83,8 +83,8 @@ class TestZendeskOnly:
 
         make_halo_request.assert_not_called()
 
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_zendesk_request_does_not_call_get_response(
         self,
         make_halo_request: mock.MagicMock,
@@ -122,8 +122,8 @@ class TestZendeskOnly:
 
 
 class TestHaloOnly:
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_halo_request_calls_make_halo_request(
         self,
         make_halo_request: mock.MagicMock,
@@ -150,8 +150,8 @@ class TestHaloOnly:
 
         make_halo_request.assert_called_once()
 
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_halo_request_does_not_call_make_zendesk_request(
         self,
         make_halo_request: mock.MagicMock,
@@ -178,8 +178,8 @@ class TestHaloOnly:
 
         make_zendesk_request.assert_not_called()
 
-    @mock.patch("zendesk_api_proxy.middleware.make_zendesk_request")
-    @mock.patch("zendesk_api_proxy.middleware.make_halo_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_halo_request_does_not_call_get_response(
         self,
         make_halo_request: mock.MagicMock,
