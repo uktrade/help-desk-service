@@ -134,3 +134,6 @@ django.core.cache.backends.db.
 DatabaseCache
 "test@example.com
 flake8
+args
+NER
+https://github.com/pycqa/flake8
