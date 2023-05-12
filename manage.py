@@ -13,7 +13,7 @@ def main():
         if os.environ.get("RUN_MAIN"):
             import debugpy
 
-            debugpy.listen((settings.DEBUGPY_HOST, 3000))
+            debugpy.listen(("0.0.0.0", 3000))
             print("attached")
     try:
         from django.core.management import execute_from_command_line

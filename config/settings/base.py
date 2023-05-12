@@ -176,5 +176,3 @@ CACHES = {
 }
 
 REQUIRE_ZENDESK = env("REQUIRE_ZENDESK", default=False)
-
-DEBUGPY_HOST = env("DEBUGPY_HOST")
