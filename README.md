@@ -11,7 +11,7 @@ The service provides an API that should be used for ticket management and creati
 - Build local docker instance:
     - `make build`
     - `make migrate` or `make first-use` 
-- Start the local docker instance `make up`
+- Start the local docker instance: `make up` or `make up-detached` to start in detached mode
 - The service will be available at: `http://localhost:8000/`
 
 ## Update requirements files

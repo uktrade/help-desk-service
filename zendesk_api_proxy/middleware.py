@@ -74,36 +74,6 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
     return zendesk_response
 
 
-def make_halo_request(self, help_desk_creds, request, supported_endpoint):
-    django_response = None
-    if supported_endpoint:
-        setattr(request, "help_desk_creds", help_desk_creds)
-        django_response = self.get_response(request)
-    return django_response
-
-
-def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
-    # Don't need to call the below in Halo because error will be raised anyway
-    if not supported_endpoint:
-        print("TODO raise Sentry error...")
-    proxy_response = proxy_zendesk(
-        request,
-        help_desk_creds.zendesk_subdomain,
-        help_desk_creds.zendesk_email,
-        token,
-        request.GET.urlencode(),
-    )
-    zendesk_response = HttpResponse(
-        json.dumps(proxy_response.json(), cls=DjangoJSONEncoder),
-        headers={
-            "Content-Type": "application/json",
-        },
-        status=proxy_response.status_code,
-    )
-    # status, location, copy dict
-    return zendesk_response
-
-
 class ZendeskAPIProxyMiddleware:
     """
     Proxies requests to Zendesk if we do not
@@ -132,11 +102,39 @@ class ZendeskAPIProxyMiddleware:
         supported_endpoint = has_endpoint(request.path, request.method.upper())
 
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
-            zendesk_response = make_zendesk_request(
+            zendesk_response = self.make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
-            django_response = make_halo_request(help_desk_creds, request, supported_endpoint)
+            django_response = self.make_halo_request(help_desk_creds, request, supported_endpoint)
 
         return zendesk_response or django_response
+
+    def make_halo_request(self, help_desk_creds, request, supported_endpoint):
+        django_response = None
+        if supported_endpoint:
+            setattr(request, "help_desk_creds", help_desk_creds)
+            django_response = self.get_response(request)
+        return django_response
+
+    def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
+        # Don't need to call the below in Halo because error will be raised anyway
+        if not supported_endpoint:
+            print("TODO raise Sentry error...")
+        proxy_response = proxy_zendesk(
+            request,
+            help_desk_creds.zendesk_subdomain,
+            help_desk_creds.zendesk_email,
+            token,
+            request.GET.urlencode(),
+        )
+        zendesk_response = HttpResponse(
+            json.dumps(proxy_response.json(), cls=DjangoJSONEncoder),
+            headers={
+                "Content-Type": "application/json",
+            },
+            status=proxy_response.status_code,
+        )
+        # status, location, copy dict
+        return zendesk_response
