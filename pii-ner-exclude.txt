@@ -145,3 +145,23 @@ args
 NER
 https://github.com/pycqa/flake8
 0.0.0.0
+info
+POST
+me.json
+BlankEnum
+'zendesk' - Zendesk
+schemas/BlankEnum
+maxLength
+JSONRenderer
+The Halo ID of the Ticket
+'"Transform from HelpDeskComment to halo comment format.'
+'"Transform from HelpDeskTicket to halo ticket format'
+Open
+Comments Serializer
+Tickets Serializer
+Halo User Serializer
+GET User in Halo
+Create/Update User
+GET Agent Me
+zendesk` - Zendesk
+'schemas/BlankEnum'
