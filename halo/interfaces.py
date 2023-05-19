@@ -41,6 +41,7 @@ class HelpDeskUser:
     id: Optional[int] = None
     full_name: Optional[str] = None
     email: Optional[str] = None
+    site_id: Optional[int] = None
     groups: Optional[List[HelpDeskGroup]] = None
 
 

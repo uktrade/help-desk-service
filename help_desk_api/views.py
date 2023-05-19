@@ -1,9 +1,15 @@
 from halo.halo_manager import HaloManager
 from halo.interfaces import HelpDeskTicket, HelpDeskUser
+from rest_framework import authentication, permissions, status
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from help_desk_api.serializers import TicketContainer
+from help_desk_api.serializers import (
+    CommentSerializer,
+    HaloUserSerializer,
+    TicketSerializer,
+)
 
 
 class HaloBaseView(APIView):
@@ -25,21 +31,43 @@ class UserView(HaloBaseView):
     View for interaction with user
     """
 
-    def get(self, request, format=None):
-        """
-        Return a ticket
-        """
-        # Get ticket from Halo
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
-        return Response()
-
-    def post(self, request, format=None):
+    def get(self, request, *args, **kwargs):
         """
-        Return a ticket
+        GET User in Halo
         """
-        # Get ticket from Halo
+        # Build User based on ID
 
-        return Response()
+        if self.kwargs.get("id"):
+            user = HelpDeskUser(id=self.kwargs.get("id"))
+            # Get User from Halo
+            queryset = self.halo_manager.get_or_create_user(user, request.method)
+            serializer = HaloUserSerializer(queryset)
+            return Response(serializer.data)
+        else:
+            # if no user id is passed we show the agent me??
+            return Response()
+
+    def post(self, request, *args, **kwargs):
+        """
+        CREATE/UPDATE a User in Halo
+        """
+        # Create/Update User in Halo
+        user = HelpDeskUser(
+            full_name=request.data["name"],
+            email=request.data["emailaddress"],
+        )
+        if "id" in request.data:
+            user.id = request.data["id"]
+            queryset = self.halo_manager.get_or_create_user(user, request.method)
+        else:
+            user.site_id = request.data["site_id"]
+            queryset = self.halo_manager.get_or_create_user(user, request.method)
+        serializer = HaloUserSerializer(queryset)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MeView(HaloBaseView):
@@ -47,13 +75,18 @@ class MeView(HaloBaseView):
     View for interaction with self
     """
 
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+
     def get(self, request, format=None):
         """
-        Return a ticket
+        GET Agent Me in Halo
         """
-        # Get ticket from Halo
-
-        return Response()
+        # Get Me from Halo
+        queryset = self.halo_manager.get_or_create_user(user=None)
+        serializer = HaloUserSerializer(queryset)
+        return Response(serializer.data)
 
 
 class CommentView(HaloBaseView):
@@ -61,59 +94,62 @@ class CommentView(HaloBaseView):
     View for interaction with comment
     """
 
-    def get(self, request, format=None):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+
+    def get(self, request, id, format=None):
         """
-        Return a ticket
+        GET comments from Halo
         """
         # Get ticket from Halo
-
-        return Response()
+        queryset = self.halo_manager.get_comments(ticket_id=id)
+        serializer = CommentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class TicketView(HaloBaseView):
-    def get(self, request, id, format=None):
+    """
+    View for interacting with tickets
+    """
+
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    serializer_class = TicketSerializer
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+
+    def get(self, request, *args, **kwargs):
         """
-        Return a ticket
+        GET ticket/tickets from Halo
         """
-        # Get ticket from Halo
+        if self.kwargs.get("id"):
+            queryset = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+        else:
+            queryset = self.halo_manager.get_ticket()
+        serializer = TicketSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-        # snippet = self.get_object(pk)
-        # serializer = SnippetSerializer(snippet)
-        # return Response(serializer.data)
-
-        return Response()
-
-    def put(self, request, id, format=None):
-        # snippet = self.get_object(pk)
-        # serializer = SnippetSerializer(snippet, data=request.data)
-        # if serializer.is_valid():
-        #     serializer.save()
-        #     return Response(serializer.data)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response()
-
-    def post(self, request, format=None):
+    def post(self, request, *args, **kwargs):
         """
-        Create a ticket
+        CREATE/UPDATE ticket in Halo
         """
-        ticket_serializer = TicketContainer(data=request.data)
+        ticket = HelpDeskTicket(
+            subject=request.data["subject"],
+            description=request.data["description"],
+            priority=request.data["priority"],
+            comment=request.data["comment"],
+            user=None,
+        )
 
-        if ticket_serializer.is_valid(raise_exception=True):
-            help_desk_user = HelpDeskUser(
-                id=36,
-            )
-
-            ticket = HelpDeskTicket(
-                subject=ticket_serializer.validated_data["ticket"]["subject"],
-                description=ticket_serializer.validated_data["ticket"]["description"],
-                # priority=ticket_serializer.validated_data["ticket"]["priority"],
-                user=help_desk_user,
-            )
-            result = self.halo_manager.create_ticket(
+        if "id" in request.data:
+            # update the ticket
+            ticket.id = request.data["id"]
+            queryset = self.halo_manager.update_ticket(
                 ticket,
             )
-
-            print("RESULT")
-            print(result)
-
-        return Response("success")
+        else:
+            queryset = self.halo_manager.create_ticket(
+                ticket,
+            )
+        serializer = TicketSerializer(queryset)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

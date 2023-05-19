@@ -13,7 +13,7 @@ class ZenpyAuthentication(authentication.TokenAuthentication):
         except:  # noqa E722
             AuthenticationFailed("Could not parse auth request header value")
 
-        creds = HelpDeskCreds.filter(email=email).first()
+        creds = HelpDeskCreds.objects.filter(zendesk_email=email).first()
 
         if not creds:
             raise AuthenticationFailed("User associated with this email not found")

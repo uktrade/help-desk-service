@@ -154,8 +154,8 @@ schemas/BlankEnum
 maxLength
 JSONRenderer
 The Halo ID of the Ticket
-'"Transform from HelpDeskComment to halo comment format.'
-'"Transform from HelpDeskTicket to halo ticket format'
+'" Transform from HelpDeskComment to halo comment format.'
+'" Transform from HelpDeskTicket to halo ticket format'
 Open
 Comments Serializer
 Tickets Serializer

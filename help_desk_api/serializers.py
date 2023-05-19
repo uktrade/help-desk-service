@@ -10,19 +10,28 @@ TICKET_PRIORITIES = (
 
 
 class CommentSerializer(serializers.Serializer):
-    body = serializers.EmailField()
-    public = serializers.CharField(max_length=200)
+    """
+    Comments Serializer
+    """
+
+    body = serializers.CharField()
+    public = serializers.BooleanField(default=True)
 
 
 class TicketSerializer(serializers.Serializer):
+    """
+    Tickets Serializer
+    """
+
     priority = serializers.ChoiceField(
         choices=TICKET_PRIORITIES,
         allow_blank=True,
         default="new",
     )
-    comment = CommentSerializer(many=True, read_only=True)
+    comment = CommentSerializer(many=True)
     subject = serializers.CharField(max_length=200)
     description = serializers.CharField(max_length=200)
+    id = serializers.IntegerField()
 
 
 class TicketContainer(serializers.Serializer):
@@ -37,3 +46,13 @@ class TicketContainer(serializers.Serializer):
         # )
         # help_desk.create_ticket(ticket)
         # return validated_data
+
+
+class HaloUserSerializer(serializers.Serializer):
+    """
+    Halo User Serializer
+    """
+
+    id = serializers.IntegerField()
+    full_name = serializers.CharField()
+    email = serializers.EmailField()
