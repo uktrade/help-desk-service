@@ -9,7 +9,7 @@ TICKET_PRIORITIES = (
 )
 
 
-class CommentSerializer(serializers.Serializer):
+class ZendeskCommentSerializer(serializers.Serializer):
     """
     Comments Serializer
     """
@@ -18,7 +18,7 @@ class CommentSerializer(serializers.Serializer):
     public = serializers.BooleanField(default=True)
 
 
-class TicketSerializer(serializers.Serializer):
+class ZendeskTicketSerializer(serializers.Serializer):
     """
     Tickets Serializer
     """
@@ -48,7 +48,7 @@ class TicketContainer(serializers.Serializer):
         # return validated_data
 
 
-class HaloUserSerializer(serializers.Serializer):
+class ZendeskUserSerializer(serializers.Serializer):
     """
     Halo User Serializer
     """
