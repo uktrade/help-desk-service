@@ -1,8 +1,9 @@
 import datetime
-from abc import ABC, abstractmethod
+
+# from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 
 class Priority(Enum):
@@ -59,7 +60,7 @@ class HelpDeskCustomField:
 
 
 @dataclass
-class HelpDeskTicket:
+class ZendeskTicket:
     subject: str
     id: Optional[int] = None
     description: Optional[str] = None

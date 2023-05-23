@@ -165,3 +165,13 @@ Create/Update User
 GET Agent Me
 zendesk` - Zendesk
 'schemas/BlankEnum'
+TicketType
+Halo API
+halo_response['id
+CommentView.as_view
+halo.data_class
+ZendeskTicket
+" Create a User in Halo
+AllowAny
+abc
+ABC

@@ -1,16 +1,9 @@
 import logging
-from typing import List
 
+from halo.data_class import HelpDeskTicketNotFoundException, ZendeskTicket
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
-from halo.data_class import (
-    HelpDeskBase,
-    HelpDeskComment,
-    HelpDeskException,
-    HelpDeskTicket,
-    HelpDeskTicketNotFoundException,
-    HelpDeskUser,
-    TicketType,
-)
+
+# from typing import List
 
 
 # def reverse_keys(dictionary):
@@ -19,7 +12,7 @@ from halo.data_class import (
 
 # Zendesk status - Halo status
 ZENDESK_TO_HALO_STATUS_MAPPING = {
-    "new": [1,4],
+    "new": 1,
     "open": 2,  # in progress
     "pending": 3,  # action requried
     "on-hold": 28,
@@ -46,7 +39,7 @@ PRIORITY_MAPPING = {
 logger = logging.getLogger(__name__)
 
 
-class HaloManager(HelpDeskBase):
+class HaloManager:
     def __init__(self, client_id, client_secret):
         """Create a new Halo client - pass credentials to.
         :TODO - correct
@@ -56,62 +49,66 @@ class HaloManager(HelpDeskBase):
             client_secret=client_secret,
         )
 
-    def get_user(self, id: str):
-        halo_user = self.client.get(path=f"Users/{id}")
-        # Need to transform into a Zendesk compatible user structure
-        zendesk_user = "TODO"
-        return zendesk_user
+    # def get_user(self, id: str):
+    #     halo_user = self.client.get(path=f"Users/{id}")
+    #     # Need to transform into a Zendesk compatible user structure
+    #     zendesk_user = "TODO"
+    #     return zendesk_user
 
-    def create_user(self, user_details: ZendeskUserDetails = {}) -> ZendeskUser:
-        # Receive Zendesk user and create user in Halo, give back Zendesk user
-        halo_payload = "TODO create payload from incoming Zendesk user details"
-        halo_user = self.client.post(path="Users", payload=[halo_payload])
-        return halo_user
+    # def create_user(self, user_details: ZendeskUserDetails = {}) -> ZendeskUser:
+    #     # Receive Zendesk user and create user in Halo, give back Zendesk user
+    #     halo_payload = "TODO create payload from incoming Zendesk user details"
+    #     halo_user = self.client.post(path="Users", payload=[halo_payload])
+    #     return halo_user
 
-    def create_ticket(self, ticket_details: ZendeskTicketDetails) -> ZendeskTicket:
-        # Create tickert 
-        halo_payload = "TODO create payload from incoming Zendesk ticket details"
+    def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
+        # Create ticket
+        # "TODO create payload from incoming Zendesk ticket details"
+        halo_payload = {
+            "subject": zendesk_request["subject"],
+            "description": zendesk_request["description"],
+        }
+        # 3. Manager calls Halo API and retuens Halo flavoured return value
         halo_response = self.client.post(path="Tickets", payload=[halo_payload])
 
-        zendesk_ticket_response = "TODO populate with transformed Halo response"
+        # if zendesk_request['comment']:
+        #     halo_response["comment"] = self.client.post(
+        #         path="Actions",
+        #         payload={"ticket_id": halo_response['id'],
+        #                  "note": halo_payload['comment']["body"]
+        #                  }
+        #     )
 
-        # If we have a comment we have to add it to the ticket after creation
-        if ticket_details.comment:
-            zendesk_ticket_response["comment"] = self.client.post(
-                path="Actions",
-                payload="TODO add ticket id and outcome?",
+        # zendesk_ticket_response = "TODO populate with transformed Halo response"
+        zendesk_ticket = ZendeskTicket(
+            subject=halo_response["summary"], description=halo_response["details"]
+        )
+
+        return zendesk_ticket
+
+    def get_ticket(self, ticket_id: int = None) -> ZendeskTicket:
+        """Recover the ticket by Halo ID.
+        :param ticket_id: The Halo ID of the Ticket.
+        :returns: A HelpDeskTicket instance.
+        :raises:
+            HelpDeskTicketNotFoundException: If no ticket is found.
+        """
+        logger.debug(f"Look for Ticket by is Halo ID:<{ticket_id}>")  # /PS-IGNORE
+        try:
+            # 3. Manager calls Halo API and
+            # returns Halo flavoured return value
+            halo_response = self.client.get(path=f"Tickets/{ticket_id}")
+            zendesk_ticket = ZendeskTicket(
+                id=halo_response["id"],
+                subject=halo_response["summary"],
+                description=halo_response["details"],
             )
+            return zendesk_ticket
+        except HaloRecordNotFoundException:
+            message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
-        return zendesk_ticket_response
-
-    # def get_ticket(self, ticket_id: int = None) -> HelpDeskTicket:
-    #     """Recover the ticket by Halo ID.
-    #     :param ticket_id: The Halo ID of the Ticket.
-    #     :returns: A HelpDeskTicket instance.
-    #     :raises:
-    #         HelpDeskTicketNotFoundException: If no ticket is found.
-    #     """
-    #     logger.debug(f"Look for Ticket by is Halo ID:<{ticket_id}>")  # /PS-IGNORE
-    #     try:
-    #         if ticket_id:
-    #             return [
-    #                 self.__transform_object_to_helpdesk_ticket(
-    #                     self.client.get(path=f"Tickets/{ticket_id}")
-    #                 )
-    #             ]
-    #         else:
-    #             tickets = self.client.get(path="Tickets")
-    #             all_tickets = []
-    #             for ticket in tickets["tickets"]:
-    #                 helpdesk_ticket = self.__transform_object_to_helpdesk_ticket(ticket)
-    #                 all_tickets.append(helpdesk_ticket)
-    #             return all_tickets
-
-    #     except HaloRecordNotFoundException:
-    #         message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
-
-    #         logger.debug(message)
-    #         raise HelpDeskTicketNotFoundException(message)
+            logger.debug(message)
+            raise HelpDeskTicketNotFoundException(message)
 
     # def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
     #     """Close a ticket in Halo.

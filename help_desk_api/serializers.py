@@ -28,14 +28,14 @@ class ZendeskTicketSerializer(serializers.Serializer):
         allow_blank=True,
         default="new",
     )
-    comment = CommentSerializer(many=True)
+    comment = ZendeskCommentSerializer(many=True)
     subject = serializers.CharField(max_length=200)
     description = serializers.CharField(max_length=200)
     id = serializers.IntegerField()
 
 
-class TicketContainer(serializers.Serializer):
-    ticket = TicketSerializer()
+class ZendeskTicketContainer(serializers.Serializer):
+    ticket = ZendeskTicketSerializer()
 
     def create(self, validated_data):
         pass
