@@ -1,4 +1,5 @@
 import datetime
+import inspect
 
 # from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -28,7 +29,7 @@ class Status(Enum):
 
 
 @dataclass
-class HelpDeskGroup:
+class ZendeskGroup:
     name: str
     created_at: Optional[datetime.datetime] = None
     deleted: Optional[bool] = None
@@ -38,39 +39,39 @@ class HelpDeskGroup:
 
 
 @dataclass
-class HelpDeskUser:
+class ZendeskUser:
     id: Optional[int] = None
     full_name: Optional[str] = None
     email: Optional[str] = None
     site_id: Optional[int] = None
-    groups: Optional[List[HelpDeskGroup]] = None
+    groups: Optional[List[ZendeskGroup]] = None
 
 
 @dataclass
-class HelpDeskComment:
+class ZendeskComment:
     body: str
     author_id: Optional[int] = None
     public: bool = True
 
 
 @dataclass
-class HelpDeskCustomField:
+class ZendeskCustomField:
     id: int
     value: str
 
 
 @dataclass
 class ZendeskTicket:
-    subject: str
+    summary: str
     id: Optional[int] = None
-    description: Optional[str] = None
-    user: Optional[HelpDeskUser] = None
+    details: Optional[str] = None
+    user: Optional[ZendeskUser] = None
     group_id: Optional[int] = None
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None
-    comment: Optional[HelpDeskComment] = None
+    comment: Optional[ZendeskComment] = None
     tags: Optional[List[str]] = None
-    custom_fields: Optional[List[HelpDeskCustomField]] = None
+    custom_fields: Optional[List[ZendeskCustomField]] = None
     recipient_email: Optional[str] = None
     responder: Optional[str] = None
     created_at: Optional[datetime.datetime] = None
@@ -80,10 +81,18 @@ class ZendeskTicket:
     priority: Optional[Priority] = None
     ticket_type: Optional[TicketType] = None
 
+    @classmethod
+    def from_json(cls, jsonElement):
+        data = {}
+        for k, v in jsonElement.items():
+            if k in inspect.signature(cls).parameters:
+                data[k] = v
+        return cls(**data)
 
-class HelpDeskException(Exception):
+
+class ZendeskException(Exception):
     pass
 
 
-class HelpDeskTicketNotFoundException(Exception):
+class ZendeskTicketNotFoundException(Exception):
     pass

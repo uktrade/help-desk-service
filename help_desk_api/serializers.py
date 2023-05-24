@@ -29,8 +29,8 @@ class ZendeskTicketSerializer(serializers.Serializer):
         default="new",
     )
     comment = ZendeskCommentSerializer(many=True)
-    subject = serializers.CharField(max_length=200)
-    description = serializers.CharField(max_length=200)
+    summary = serializers.CharField(max_length=200)
+    details = serializers.CharField(max_length=200)
     id = serializers.IntegerField()
 
 

@@ -1,7 +1,11 @@
 import logging
 
-from halo.data_class import HelpDeskTicketNotFoundException, ZendeskTicket
+from halo.data_class import (  # ZendeskComment,
+    ZendeskTicket,
+    ZendeskTicketNotFoundException,
+)
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
+from halo.zendesk_to_halo import ZendeskToHalo
 
 # from typing import List
 
@@ -64,24 +68,22 @@ class HaloManager:
     def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
         # Create ticket
         # "TODO create payload from incoming Zendesk ticket details"
-        halo_payload = {
-            "subject": zendesk_request["subject"],
-            "description": zendesk_request["description"],
-        }
-        # 3. Manager calls Halo API and retuens Halo flavoured return value
+        halo_payload = ZendeskToHalo.create_ticket_payload(zendesk_request)
+
+        # 3. Manager calls Halo API and returns Halo flavoured return value
         halo_response = self.client.post(path="Tickets", payload=[halo_payload])
 
-        # if zendesk_request['comment']:
-        #     halo_response["comment"] = self.client.post(
-        #         path="Actions",
-        #         payload={"ticket_id": halo_response['id'],
-        #                  "note": halo_payload['comment']["body"]
-        #                  }
-        #     )
+        zendesk_comment = None
+        if "comment" in zendesk_request["ticket"]:
+            comment_payload = ZendeskToHalo.create_comment_payload(
+                halo_response["id"], zendesk_request
+            )
+            halo_response["comment"] = self.client.post(path="Actions", payload=[comment_payload])
+            zendesk_comment = ZendeskToHalo.convert_halo_response_to_zendesk_comment(halo_response)
 
         # zendesk_ticket_response = "TODO populate with transformed Halo response"
-        zendesk_ticket = ZendeskTicket(
-            subject=halo_response["summary"], description=halo_response["details"]
+        zendesk_ticket = ZendeskToHalo.convert_halo_response_to_zendesk_ticket(
+            halo_response, zendesk_comment
         )
 
         return zendesk_ticket
@@ -98,17 +100,13 @@ class HaloManager:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
             halo_response = self.client.get(path=f"Tickets/{ticket_id}")
-            zendesk_ticket = ZendeskTicket(
-                id=halo_response["id"],
-                subject=halo_response["summary"],
-                description=halo_response["details"],
-            )
+            zendesk_ticket = ZendeskTicket.from_json(halo_response)
             return zendesk_ticket
         except HaloRecordNotFoundException:
             message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
             logger.debug(message)
-            raise HelpDeskTicketNotFoundException(message)
+            raise ZendeskTicketNotFoundException(message)
 
     # def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
     #     """Close a ticket in Halo.

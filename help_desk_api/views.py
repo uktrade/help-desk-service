@@ -125,8 +125,8 @@ class TicketView(HaloBaseView):
         """
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
-        zendesk_ticket_response = self.halo_manager.create_ticket(request.data)
+        zendesk_ticket = self.halo_manager.create_ticket(request.data)
         # 4. View uses serializer class to transform Halo format to Zendesk
-        serializer = ZendeskTicketSerializer(zendesk_ticket_response)
+        serializer = ZendeskTicketSerializer(zendesk_ticket)
         # 5. Serialized data (in Zendesk format) sent to caller
         return Response(serializer.data, status=status.HTTP_201_CREATED)
