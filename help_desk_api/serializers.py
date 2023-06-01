@@ -14,8 +14,8 @@ class ZendeskCommentSerializer(serializers.Serializer):
     Comments Serializer
     """
 
-    body = serializers.CharField()
-    public = serializers.BooleanField(default=True)
+    note = serializers.CharField()
+    who = serializers.CharField()
 
 
 class ZendeskTicketSerializer(serializers.Serializer):

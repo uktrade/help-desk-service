@@ -49,9 +49,29 @@ class ZendeskUser:
 
 @dataclass
 class ZendeskComment:
-    body: str
-    author_id: Optional[int] = None
-    public: bool = True
+    note: str
+    who: Optional[int] = None
+
+    @classmethod
+    def from_json(cls, comments):
+        comments_list = []
+        if "actions" in comments:
+            for action in comments["actions"]:
+                comment = cls.comments_processing(action)
+                if isinstance(comment, ZendeskComment):
+                    comments_list.append(cls.comments_processing(action))
+        else:
+            comments_list.append(cls.comments_processing(comments))
+        return comments_list
+
+    @classmethod
+    def comments_processing(cls, comments):
+        data = {}
+        if comments["outcome"] == "comment":
+            for k, v in comments.items():
+                if k in inspect.signature(cls).parameters:
+                    data[k] = v
+            return cls(**data)
 
 
 @dataclass
@@ -82,11 +102,16 @@ class ZendeskTicket:
     ticket_type: Optional[TicketType] = None
 
     @classmethod
-    def from_json(cls, jsonElement):
+    def from_json(cls, ticket_response):
         data = {}
-        for k, v in jsonElement.items():
+        for k, v in ticket_response.items():
             if k in inspect.signature(cls).parameters:
-                data[k] = v
+                if k == "comment":
+                    data[k] = ZendeskComment.from_json(v)
+                elif k == "priority":
+                    data[k] = v["name"].lower()
+                else:
+                    data[k] = v
         return cls(**data)
 
 
