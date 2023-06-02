@@ -21,8 +21,9 @@ class MockResponse:
             else:
                 return {
                     "id": 123,
+                    "priority": {"name": "Low"},
                     "summary": "fake-summary",
-                    "outcome": "comment",
+                    "actions": [{"outcome": "comment"}],
                     "note": "The smoke is very colorful.",
                 }
         else:

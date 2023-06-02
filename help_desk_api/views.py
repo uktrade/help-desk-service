@@ -1,4 +1,6 @@
 # from halo.data_class import ZendeskTicket
+from halo.data_class import ZendeskException
+from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 from rest_framework import authentication, permissions, status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
@@ -113,7 +115,14 @@ class TicketView(HaloBaseView):
         """
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
-        zendesk_ticket = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+        try:
+            zendesk_ticket = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+        except HaloClientNotFoundException:
+            return Response(
+                "please check ticket_id - " "a ticket with given id could not be found",
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         # 4. View uses serializer class to transform Halo format to Zendesk
         serializer = ZendeskTicketSerializer(zendesk_ticket)
         # 5. Serialized data (in Zendesk format) sent to caller
@@ -125,7 +134,13 @@ class TicketView(HaloBaseView):
         """
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
-        zendesk_ticket = self.halo_manager.create_ticket(request.data)
+        try:
+            zendesk_ticket = self.halo_manager.create_ticket(request.data)
+        except ZendeskException:
+            return Response(
+                "please check payload - " "create ticket payload must have ticket and comment",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # 4. View uses serializer class to transform Halo format to Zendesk
         serializer = ZendeskTicketSerializer(zendesk_ticket)
         # 5. Serialized data (in Zendesk format) sent to caller

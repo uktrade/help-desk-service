@@ -1,17 +1,15 @@
 import datetime
-import inspect
-
-# from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
+from pydantic.dataclasses import dataclass
+
 
 class Priority(Enum):
-    URGENT = "urgent"
-    HIGH = "high"
-    NORMAL = "normal"
-    LOW = "low"
+    URGENT = "Critical"
+    HIGH = "High"
+    NORMAL = "Medium"
+    LOW = "Low"
 
 
 class TicketType(Enum):
@@ -49,29 +47,8 @@ class ZendeskUser:
 
 @dataclass
 class ZendeskComment:
-    note: str
-    who: Optional[int] = None
-
-    @classmethod
-    def from_json(cls, comments):
-        comments_list = []
-        if "actions" in comments:
-            for action in comments["actions"]:
-                comment = cls.comments_processing(action)
-                if isinstance(comment, ZendeskComment):
-                    comments_list.append(cls.comments_processing(action))
-        else:
-            comments_list.append(cls.comments_processing(comments))
-        return comments_list
-
-    @classmethod
-    def comments_processing(cls, comments):
-        data = {}
-        if comments["outcome"] == "comment":
-            for k, v in comments.items():
-                if k in inspect.signature(cls).parameters:
-                    data[k] = v
-            return cls(**data)
+    note: Optional[str] = None
+    who: Optional[str] = None
 
 
 @dataclass
@@ -89,7 +66,7 @@ class ZendeskTicket:
     group_id: Optional[int] = None
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None
-    comment: Optional[ZendeskComment] = None
+    comment: Optional[List[ZendeskComment]] = None
     tags: Optional[List[str]] = None
     custom_fields: Optional[List[ZendeskCustomField]] = None
     recipient_email: Optional[str] = None
@@ -98,21 +75,8 @@ class ZendeskTicket:
     updated_at: Optional[datetime.datetime] = None
     due_at: Optional[datetime.datetime] = None
     status: Optional[Status] = None
-    priority: Optional[Priority] = None
+    priority_type: Optional[Priority] = None
     ticket_type: Optional[TicketType] = None
-
-    @classmethod
-    def from_json(cls, ticket_response):
-        data = {}
-        for k, v in ticket_response.items():
-            if k in inspect.signature(cls).parameters:
-                if k == "comment":
-                    data[k] = ZendeskComment.from_json(v)
-                elif k == "priority":
-                    data[k] = v["name"].lower()
-                else:
-                    data[k] = v
-        return cls(**data)
 
 
 class ZendeskException(Exception):

@@ -68,21 +68,21 @@ class HaloManager:
 
     def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
         # Create ticket
-        # "TODO create payload from incoming Zendesk ticket details"
-        halo_payload = ZendeskToHalo.create_ticket_payload(zendesk_request)
-
         # 3. Manager calls Halo API and returns Halo flavoured return value
         zendesk_ticket = None
-        if "comment" in zendesk_request["ticket"]:
+        if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
+            halo_payload = ZendeskToHalo.create_ticket_payload(zendesk_request)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload])
-            # TODO: if comment is list with multiple actions, need to adapt code accordingly
+            halo_response["priority_type"] = halo_response["priority"]["name"]
+            # TODO: if comment is list with multiple actions
             comment_payload = ZendeskToHalo.create_comment_payload(
                 halo_response["id"], zendesk_request
             )
-            halo_response["comment"] = self.client.post(path="Actions", payload=[comment_payload])
-            zendesk_ticket = ZendeskTicket.from_json(halo_response)
+            actions_response = self.client.post(path="Actions", payload=[comment_payload])
+            halo_response["comment"] = [actions_response]
+            zendesk_ticket = ZendeskTicket(**halo_response)
         else:
-            logging.error("create ticket payload must have comment")
+            logging.error("create ticket payload must have ticket and comment")
             raise ZendeskException
 
         return zendesk_ticket
@@ -99,11 +99,17 @@ class HaloManager:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
             ticket_response = self.client.get(path=f"Tickets/{ticket_id}")
+            ticket_response["priority_type"] = ticket_response["priority"]["name"]
             ticket_actions = self.client.get(
                 f"Actions?ticket_id={ticket_response['id']}"
             )  # /PS-IGNORE
-            ticket_response["comment"] = ticket_actions
-            zendesk_ticket = ZendeskTicket.from_json(ticket_response)
+            comment_list = []
+            for comment in ticket_actions["actions"]:
+                if comment["outcome"] == "comment":
+                    comment_list.append(comment)
+            ticket_response["comment"] = comment_list
+            zendesk_ticket = ZendeskTicket(**ticket_response)
+
             return zendesk_ticket
         except HaloRecordNotFoundException:
             message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE

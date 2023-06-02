@@ -1,11 +1,10 @@
 from rest_framework import serializers
 
 TICKET_PRIORITIES = (
-    ("new", "New"),
-    ("open", "Open"),
-    ("pendign", "Pending"),
-    ("on-hold", "On-hold"),
-    ("solved", "Solved"),
+    ("low", "Low"),
+    ("medium", "Medium"),
+    ("high", "High"),
+    ("critical", "Critical"),
 )
 
 
@@ -23,11 +22,12 @@ class ZendeskTicketSerializer(serializers.Serializer):
     Tickets Serializer
     """
 
-    priority = serializers.ChoiceField(
-        choices=TICKET_PRIORITIES,
-        allow_blank=True,
-        default="new",
-    )
+    # priority = serializers.ChoiceField(
+    #     choices=TICKET_PRIORITIES,
+    #     allow_blank=True,
+    #     default="new",
+    # )
+    priority_type = serializers.CharField()
     comment = ZendeskCommentSerializer(many=True)
     summary = serializers.CharField(max_length=200)
     details = serializers.CharField(max_length=200)
