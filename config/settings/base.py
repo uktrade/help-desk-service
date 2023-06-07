@@ -176,3 +176,12 @@ CACHES = {
 }
 
 REQUIRE_ZENDESK = env("REQUIRE_ZENDESK", default=False)
+
+OPENAPI_CONFIG = {
+    "title": "Help Desk Service",
+    "description": """
+    Acts as a proxy server for Zendesk API requests,
+    translates Zendesk API requests into Halo API requests,
+    and translates Halo API responses into Zendesk API responses.
+    """,  # /PS-IGNORE
+}
