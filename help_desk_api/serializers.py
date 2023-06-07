@@ -13,8 +13,28 @@ class ZendeskCommentSerializer(serializers.Serializer):
     Comments Serializer
     """
 
+    id = serializers.IntegerField()
     note = serializers.CharField()
     who = serializers.CharField()
+
+
+class ZendeskTagSerializer(serializers.Serializer):
+    """
+    Tags Serializer
+    """
+
+    id = serializers.IntegerField()
+    text = serializers.CharField()
+
+
+class ZendeskAttachmentSerializer(serializers.Serializer):
+    """
+    Tags Serializer
+    """
+
+    id = serializers.IntegerField()
+    filename = serializers.CharField()
+    isimage = serializers.BooleanField()
 
 
 class ZendeskTicketSerializer(serializers.Serializer):
@@ -31,7 +51,9 @@ class ZendeskTicketSerializer(serializers.Serializer):
     comment = ZendeskCommentSerializer(many=True)
     summary = serializers.CharField(max_length=200)
     details = serializers.CharField(max_length=200)
+    tags = ZendeskTagSerializer(many=True)
     id = serializers.IntegerField()
+    attachments = ZendeskAttachmentSerializer(many=True)
 
 
 class ZendeskTicketContainer(serializers.Serializer):

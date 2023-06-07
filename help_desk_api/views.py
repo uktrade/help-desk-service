@@ -135,7 +135,10 @@ class TicketView(HaloBaseView):
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
         try:
-            zendesk_ticket = self.halo_manager.create_ticket(request.data)
+            if "id" in request.data:
+                zendesk_ticket = self.halo_manager.update_ticket(request.data)
+            else:
+                zendesk_ticket = self.halo_manager.create_ticket(request.data)
         except ZendeskException:
             return Response(
                 "please check payload - " "create ticket payload must have ticket and comment",

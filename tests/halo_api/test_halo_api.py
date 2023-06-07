@@ -23,12 +23,15 @@ class MockResponse:
                     "id": 123,
                     "priority": {"name": "Low"},
                     "summary": "fake-summary",
-                    "actions": [{"outcome": "comment"}],
+                    "actions": [{"id": 1, "outcome": "comment"}],
                     "note": "The smoke is very colorful.",
+                    "attachments": [{"id": 1, "filename": "x.txt", "isimage": False}],
+                    # "comment": [{"id": 1, "note": "comment", "who": "Test"}]
                 }
         else:
             return {
                 "id": 123,
+                "priority": {"name": "Low"},
                 "summary": "fake-summary",
                 "outcome": "comment",
                 "note": "The smoke is very colorful.",
@@ -107,7 +110,7 @@ class TestTicketViews:
         dummy_ticket_payload = {
             "ticket": {
                 "comment": {"body": "dummy-body"},
-                "priority": "urgent",
+                "priority": {"name": "urgent"},
                 "subject": "dummy-subject",
             }
         }

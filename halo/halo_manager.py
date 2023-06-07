@@ -11,8 +11,8 @@ from halo.zendesk_to_halo import ZendeskToHalo
 # from typing import List
 
 
-# def reverse_keys(dictionary):
-#     return {value: key for key, value in dictionary.items()}
+def reverse_keys(dictionary):
+    return {value: key for key, value in dictionary.items()}
 
 
 # Zendesk status - Halo status
@@ -71,11 +71,10 @@ class HaloManager:
         # 3. Manager calls Halo API and returns Halo flavoured return value
         zendesk_ticket = None
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
-            halo_payload = ZendeskToHalo.create_ticket_payload(zendesk_request)
+            halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload])
             halo_response["priority_type"] = halo_response["priority"]["name"]
-            # TODO: if comment is list with multiple actions
-            comment_payload = ZendeskToHalo.create_comment_payload(
+            comment_payload = ZendeskToHalo().create_comment_payload(
                 halo_response["id"], zendesk_request
             )
             actions_response = self.client.post(path="Actions", payload=[comment_payload])
@@ -108,6 +107,8 @@ class HaloManager:
                 if comment["outcome"] == "comment":
                     comment_list.append(comment)
             ticket_response["comment"] = comment_list
+            attachments = self.client.get(f"Attachment?ticket_id={ticket_response['id']}")
+            ticket_response["attachments"] = attachments["attachments"]
             zendesk_ticket = ZendeskTicket(**ticket_response)
 
             return zendesk_ticket
@@ -117,45 +118,31 @@ class HaloManager:
             logger.debug(message)
             raise ZendeskTicketNotFoundException(message)
 
-    # def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
-    #     """Close a ticket in Halo.
-    #     :param ticket_id: The Halo ticket ID.
-    #     :returns: HelpDeskTicket instance.
-    #     """
-    #     raise NotImplementedError()
+    def update_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
+        """Update an existing ticket.
+        :param ticket: HelpDeskTicket ticket.
+        :returns: The updated HelpDeskTicket instance.
+        :raises:
+            HelpDeskTicketNotFoundException: If no ticket is found.
+        """
+        # ticket_response = self.client.get(path=f"Tickets/{zendesk_request['id']}")
 
-    # def add_comment(self, ticket_id: int, comment: HelpDeskComment) -> HelpDeskTicket:
-    #     """Add a comment to an existing ticket.
-    #     :param ticket_id: id of Halo ticket instance.
-    #     :param comment: HelpDeskComment instance.
-    #     :returns: The updated HelpDeskTicket instance.
-    #     """
-    #     raise NotImplementedError()
+        halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
+        halo_payload["id"] = zendesk_request["id"]
+        updated_ticket = self.client.post(path="Tickets", payload=[halo_payload])
+        if updated_ticket is None:
+            message = f"Could not update ticket with id {zendesk_request['id']}"
+            logger.error(message)
+            raise ZendeskTicketNotFoundException(message)
 
-    # def update_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
-    #     """Update an existing ticket.
-    #     :param ticket: HelpDeskTicket ticket.
-    #     :returns: The updated HelpDeskTicket instance.
-    #     :raises:
-    #         HelpDeskTicketNotFoundException: If no ticket is found.
-    #     """
-    #     halo_ticket = self.__transform_helpdesk_to_halo_ticket(ticket)
-    #     if not ticket.id:
-    #         logger.error("No ticket id")
-    #         raise HelpDeskTicketNotFoundException("No ticket id")
+        if "comment" in zendesk_request["ticket"]:
+            comment_payload = ZendeskToHalo().update_comment_payload(zendesk_request)
+            updated_ticket["comment"] = [
+                self.client.post(path="Actions", payload=[comment_payload])
+            ]
 
-    #     updated_ticket = self.client.post(path="Tickets", payload=[halo_ticket])
-    #     if updated_ticket is None:
-    #         message = f"Could not update ticket with id {ticket.id}"
-    #         logger.error(message)
-    #         raise HelpDeskTicketNotFoundException(message)
-
-    #     if halo_ticket["comment"]:
-    #         updated_ticket["comment"] = self.client.post(
-    #             path="Actions", payload=[halo_ticket["comment"]]
-    #         )
-
-    #     return self.__transform_object_to_helpdesk_ticket(updated_ticket)
+        zendesk_ticket = ZendeskTicket(**updated_ticket)
+        return zendesk_ticket
 
     # def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
     #     comments = []
