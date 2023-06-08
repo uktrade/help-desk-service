@@ -7,7 +7,8 @@ from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from help_desk_api.serializers import (  # ZendeskCommentSerializer,
+from help_desk_api.serializers import (
+    ZendeskTicketContainer,
     ZendeskTicketSerializer,
     ZendeskUserSerializer,
 )
@@ -124,7 +125,7 @@ class TicketView(HaloBaseView):
             )
 
         # 4. View uses serializer class to transform Halo format to Zendesk
-        serializer = ZendeskTicketSerializer(zendesk_ticket)
+        serializer = ZendeskTicketContainer(zendesk_ticket)
         # 5. Serialized data (in Zendesk format) sent to caller
         return Response(serializer.data)
 
@@ -137,14 +138,22 @@ class TicketView(HaloBaseView):
         try:
             if "id" in request.data:
                 zendesk_ticket = self.halo_manager.update_ticket(request.data)
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketContainer(zendesk_ticket)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 zendesk_ticket = self.halo_manager.create_ticket(request.data)
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketContainer(zendesk_ticket)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data, status=status.HTTP_200_OK)
         except ZendeskException:
             return Response(
                 "please check payload - " "create ticket payload must have ticket and comment",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # 4. View uses serializer class to transform Halo format to Zendesk
-        serializer = ZendeskTicketSerializer(zendesk_ticket)
-        # 5. Serialized data (in Zendesk format) sent to caller
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # # 4. View uses serializer class to transform Halo format to Zendesk
+        # serializer = ZendeskTicketContainer(zendesk_ticket)
+        # # 5. Serialized data (in Zendesk format) sent to caller
+        # return Response(serializer.data, status=status.HTTP_201_CREATED)

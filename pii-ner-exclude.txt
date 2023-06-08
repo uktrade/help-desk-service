@@ -189,3 +189,5 @@ zendesk_request['id
 Comment Create Payload TODO
 Comment Update Payload TODO
 Tags Serializer
+Ticket Mapping
+ZendeskTicketContainer(zendesk_ticket

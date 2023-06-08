@@ -3,9 +3,11 @@ import logging
 from halo.data_class import (
     ZendeskException,
     ZendeskTicket,
+    ZendeskTicketContainer,
     ZendeskTicketNotFoundException,
 )
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
+from halo.halo_to_zendesk import HaloToZendesk
 from halo.zendesk_to_halo import ZendeskToHalo
 
 # from typing import List
@@ -73,13 +75,15 @@ class HaloManager:
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
             halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload])
-            halo_response["priority_type"] = halo_response["priority"]["name"]
+            # halo_response["priority_type"] = halo_response["priority"]["name"]
             comment_payload = ZendeskToHalo().create_comment_payload(
                 halo_response["id"], zendesk_request
             )
             actions_response = self.client.post(path="Actions", payload=[comment_payload])
             halo_response["comment"] = [actions_response]
-            zendesk_ticket = ZendeskTicket(**halo_response)
+            # convert Halo response to Zendesk response
+            zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         else:
             logging.error("create ticket payload must have ticket and comment")
             raise ZendeskException
@@ -97,19 +101,21 @@ class HaloManager:
         try:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
-            ticket_response = self.client.get(path=f"Tickets/{ticket_id}")
-            ticket_response["priority_type"] = ticket_response["priority"]["name"]
+            halo_response = self.client.get(path=f"Tickets/{ticket_id}")
             ticket_actions = self.client.get(
-                f"Actions?ticket_id={ticket_response['id']}"
-            )  # /PS-IGNORE
+                f"Actions?ticket_id={halo_response['id']}"
+            )  # /PS-IGNORE5
             comment_list = []
             for comment in ticket_actions["actions"]:
                 if comment["outcome"] == "comment":
                     comment_list.append(comment)
-            ticket_response["comment"] = comment_list
-            attachments = self.client.get(f"Attachment?ticket_id={ticket_response['id']}")
-            ticket_response["attachments"] = attachments["attachments"]
-            zendesk_ticket = ZendeskTicket(**ticket_response)
+            halo_response["comment"] = comment_list
+            attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
+            halo_response["attachments"] = attachments["attachments"]
+
+            # convert Halo response to Zendesk response
+            zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
 
             return zendesk_ticket
         except HaloRecordNotFoundException:
@@ -125,8 +131,6 @@ class HaloManager:
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
-        # ticket_response = self.client.get(path=f"Tickets/{zendesk_request['id']}")
-
         halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
         halo_payload["id"] = zendesk_request["id"]
         updated_ticket = self.client.post(path="Tickets", payload=[halo_payload])
@@ -140,8 +144,9 @@ class HaloManager:
             updated_ticket["comment"] = [
                 self.client.post(path="Actions", payload=[comment_payload])
             ]
-
-        zendesk_ticket = ZendeskTicket(**updated_ticket)
+        # convert Halo response to Zendesk response
+        zendesk_response = HaloToZendesk().get_ticket_response_mapping(updated_ticket)
+        zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         return zendesk_ticket
 
     # def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:

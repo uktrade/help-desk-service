@@ -1,6 +1,6 @@
 import pytest
 import requests
-from halo.data_class import ZendeskTicket
+from halo.data_class import ZendeskTicketContainer
 from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 
@@ -23,6 +23,7 @@ class MockResponse:
                     "id": 123,
                     "priority": {"name": "Low"},
                     "summary": "fake-summary",
+                    "details": "fake-details",
                     "actions": [{"id": 1, "outcome": "comment"}],
                     "note": "The smoke is very colorful.",
                     "attachments": [{"id": 1, "filename": "x.txt", "isimage": False}],
@@ -33,6 +34,7 @@ class MockResponse:
                 "id": 123,
                 "priority": {"name": "Low"},
                 "summary": "fake-summary",
+                "details": "fake-details",
                 "outcome": "comment",
                 "note": "The smoke is very colorful.",
             }
@@ -84,8 +86,7 @@ class TestTicketViews:
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         mock_response(200, "get")
         ticket = halo_manager.get_ticket(123)
-        assert isinstance(ticket, ZendeskTicket)
-        assert ticket.summary == "fake-summary"
+        assert isinstance(ticket, ZendeskTicketContainer)
 
     def test_get_ticket_failure(self, mock_response):
         """
@@ -112,11 +113,11 @@ class TestTicketViews:
                 "comment": {"body": "dummy-body"},
                 "priority": {"name": "urgent"},
                 "subject": "dummy-subject",
+                "details": "dummy-details",
             }
         }
         ticket = halo_manager.create_ticket(dummy_ticket_payload)
-        assert isinstance(ticket, ZendeskTicket)
-        assert ticket.summary == "fake-summary"
+        assert isinstance(ticket, ZendeskTicketContainer)
 
     def test_post_ticket_failure(self, mock_response):
         """

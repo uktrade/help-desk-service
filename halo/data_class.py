@@ -4,12 +4,11 @@ from typing import List, Optional
 
 from pydantic.dataclasses import dataclass
 
-
-class Priority(Enum):
-    URGENT = "Critical"
-    HIGH = "High"
-    NORMAL = "Medium"
-    LOW = "Low"
+# class Priority(Enum):
+#     URGENT = "Critical"
+#     HIGH = "High"
+#     NORMAL = "Medium"
+#     LOW = "Low"
 
 
 class TicketType(Enum):
@@ -73,7 +72,7 @@ class ZendeskAttachment:
 
 @dataclass
 class ZendeskTicket:
-    summary: str
+    subject: str
     id: Optional[int] = None
     details: Optional[str] = None
     user: Optional[ZendeskUser] = None
@@ -89,9 +88,14 @@ class ZendeskTicket:
     updated_at: Optional[datetime.datetime] = None
     due_at: Optional[datetime.datetime] = None
     status: Optional[Status] = None
-    priority_type: Optional[Priority] = None
+    priority: Optional[str] = None
     ticket_type: Optional[TicketType] = None
     attachments: Optional[List[ZendeskAttachment]] = None
+
+
+@dataclass
+class ZendeskTicketContainer:
+    ticket: List[ZendeskTicket]
 
 
 class ZendeskException(Exception):

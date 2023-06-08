@@ -42,14 +42,14 @@ class ZendeskTicketSerializer(serializers.Serializer):
     Tickets Serializer
     """
 
-    # priority = serializers.ChoiceField(
-    #     choices=TICKET_PRIORITIES,
-    #     allow_blank=True,
-    #     default="new",
-    # )
-    priority_type = serializers.CharField()
+    priority = serializers.ChoiceField(
+        choices=TICKET_PRIORITIES,
+        allow_blank=True,
+        default="low",
+    )
+    # priority = serializers.CharField()
     comment = ZendeskCommentSerializer(many=True)
-    summary = serializers.CharField(max_length=200)
+    subject = serializers.CharField(max_length=200)
     details = serializers.CharField(max_length=200)
     tags = ZendeskTagSerializer(many=True)
     id = serializers.IntegerField()
@@ -57,7 +57,7 @@ class ZendeskTicketSerializer(serializers.Serializer):
 
 
 class ZendeskTicketContainer(serializers.Serializer):
-    ticket = ZendeskTicketSerializer()
+    ticket = ZendeskTicketSerializer(many=True)
 
     def create(self, validated_data):
         pass
