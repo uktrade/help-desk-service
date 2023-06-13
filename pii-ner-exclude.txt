@@ -191,3 +191,29 @@ Comment Update Payload TODO
 Tags Serializer
 Ticket Mapping
 ZendeskTicketContainer(zendesk_ticket
+"Example User
+Deprtment for International Trade
+Europe
+"halo-only@example.com
+Example User
+isimportantcontact2
+Deprtment for International Trade/UK Trade
+override_org_logo
+defcat1
+defcat2
+defcat3
+defcat4
+allowall_category1
+client_to_invoice
+line1
+Site Invoice Address
+guid
+allowviewclientdocs
+azure_last_login_date
+canviewopps
+job_title
+Get a User
+the Halo API
+the Zendesk API"
+DBT
+int - Zendesk
