@@ -196,3 +196,5 @@ GET Token Success
 GET Token Failure
 Postcode
 Email
+APIViews
+ZenpyAuthentication
