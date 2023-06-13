@@ -1,56 +1,10 @@
+import datetime
+from unittest.mock import patch
+
 import pytest
-import requests
-from halo.data_class import ZendeskTicketContainer
+from halo.data_class import ZendeskTicket, ZendeskTicketContainer
 from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
 from halo.halo_manager import HaloManager
-
-
-class MockResponse:
-    """
-    MockResponse
-    """
-
-    def __init__(self, status_code, post_or_get):
-        self.status_code = status_code
-        self.post_or_get = post_or_get
-
-    def json(self):
-        if self.status_code == 200:
-            if self.post_or_get == "post":
-                return {"access_token": "fake-access-token"}
-            else:
-                return {
-                    "id": 123,
-                    "priority": {"name": "Low"},
-                    "summary": "fake-summary",
-                    "details": "fake-details",
-                    "actions": [{"id": 1, "outcome": "comment"}],
-                    "note": "The smoke is very colorful.",
-                    "attachments": [{"id": 1, "filename": "x.txt", "isimage": False}],
-                    # "comment": [{"id": 1, "note": "comment", "who": "Test"}]
-                }
-        else:
-            return {
-                "id": 123,
-                "priority": {"name": "Low"},
-                "summary": "fake-summary",
-                "details": "fake-details",
-                "outcome": "comment",
-                "note": "The smoke is very colorful.",
-            }
-
-
-@pytest.fixture
-def mock_response(monkeypatch):
-    """Requests.get() and Requests.post() mocked to return json."""
-
-    def wrapper(status_code, post_or_get):
-        def mock_verb(*args, **kwargs):
-            return MockResponse(status_code, post_or_get)
-
-        monkeypatch.setattr(requests, post_or_get, mock_verb)
-
-    return wrapper
 
 
 class TestTicketViews:
@@ -58,82 +12,232 @@ class TestTicketViews:
     Get Ticket and Create Ticket Tests
     """
 
-    def test_halo_access_token_success(self, mock_response) -> None:
+    @patch("requests.post")
+    def test_token_success(self, mock_post):
         """
-        Token Success
+        GET Token Success
         """
-        mock_response(200, "post")
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        api_client = HaloAPIClient(client_id="fake-id", client_secret="fake-secret")
+        assert api_client.access_token == "fake-access-token"
 
-        result = HaloAPIClient(client_id="fake-client-id", client_secret="fake-client-secret")
-
-        assert result.access_token == "fake-access-token"
-
-    def test_halo_access_token_failure(self, mock_response) -> None:
+    @patch("requests.post")
+    def test_token_failure(self, mock_post):
         """
-        Token Failure
+        GET Token Failure
         """
-        mock_response(401, "post")
+        mock_post.return_value.status_code = 400
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             HaloAPIClient(client_id="fake-client-id", client_secret="fake-client-secret")
         assert excinfo.typename == "HaloClientNotFoundException"
 
-    def test_get_ticket_success(self, mock_response):
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_get_ticket_success(self, mock_post, mock_get):
         """
         GET Ticket Success
         """
-        mock_response(200, "post")
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "id": 123,
+            "summary": "summary",
+            "details": "details",
+            "user": {"id": 1},
+            "external_id": 1,
+            "assignee_id": 1,
+            "comment": [{"id": 2, "note": "note", "who": "who"}],
+            "tags": [{"id": 1, "text": "test"}],
+            "custom_fields": [{"id": 1, "value": 1}],
+            "recipient_email": "user_email",
+            "responder": "reportedby",
+            "created_at": datetime.datetime.today(),
+            "updated_at": datetime.datetime.today(),
+            "due_at": datetime.datetime.today(),
+            "ticket_type": "incident",
+            "actions": [{"id": 2, "outcome": "comment"}],
+            "attachments": [{"id": 1, "filename": "a", "isimage": True}],
+            "user_id": 1,
+            "customfields": [{"id": 1, "value": 1}],
+            "user_email": "test@test.com",  # /PS-IGNORE
+            "reportedby": "test",
+            "dateoccurred": datetime.datetime.today(),
+            "deadlinedate": datetime.datetime.today(),
+            "priority": {"name": "low"},
+        }
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-        mock_response(200, "get")
         ticket = halo_manager.get_ticket(123)
         assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket.ticket, list)
+        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert ticket.ticket[0].subject == "summary"
 
-    def test_get_ticket_failure(self, mock_response):
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_get_ticket_failure(self, mock_post, mock_get):
         """
         GET Ticket Failure
         """
-        mock_response(200, "post")
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
 
+        mock_get.return_value.status_code = 400
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-        mock_response(401, "get")
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.get_ticket(123)
         assert excinfo.typename == "HaloClientNotFoundException"
 
-    def test_post_ticket_success(self, mock_response):
+    @patch("requests.post")
+    def test_post_ticket_success(self, mock_post):
         """
         POST Ticket Success
         """
-        mock_response(200, "post")
+        mock_ticket_post = {
+            "id": 123,
+            "summary": "summary",
+            "details": "details",
+            "user": {"id": 1},
+            "external_id": 1,
+            "assignee_id": 1,
+            "comment": [{"id": 2, "note": "note", "who": "who"}],
+            "tags": [{"id": 1, "text": "test"}],
+            "custom_fields": [{"id": 1, "value": 1}],
+            "recipient_email": "user_email",
+            "responder": "reportedby",
+            "created_at": datetime.datetime.today(),
+            "updated_at": datetime.datetime.today(),
+            "due_at": datetime.datetime.today(),
+            "ticket_type": "incident",
+            "actions": [{"id": 2, "outcome": "comment"}],
+            "attachments": [{"id": 1, "filename": "a", "isimage": True}],
+            "user_id": 1,
+            "customfields": [{"id": 1, "value": 1}],
+            "user_email": "test@test.com",  # /PS-IGNORE
+            "reportedby": "test",
+            "dateoccurred": datetime.datetime.today(),
+            "deadlinedate": datetime.datetime.today(),
+            "priority": {"name": "low"},
+        }
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-        mock_response(201, "post")
-        dummy_ticket_payload = {
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 201
+        mock_post.side_effects = fake_responses
+
+        request_data = {
             "ticket": {
-                "comment": {"body": "dummy-body"},
-                "priority": {"name": "urgent"},
-                "subject": "dummy-subject",
-                "details": "dummy-details",
+                "comment": {"body": "The smoke is very colorful."},
+                "priority": "urgent",
+                "subject": "My printer is on fire!",
             }
         }
-        ticket = halo_manager.create_ticket(dummy_ticket_payload)
+        ticket = halo_manager.create_ticket(request_data)
         assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket.ticket, list)
+        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert ticket.ticket[0].subject == "summary"
 
-    def test_post_ticket_failure(self, mock_response):
+    @patch("requests.post")
+    def test_post_ticket_failure(self, mock_post):
         """
         POST Ticket Failure
         """
-        mock_response(200, "post")
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
+
+        mock_ticket_post = {}
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 400
+        mock_post.side_effects = fake_responses
+
+        # TODO: add more tests when payload is messed up
+        request_data = {"ticket": {"comment": {}}}
+        with pytest.raises(HaloClientNotFoundException) as excinfo:
+            halo_manager.create_ticket(request_data)
+        assert excinfo.typename == "HaloClientNotFoundException"
+
+    @patch("requests.post")
+    def test_update_ticket_success(self, mock_post):
+        """
+        POST Ticket Success
+        """
+        mock_ticket_post = {
+            "id": 123,
+            "summary": "summary",
+            "details": "details",
+            "user": {"id": 1},
+            "external_id": 1,
+            "assignee_id": 1,
+            "comment": [{"id": 2, "note": "note", "who": "who"}],
+            "tags": [{"id": 1, "text": "test"}],
+            "custom_fields": [{"id": 1, "value": 1}],
+            "recipient_email": "user_email",
+            "responder": "reportedby",
+            "created_at": datetime.datetime.today(),
+            "updated_at": datetime.datetime.today(),
+            "due_at": datetime.datetime.today(),
+            "ticket_type": "incident",
+            "actions": [{"id": 2, "outcome": "comment"}],
+            "attachments": [{"id": 1, "filename": "a", "isimage": True}],
+            "user_id": 1,
+            "customfields": [{"id": 1, "value": 1}],
+            "user_email": "test@test.com",  # /PS-IGNORE
+            "reportedby": "test",
+            "dateoccurred": datetime.datetime.today(),
+            "deadlinedate": datetime.datetime.today(),
+            "priority": {"name": "low"},
+        }
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-        mock_response(401, "post")
-        dummy_ticket_payload = {
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 201
+        mock_post.side_effects = fake_responses
+
+        request_data = {
+            "id": 1,
             "ticket": {
-                "comment": {"body": "dummy-body"},
-                "priority": "urgent",
-                "subject": "dummy-subject",
-            }
+                "comment": {"body": "updated comment"},
+            },
         }
+        ticket = halo_manager.update_ticket(request_data)
+        assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket.ticket, list)
+        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert ticket.ticket[0].subject == "summary"
+
+    @patch("requests.post")
+    def test_update_ticket_failure(self, mock_post):
+        """
+        POST Ticket Failure
+        """
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
+
+        mock_ticket_post = {}
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 400
+        mock_post.side_effects = fake_responses
+
+        # TODO: add more tests when payload is messed up
+        request_data = {"id": 1, "ticket": {"comment": {}}}
         with pytest.raises(HaloClientNotFoundException) as excinfo:
-            halo_manager.create_ticket(dummy_ticket_payload)
+            halo_manager.update_ticket(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"

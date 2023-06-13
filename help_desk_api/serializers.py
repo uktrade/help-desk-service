@@ -8,6 +8,17 @@ TICKET_PRIORITIES = (
 )
 
 
+class ZendeskUserSerializer(serializers.Serializer):
+    """
+    Halo User Serializer
+    """
+
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    emailaddress = serializers.EmailField()
+    site_id = serializers.IntegerField()
+
+
 class ZendeskCommentSerializer(serializers.Serializer):
     """
     Comments Serializer
@@ -27,6 +38,15 @@ class ZendeskTagSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
+class ZendeskCustomFieldsSerializer(serializers.Serializer):
+    """
+    CustomFields Serializer
+    """
+
+    id = serializers.IntegerField()
+    value = serializers.CharField()
+
+
 class ZendeskAttachmentSerializer(serializers.Serializer):
     """
     Tags Serializer
@@ -42,39 +62,30 @@ class ZendeskTicketSerializer(serializers.Serializer):
     Tickets Serializer
     """
 
+    id = serializers.IntegerField()
+    subject = serializers.CharField(max_length=200)
+    details = serializers.CharField(max_length=200)
+    user = ZendeskUserSerializer(many=True)
+    group_id = serializers.CharField()
+    external_id = serializers.CharField()
+    assignee_id = serializers.CharField()
+    comment = ZendeskCommentSerializer(many=True)
+    tags = ZendeskTagSerializer(many=True)
+    custom_fields = ZendeskCustomFieldsSerializer(many=True)
+    recipient_email = serializers.EmailField()
+    responder = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    due_at = serializers.CharField()
+    # status = serializers.CharField()
     priority = serializers.ChoiceField(
         choices=TICKET_PRIORITIES,
         allow_blank=True,
         default="low",
     )
-    # priority = serializers.CharField()
-    comment = ZendeskCommentSerializer(many=True)
-    subject = serializers.CharField(max_length=200)
-    details = serializers.CharField(max_length=200)
-    tags = ZendeskTagSerializer(many=True)
-    id = serializers.IntegerField()
+    assignee_id = serializers.CharField()
     attachments = ZendeskAttachmentSerializer(many=True)
 
 
 class ZendeskTicketContainer(serializers.Serializer):
     ticket = ZendeskTicketSerializer(many=True)
-
-    def create(self, validated_data):
-        pass
-        # ticket = HelpDeskTicket(
-        #     subject=validated_data["ticket"]["subject"],
-        #     description=validated_data["ticket"]["description"],
-        #     priority=validated_data["ticket"]["priority"],
-        # )
-        # help_desk.create_ticket(ticket)
-        # return validated_data
-
-
-class ZendeskUserSerializer(serializers.Serializer):
-    """
-    Halo User Serializer
-    """
-
-    id = serializers.IntegerField()
-    full_name = serializers.CharField()
-    email = serializers.EmailField()

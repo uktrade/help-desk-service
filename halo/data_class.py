@@ -37,11 +37,11 @@ class ZendeskGroup:
 
 @dataclass
 class ZendeskUser:
-    id: Optional[int] = None
-    full_name: Optional[str] = None
-    email: Optional[str] = None
+    id: int
+    name: Optional[str] = None
+    emailaddress: Optional[str] = None
     site_id: Optional[int] = None
-    groups: Optional[List[ZendeskGroup]] = None
+    # groups: Optional[List[ZendeskGroup]] = None
 
 
 @dataclass
@@ -75,7 +75,7 @@ class ZendeskTicket:
     subject: str
     id: Optional[int] = None
     details: Optional[str] = None
-    user: Optional[ZendeskUser] = None
+    user: Optional[List[ZendeskUser]] = None
     group_id: Optional[int] = None
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None

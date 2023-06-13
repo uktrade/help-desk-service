@@ -1,12 +1,12 @@
 class ZendeskToHalo:
     """
-    This is a mapping class, where we mapp the incoming payloads to outgoing halo payloads
+    This is a mapping class, where we map the incoming payloads to outgoing halo payloads
     """
 
     def create_ticket_payload(self, zendesk_request):
         """
         Ticket Payload
-        TODO: mapping will come into picture
+        TODO: map all the fields, atm it is subset
         """
         halo_payload = {
             "summary": zendesk_request.get("ticket", {}).get("subject", None),

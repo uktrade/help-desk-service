@@ -69,8 +69,6 @@ Run Django
 migrate$(COLOUR_NONE
 Zendesk API
 Jim Example
-Postcode
-Email
 django.contrib import
 DEFAULT_PERMISSION_CLASSES
 Token
@@ -191,3 +189,10 @@ Comment Update Payload TODO
 Tags Serializer
 Ticket Mapping
 ZendeskTicketContainer(zendesk_ticket
+print("client_id=
+HALO_SUBDOMAIN}.haloitsm.com
+CustomFields Serializer
+GET Token Success
+GET Token Failure
+Postcode
+Email

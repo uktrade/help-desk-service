@@ -75,12 +75,20 @@ class HaloManager:
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
             halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload])
-            # halo_response["priority_type"] = halo_response["priority"]["name"]
             comment_payload = ZendeskToHalo().create_comment_payload(
                 halo_response["id"], zendesk_request
             )
             actions_response = self.client.post(path="Actions", payload=[comment_payload])
             halo_response["comment"] = [actions_response]
+            # if attachements exist upload them
+            if "attachments" in zendesk_request["ticket"]:
+                attachment_payload = zendesk_request["ticket"]["attachments"]
+                attachment_payload["ticket_id"] = halo_response["id"]
+                halo_response["attachments"] = [
+                    self.client.post(
+                        f"Attachment?ticket_id={halo_response['id']}", payload=[attachment_payload]
+                    )
+                ]
             # convert Halo response to Zendesk response
             zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
             zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
