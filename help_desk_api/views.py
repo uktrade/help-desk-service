@@ -20,8 +20,6 @@ class HaloBaseView(APIView):
     """
 
     def initial(self, request, *args, **kwargs):
-        request.help_desk_creds
-
         self.halo_manager = HaloManager(
             client_id=request.help_desk_creds.halo_client_id,
             client_secret=request.help_desk_creds.halo_client_secret,
@@ -36,6 +34,7 @@ class UserView(HaloBaseView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    serializer_class = ZendeskUserSerializer
 
     def get(self, request, *args, **kwargs):
         """
@@ -45,7 +44,7 @@ class UserView(HaloBaseView):
 
         if self.kwargs.get("id"):
             # Get User from Halo
-            halo_user = self.halo_manager.get_user(id=self.kwargs.get("id"))
+            halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
             serializer = ZendeskUserSerializer(id=halo_user["id"])
             return Response(serializer.data)
         else:

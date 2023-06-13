@@ -78,3 +78,11 @@ class ZendeskUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     full_name = serializers.CharField()
     email = serializers.EmailField()
+
+    def to_representation(self, instance):
+        zendesk_user = {
+            "id": instance["id"],
+            "full_name": instance["name"],
+            "email": instance["emailaddress"],
+        }
+        return super().to_representation(zendesk_user)
