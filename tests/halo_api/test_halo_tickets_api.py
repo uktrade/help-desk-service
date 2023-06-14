@@ -2,7 +2,7 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-from halo.data_class import ZendeskTicket, ZendeskTicketContainer
+from halo.data_class import ZendeskException, ZendeskTicket, ZendeskTicketContainer
 from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 
@@ -240,4 +240,41 @@ class TestTicketViews:
         request_data = {"id": 1, "ticket": {"comment": {}}}
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.update_ticket(request_data)
+        assert excinfo.typename == "HaloClientNotFoundException"
+
+    @patch("requests.post")
+    def test_create_ticket_payload_failure(self, mock_post):
+        """
+        POST Ticket Failure
+        """
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
+
+        mock_ticket_post = {}
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 201
+        mock_post.side_effects = fake_responses
+
+        # TODO: add more tests when payload is messed up
+        request_data = {"id": 1}
+        with pytest.raises(ZendeskException) as excinfo:
+            halo_manager.create_ticket(request_data)
+        assert excinfo.typename == "ZendeskException"
+
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_get_ticket_payload_failure(self, mock_post, mock_get):
+        """
+        GET Ticket Failure
+        """
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+
+        mock_get.return_value.status_code = 400
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        with pytest.raises(HaloClientNotFoundException) as excinfo:
+            halo_manager.get_ticket()
         assert excinfo.typename == "HaloClientNotFoundException"

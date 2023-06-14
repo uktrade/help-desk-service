@@ -198,3 +198,7 @@ Postcode
 Email
 APIViews
 ZenpyAuthentication
+Comment Mapping
+Get Comments Tests
+GET Comment Success
+GET Comment Failure

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from help_desk_api.serializers import (
+    ZendeskCommentSerializer,
     ZendeskTicketContainer,
     ZendeskTicketSerializer,
     ZendeskUserSerializer,
@@ -81,23 +82,23 @@ class UserView(HaloBaseView):
 #         return Response(serializer.data)
 
 
-# class CommentView(HaloBaseView):
-#     """
-#     View for interaction with comment
-#     """
+class CommentView(HaloBaseView):
+    """
+    View for interaction with comment
+    """
 
-#     authentication_classes = [authentication.TokenAuthentication]
-#     permission_classes = [permissions.AllowAny]
-#     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
-#     def get(self, request, id, format=None):
-#         """
-#         GET comments from Halo
-#         """
-#         # Get ticket from Halo
-#         queryset = self.halo_manager.get_comments(ticket_id=id)
-#         serializer = CommentSerializer(queryset, many=True)
-#         return Response(serializer.data)
+    def get(self, request, id, format=None):
+        """
+        GET comments from Halo
+        """
+        # Get ticket from Halo
+        queryset = self.halo_manager.get_comments(ticket_id=id)
+        serializer = ZendeskCommentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class TicketView(HaloBaseView):

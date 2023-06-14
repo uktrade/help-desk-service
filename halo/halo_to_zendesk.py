@@ -33,3 +33,14 @@ class HaloToZendesk:
             ]
         }
         return zendesk_response
+
+    def get_comment_response_mapping(self, comment_response):
+        """
+        Comment Mapping
+        """
+        zendesk_response = {
+            "id": comment_response["id"],
+            "note": comment_response["note"],
+            "who": comment_response["who"],
+        }
+        return zendesk_response

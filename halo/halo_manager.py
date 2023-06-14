@@ -1,6 +1,7 @@
 import logging
 
 from halo.data_class import (
+    ZendeskComment,
     ZendeskException,
     ZendeskTicket,
     ZendeskTicketContainer,
@@ -157,11 +158,12 @@ class HaloManager:
         zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         return zendesk_ticket
 
-    # def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
-    #     comments = []
-    #     ticket_actions = self.client.get(f"Actions?ticket_id={ticket_id}")
-    #     for action in reversed(ticket_actions["actions"]):
-    #         if action["outcome"] == "comment":
-    #             comment = self.__transform_halo_action_to_comment(action)
-    #             comments.append(comment)
-    #     return comments
+    def get_comments(self, ticket_id: int) -> ZendeskComment:
+        comments = []
+        ticket_actions = self.client.get(f"Actions?ticket_id={ticket_id}")
+        for action in reversed(ticket_actions["actions"]):
+            if action["outcome"] == "comment":
+                comment = HaloToZendesk().get_comment_response_mapping(action)
+                zendesk_comment = ZendeskComment(**comment)
+                comments.append(zendesk_comment)
+        return comments
