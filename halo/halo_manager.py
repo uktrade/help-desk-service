@@ -57,11 +57,11 @@ class HaloManager:
             client_secret=client_secret,
         )
 
-    # def get_user(self, id: str):
-    #     halo_user = self.client.get(path=f"Users/{id}")
-    #     # Need to transform into a Zendesk compatible user structure
-    #     zendesk_user = "TODO"
-    #     return zendesk_user
+    def get_user(self, user_id: int):
+        halo_user = self.client.get(path=f"Users/{user_id}")
+        # Need to transform into a Zendesk compatible user structure
+        zendesk_user = halo_user
+        return zendesk_user
 
     # def create_user(self, user_details: ZendeskUserDetails = {}) -> ZendeskUser:
     #     # Receive Zendesk user and create user in Halo, give back Zendesk user
