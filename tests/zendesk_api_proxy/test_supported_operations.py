@@ -30,7 +30,7 @@ class TestSupportedOperations:
         response.status_code = HTTPStatus.OK
         
         proxy_zendesk.return_value = response
-        res1=client.get(url, headers={"Authorization": zendesk_authorization_header})
+        client.get(url, headers={"Authorization": zendesk_authorization_header})
         proxy_zendesk.assert_called_once()
 
         request = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
@@ -39,10 +39,43 @@ class TestSupportedOperations:
         # request[2] : email address extracted from the Auth header
         # request[3] : token
         
-        assert request[1] == zendesk_creds_only.zendesk_subdomain 
-        assert request[2] == zendesk_creds_only.zendesk_email
-        #assert request[3] == zendesk_creds_only.zendesk_token
         assert request[0].get_full_path() == url
         assert request[0].method == "GET"
+        assert request[1] == zendesk_creds_only.zendesk_subdomain 
+        assert request[2] == zendesk_creds_only.zendesk_email
 
-      
+
+    @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
+    def test_post_ticket(
+        self,
+        proxy_zendesk: mock.MagicMock, 
+        client: Client,
+        zendesk_required_settings, # fixture: see /tests/conftest.py
+        zendesk_creds_only,
+        zendesk_authorization_header
+    ):
+        data = {
+            "description": "A description",
+        }
+
+        url = reverse("api:tickets")
+        
+        response = Response()
+        response._content = b"{}"
+        response.status_code = HTTPStatus.OK
+        
+        proxy_zendesk.return_value = response
+        client.post(url, headers={"Authorization": zendesk_authorization_header})
+        proxy_zendesk.assert_called_once()
+
+        request = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
+        # request[0] : HttpRequest object
+        # request[1] : Zendesk subdomain
+        # request[2] : email address extracted from the Auth header
+        # request[3] : token
+        
+        assert request[0].get_full_path() == url
+        assert request[0].method == "POST"
+        assert request[1] == zendesk_creds_only.zendesk_subdomain 
+        assert request[2] == zendesk_creds_only.zendesk_email
+        
