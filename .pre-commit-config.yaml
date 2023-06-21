@@ -26,7 +26,7 @@ repos:
         verbose: true
         require_serial: true
 -   repo: https://github.com/ambv/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
     - id: black
       language_version: python3.10
@@ -39,12 +39,12 @@ repos:
     hooks:
     - id: isort
 -   repo: https://github.com/rtts/djhtml
-    rev: v2.0.0
+    rev: 3.0.6
     hooks:
     - id: djhtml
     - id: djcss
     - id: djjs
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.19.14
+    rev: v1.31.0
     hooks:
     - id: djlint-django
