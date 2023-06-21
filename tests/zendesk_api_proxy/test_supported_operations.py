@@ -1,26 +1,25 @@
+from http import HTTPStatus
 from unittest import mock
-import pytest
 
 from django.test import Client
 from django.urls import reverse
-from http import HTTPStatus
 from requests import Response
 
 
 class TestSupportedOperations:
-    '''
+    """
     The following @mock.patch lines ensure the external services don't actually
     have requests made to them by the test.
-    '''
+    """
 
     @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
     def test_get_ticket_by_id(
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings, # fixture: see /tests/conftest.py
+        zendesk_required_settings,  # fixture: see /tests/conftest.py
         zendesk_creds_only,
-        zendesk_authorization_header
+        zendesk_authorization_header,
     ):
         url = reverse("api:ticket", kwargs={"id": 123})
 
@@ -43,20 +42,15 @@ class TestSupportedOperations:
         assert request[1] == zendesk_creds_only.zendesk_subdomain
         assert request[2] == zendesk_creds_only.zendesk_email
 
-
     @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
     def test_post_ticket(
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings, # fixture: see /tests/conftest.py
+        zendesk_required_settings,  # fixture: see /tests/conftest.py
         zendesk_creds_only,
-        zendesk_authorization_header
+        zendesk_authorization_header,
     ):
-        data = {
-            "description": "A description",
-        }
-
         url = reverse("api:tickets")
 
         response = Response()
