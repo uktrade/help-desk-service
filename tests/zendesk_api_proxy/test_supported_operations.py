@@ -31,16 +31,13 @@ class TestSupportedOperations:
         client.get(url, headers={"Authorization": zendesk_authorization_header})
         proxy_zendesk.assert_called_once()
 
-        request = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
-        # request[0] : HttpRequest object
-        # request[1] : Zendesk subdomain
-        # request[2] : email address extracted from the Auth header
-        # request[3] : token
+        request_obj, subdomain, email, *_ = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
 
-        assert request[0].get_full_path() == url
-        assert request[0].method == "GET"
-        assert request[1] == zendesk_creds_only.zendesk_subdomain
-        assert request[2] == zendesk_creds_only.zendesk_email
+        assert request_obj.get_full_path() == url
+        assert request_obj.method == "GET"
+        assert subdomain == zendesk_creds_only.zendesk_subdomain
+        assert email == zendesk_creds_only.zendesk_email
+        
 
     @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
     def test_post_ticket(
@@ -61,13 +58,9 @@ class TestSupportedOperations:
         client.post(url, headers={"Authorization": zendesk_authorization_header})
         proxy_zendesk.assert_called_once()
 
-        request = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
-        # request[0] : HttpRequest object
-        # request[1] : Zendesk subdomain
-        # request[2] : email address extracted from the Auth header
-        # request[3] : token
+        request_obj, subdomain, email, *_ = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
 
-        assert request[0].get_full_path() == url
-        assert request[0].method == "POST"
-        assert request[1] == zendesk_creds_only.zendesk_subdomain
-        assert request[2] == zendesk_creds_only.zendesk_email
+        assert request_obj.get_full_path() == url
+        assert request_obj.method == "POST"
+        assert subdomain == zendesk_creds_only.zendesk_subdomain
+        assert email == zendesk_creds_only.zendesk_email
