@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from unittest import mock
+import pytest
 
 from django.test import Client
 from django.urls import reverse
@@ -11,17 +12,24 @@ class TestSupportedOperations:
     The following @mock.patch lines ensure the external services don't actually
     have requests made to them by the test.
     """
-
+    
+    # †est different url scenarios in get by using the @pytest.mark.parametrize decorator
+    @pytest.mark.parametrize("url", [
+                (reverse("api:ticket", kwargs={"id": 123})),
+                (reverse("api:comments", kwargs={"id": 123})),
+                (reverse("api:user", kwargs={"id": 123})),
+                (reverse("api:me")),
+    ])
     @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
-    def test_get_ticket_by_id(
+    def test_get_ticket_user_by_id(
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
         zendesk_required_settings,  # fixture: see /tests/conftest.py
         zendesk_creds_only,
         zendesk_authorization_header,
+        url,
     ):
-        url = reverse("api:ticket", kwargs={"id": 123})
 
         response = Response()
         response._content = b"{}"
@@ -37,8 +45,11 @@ class TestSupportedOperations:
         assert request_obj.method == "GET"
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
-        
 
+
+    @pytest.mark.parametrize("url", [
+                (reverse("api:tickets")),
+    ])
     @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
     def test_post_ticket(
         self,
@@ -47,8 +58,8 @@ class TestSupportedOperations:
         zendesk_required_settings,  # fixture: see /tests/conftest.py
         zendesk_creds_only,
         zendesk_authorization_header,
+        url,
     ):
-        url = reverse("api:tickets")
 
         response = Response()
         response._content = b"{}"
@@ -64,3 +75,4 @@ class TestSupportedOperations:
         assert request_obj.method == "POST"
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
+
