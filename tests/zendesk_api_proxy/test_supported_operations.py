@@ -5,9 +5,55 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 from requests import Response
+from zendesk_api_proxy.middleware import get_view_class
+from zendesk_api_proxy.middleware import method_supported
 
 
 class TestSupportedOperations:
+    # †est different path/view_class scenarios in get by using the @pytest.mark.parametrize decorator
+    @pytest.mark.parametrize("path, view_class", [
+                ("/api/v2/users/123.json", "help_desk_api.views.UserView"),
+                ("/api/v2/tickets/123.json", "help_desk_api.views.TicketView"),
+                ("/api/v2/tickets/123/comments.json", "help_desk_api.views.CommentView"),
+                ("/api/v2/users/me.json", "help_desk_api.views.MeView"),
+    ])
+    def test_get_view_class_correct(self, path, view_class):
+        assert get_view_class(path) == view_class
+
+
+    # some fake paths
+    @pytest.mark.parametrize("path, view_class", [
+                ("/api/fake/users/123.json", "help_desk_api.views.UserView"),
+                ("/api/fake/tickets/123.json", "help_desk_api.views.TicketView"),
+                ("/api/fake/tickets/123/comments.json", "help_desk_api.views.CommentView"),
+                ("/api/fake/users/me.json", "help_desk_api.views.MeView"),
+    ])
+    def test_get_view_class_not_correct_paths(self, path, view_class):
+        assert not get_view_class(path) == view_class
+
+
+    # †est different path/method scenarios in get by using the @pytest.mark.parametrize decorator
+    @pytest.mark.parametrize("path, method", [
+                ("/api/v2/users/123.json", "GET"),
+                ("/api/v2/tickets/123.json", "POST"),
+                ("/api/v2/tickets/123/comments.json", "GET"),
+                ("/api/v2/users/me.json", "GET"),
+    ])
+    def test_method_supported_success(self, path, method):
+        assert method_supported(path, method) == True
+
+    
+    # †est some fake path/method scenarios in get by using the @pytest.mark.parametrize decorator
+    @pytest.mark.parametrize("path, method", [
+                ("/api/fake/users/123.json", "GET"),
+                ("/api/fake/tickets/123.json", "POST"),
+                ("/api/v2/tickets/123/comments.json", "POST"),
+                ("/api/v2/users/me.json", "PUT"),
+    ])
+    def test_method_supported_success(self, path, method):
+        assert not method_supported(path, method) == True
+
+    
     """
     The following @mock.patch lines ensure the external services don't actually
     have requests made to them by the test.
@@ -75,4 +121,3 @@ class TestSupportedOperations:
         assert request_obj.method == "POST"
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
-
