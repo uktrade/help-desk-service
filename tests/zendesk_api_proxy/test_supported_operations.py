@@ -10,7 +10,7 @@ from zendesk_api_proxy.middleware import method_supported
 
 
 class TestSupportedOperations:
-    # †est different path/view_class scenarios in get by using the @pytest.mark.parametrize decorator
+    # †est different path/view_class scenarios by using the @pytest.mark.parametrize decorator
     @pytest.mark.parametrize("path, view_class", [
                 ("/api/v2/users/123.json", "help_desk_api.views.UserView"),
                 ("/api/v2/tickets/123.json", "help_desk_api.views.TicketView"),
@@ -32,7 +32,7 @@ class TestSupportedOperations:
         assert not get_view_class(path) == view_class
 
 
-    # †est different path/method scenarios in get by using the @pytest.mark.parametrize decorator
+    # †est different path/method scenarios by using the @pytest.mark.parametrize decorator
     @pytest.mark.parametrize("path, method", [
                 ("/api/v2/users/123.json", "GET"),
                 ("/api/v2/tickets/123.json", "POST"),
@@ -43,14 +43,14 @@ class TestSupportedOperations:
         assert method_supported(path, method) == True
 
     
-    # †est some fake path/method scenarios in get by using the @pytest.mark.parametrize decorator
+    # †est some fake path/method scenarios 
     @pytest.mark.parametrize("path, method", [
                 ("/api/fake/users/123.json", "GET"),
                 ("/api/fake/tickets/123.json", "POST"),
                 ("/api/v2/tickets/123/comments.json", "POST"),
                 ("/api/v2/users/me.json", "PUT"),
     ])
-    def test_method_supported_success(self, path, method):
+    def test_method_supported_fake_paths_methods(self, path, method):
         assert not method_supported(path, method) == True
 
     
