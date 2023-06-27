@@ -228,3 +228,10 @@ the Halo API
 the Zendesk API"
 DBT
 int - Zendesk
+CustomPagination
+List Tickets with Pagination Logic
+" Single Ticket Serializer
+Multiple Tickets Serializer
+IntegerField
+MetaFieldSerializer
+print(pagenum

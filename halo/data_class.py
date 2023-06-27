@@ -37,7 +37,7 @@ class ZendeskGroup:
 
 @dataclass
 class ZendeskUser:
-    id: int
+    id: Optional[int] = None
     name: Optional[str] = None
     emailaddress: Optional[str] = None
     site_id: Optional[int] = None
@@ -96,6 +96,16 @@ class ZendeskTicket:
 @dataclass
 class ZendeskTicketContainer:
     ticket: List[ZendeskTicket]
+
+
+@dataclass
+class ZendeskTicketsContainer:
+    tickets: List[ZendeskTicket]
+    # page_no: Optional[int] = None
+    # page_size: Optional[int] = None
+    # record_count: Optional[int] = None
+    # meta: Optional[dict] = None
+    # links: Optional[dict] = None
 
 
 class ZendeskException(Exception):

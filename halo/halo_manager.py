@@ -6,6 +6,7 @@ from halo.data_class import (
     ZendeskTicket,
     ZendeskTicketContainer,
     ZendeskTicketNotFoundException,
+    ZendeskTicketsContainer,
 )
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 from halo.halo_to_zendesk import HaloToZendesk
@@ -123,7 +124,8 @@ class HaloManager:
             halo_response["attachments"] = attachments["attachments"]
 
             # convert Halo response to Zendesk response
-            zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_response = {"ticket": [response]}
             zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
 
             return zendesk_ticket
@@ -167,3 +169,27 @@ class HaloManager:
                 zendesk_comment = ZendeskComment(**comment)
                 comments.append(zendesk_comment)
         return comments
+
+    def get_tickets(self, pagenum: int = None) -> ZendeskTicket:
+        params = {
+            "pageinate": "true",
+            "page_size": 10,
+            "page_no": 1 if pagenum is None else pagenum,
+        }
+        halo_response = self.client.get(path="Tickets", params=params)
+        # ticket_actions = self.client.get(
+        #         f"Actions?ticket_id={halo_response['id']}"
+        #     )  # /PS-IGNORE5
+        #     comment_list = []
+        #     for comment in ticket_actions["actions"]:
+        #         if comment["outcome"] == "comment":
+        #             comment_list.append(comment)
+        #     halo_response["comment"] = comment_list
+        #     attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
+        #     halo_response["attachments"] = attachments["attachments"]
+
+        # convert Halo response to Zendesk response
+        zendesk_response = HaloToZendesk().get_tickets_response_mapping(halo_response)
+        zendesk_ticket = ZendeskTicketsContainer(**zendesk_response)
+
+        return zendesk_ticket

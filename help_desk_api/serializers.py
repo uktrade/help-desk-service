@@ -87,18 +87,30 @@ class ZendeskTicketSerializer(serializers.Serializer):
     attachments = ZendeskAttachmentSerializer(many=True)
 
 
-class ZendeskTicketContainer(serializers.Serializer):
+class ZendeskTicketContainerSerializer(serializers.Serializer):
+    """
+    Single Ticket Serializer
+    """
+
     ticket = ZendeskTicketSerializer(many=True)
 
-    def create(self, validated_data):
-        pass
-        # ticket = HelpDeskTicket(
-        #     subject=validated_data["ticket"]["subject"],
-        #     description=validated_data["ticket"]["description"],
-        #     priority=validated_data["ticket"]["priority"],
-        # )
-        # help_desk.create_ticket(ticket)
-        # return validated_data
+
+class MetaFieldSerializer(serializers.DictField):
+    has_more = serializers.BooleanField()
+    after_cursor = serializers.CharField()
+    before_cursor = serializers.CharField()
+
+
+class ZendeskTicketsContainerSerializer(serializers.Serializer):
+    """
+    Multiple Tickets Serializer
+    """
+
+    # page_no = serializers.IntegerField()
+    # page_size = serializers.IntegerField()
+    # record_count = serializers.IntegerField()
+    tickets = ZendeskTicketSerializer(many=True)
+    # meta = MetaFieldSerializer()
 
 
 class ZendeskUserSerializer(serializers.Serializer):
