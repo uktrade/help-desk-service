@@ -40,7 +40,7 @@ class TestSupportedOperations:
                 ("/api/v2/users/me.json", "GET"),
     ])
     def test_method_supported_success(self, path, method):
-        assert method_supported(path, method) == True
+        assert method_supported(path, method)
 
     
     # †est some fake path/method scenarios 
@@ -51,7 +51,7 @@ class TestSupportedOperations:
                 ("/api/v2/users/me.json", "PUT"),
     ])
     def test_method_supported_fake_paths_methods(self, path, method):
-        assert not method_supported(path, method) == True
+        assert not method_supported(path, method)
 
     
     """
