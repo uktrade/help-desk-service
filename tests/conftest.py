@@ -72,6 +72,7 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         zendesk_token=zendesk_token,
+        zendesk_subdomain="abc123",
         help_desk=[
             HelpDeskCreds.HelpDeskChoices.ZENDESK,
         ],
