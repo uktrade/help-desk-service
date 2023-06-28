@@ -102,7 +102,6 @@ class ZendeskAPIProxyMiddleware:
         zendesk_response = None
         django_response = None
 
-        #supported_endpoint = has_endpoint(request.path, request.method.upper())
         supported_endpoint = method_supported(request.path, request.method.upper())
         
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
