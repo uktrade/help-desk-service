@@ -1,6 +1,3 @@
-import math
-
-
 class HaloToZendesk:
     """
     This is a mapping class, where we map the Halo response to Zendesk response
@@ -13,7 +10,7 @@ class HaloToZendesk:
         zendesk_response = {
             "id": ticket_response["id"],
             "subject": ticket_response.get("summary", ""),
-            "details": ticket_response["details"],
+            "details": ticket_response.get("details", ""),
             "user": [ticket_response.get("user", [])],
             "group_id": ticket_response["id"],
             "external_id": ticket_response["id"],
@@ -59,17 +56,4 @@ class HaloToZendesk:
                 all_tickets.append(zendesk_response)
         halo_response["tickets"] = all_tickets
 
-        # Logic of Halo to Zendesk Pagination
-        total_pages = self.pagination_logic(halo_response)
-        halo_response["meta"] = {
-            "has_more": True if total_pages > 0 else False,
-            "after_cursor": "xxx",
-            "before_cursor": "yyy",
-        }
         return halo_response
-
-    def pagination_logic(self, halo_response):
-        record_count = halo_response["record_count"]
-        page_size = halo_response["page_size"]
-        total_pages = math.ceil(record_count / page_size)
-        return total_pages

@@ -1,16 +1,16 @@
-# from halo.data_class import ZendeskTicket
 from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 from rest_framework import authentication, permissions, status
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from help_desk_api.serializers import (  # ZendeskTicketsContainerSerializer,
+from help_desk_api.pagination import CustomPagination
+from help_desk_api.serializers import (
     ZendeskCommentSerializer,
     ZendeskTicketContainerSerializer,
+    ZendeskTicketsContainerSerializer,
     ZendeskTicketSerializer,
     ZendeskUserSerializer,
 )
@@ -101,28 +101,6 @@ class CommentView(HaloBaseView):
         return Response(serializer.data)
 
 
-class CustomPagination(PageNumberPagination):
-    """
-    A simple page number based style that supports page numbers as
-    query parameters. For example:
-
-    http://zendesk.com/api?page=2
-    """
-
-    page_size = 2
-    page_query_param = "page"
-    max_page_size = 2
-
-    def get_paginated_response(self, data):
-        return Response(
-            {
-                "links": {"next": self.get_next_link(), "previous": self.get_previous_link()},
-                "count": self.page.paginator.count,
-                "tickets": [data],
-            }
-        )
-
-
 class TicketView(HaloBaseView, CustomPagination):
     """
     View for interacting with tickets
@@ -152,8 +130,7 @@ class TicketView(HaloBaseView, CustomPagination):
                 tickets = self.halo_manager.get_tickets(pagenum=pagenum)
                 pages = self.paginate_queryset(tickets.tickets, self.request)
                 # 4. View uses serializer class to transform Halo format to Zendesk
-                # serializer = ZendeskTicketSerializer(pages[0])
-                serializer = ZendeskTicketSerializer(pages[0])
+                serializer = ZendeskTicketsContainerSerializer({"tickets": pages})
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return self.get_paginated_response(serializer.data)
 
@@ -162,11 +139,6 @@ class TicketView(HaloBaseView, CustomPagination):
                 "please check ticket_id - " "a ticket with given id could not be found",
                 status=status.HTTP_404_NOT_FOUND,
             )
-
-        # # 4. View uses serializer class to transform Halo format to Zendesk
-        # serializer = ZendeskTicketContainer(zendesk_ticket)
-        # # 5. Serialized data (in Zendesk format) sent to caller
-        # return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
         """
@@ -192,7 +164,3 @@ class TicketView(HaloBaseView, CustomPagination):
                 "please check payload - " "create ticket payload must have ticket and comment",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # # 4. View uses serializer class to transform Halo format to Zendesk
-        # serializer = ZendeskTicketContainer(zendesk_ticket)
-        # # 5. Serialized data (in Zendesk format) sent to caller
-        # return Response(serializer.data, status=status.HTTP_201_CREATED)

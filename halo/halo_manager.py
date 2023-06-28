@@ -3,7 +3,6 @@ import logging
 from halo.data_class import (
     ZendeskComment,
     ZendeskException,
-    ZendeskTicket,
     ZendeskTicketContainer,
     ZendeskTicketNotFoundException,
     ZendeskTicketsContainer,
@@ -70,7 +69,7 @@ class HaloManager:
     #     halo_user = self.client.post(path="Users", payload=[halo_payload])
     #     return halo_user
 
-    def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
+    def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
         # Create ticket
         # 3. Manager calls Halo API and returns Halo flavoured return value
         zendesk_ticket = None
@@ -100,7 +99,7 @@ class HaloManager:
 
         return zendesk_ticket
 
-    def get_ticket(self, ticket_id: int = None) -> ZendeskTicket:
+    def get_ticket(self, ticket_id: int = None) -> ZendeskTicketContainer:
         """Recover the ticket by Halo ID.
         :param ticket_id: The Halo ID of the Ticket.
         :returns: A HelpDeskTicket instance.
@@ -135,7 +134,7 @@ class HaloManager:
             logger.debug(message)
             raise ZendeskTicketNotFoundException(message)
 
-    def update_ticket(self, zendesk_request: dict = {}) -> ZendeskTicket:
+    def update_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
         """Update an existing ticket.
         :param ticket: HelpDeskTicket ticket.
         :returns: The updated HelpDeskTicket instance.
@@ -160,7 +159,7 @@ class HaloManager:
         zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         return zendesk_ticket
 
-    def get_comments(self, ticket_id: int) -> ZendeskComment:
+    def get_comments(self, ticket_id: int) -> list[ZendeskComment]:
         comments = []
         ticket_actions = self.client.get(f"Actions?ticket_id={ticket_id}")
         for action in reversed(ticket_actions["actions"]):
@@ -170,24 +169,25 @@ class HaloManager:
                 comments.append(zendesk_comment)
         return comments
 
-    def get_tickets(self, pagenum: int = None) -> ZendeskTicket:
+    def get_tickets(self, pagenum: int = None) -> ZendeskTicketsContainer:
         params = {
             "pageinate": "true",
-            "page_size": 10,
-            "page_no": 1 if pagenum is None else pagenum,
+            "page_size": 100,
+            "page_no": 1,
         }
         halo_response = self.client.get(path="Tickets", params=params)
-        # ticket_actions = self.client.get(
-        #         f"Actions?ticket_id={halo_response['id']}"
-        #     )  # /PS-IGNORE5
-        #     comment_list = []
-        #     for comment in ticket_actions["actions"]:
-        #         if comment["outcome"] == "comment":
-        #             comment_list.append(comment)
-        #     halo_response["comment"] = comment_list
-        #     attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
-        #     halo_response["attachments"] = attachments["attachments"]
+        # page_no = halo_response["page_no"]
+        page_size = halo_response["page_size"]
+        record_count = halo_response["record_count"]
+        pages = record_count // page_size
 
+        all_tickets = []
+        for i in range(1, pages + 2):
+            params["page_no"] = i
+            halo_response = self.client.get(path="Tickets", params=params)
+            all_tickets.extend(halo_response["tickets"])
+        print(len(all_tickets))
+        halo_response["tickets"] = all_tickets
         # convert Halo response to Zendesk response
         zendesk_response = HaloToZendesk().get_tickets_response_mapping(halo_response)
         zendesk_ticket = ZendeskTicketsContainer(**zendesk_response)

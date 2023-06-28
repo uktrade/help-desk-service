@@ -198,7 +198,6 @@ Postcode
 Email
 APIViews
 ZenpyAuthentication
-<<<<<<< HEAD
 Comment Mapping
 Get Comments Tests
 GET Comment Success
@@ -236,6 +235,4 @@ Multiple Tickets Serializer
 IntegerField
 MetaFieldSerializer
 print(pagenum
-=======
 ENV
->>>>>>> main
