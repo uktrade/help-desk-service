@@ -63,23 +63,23 @@ class UserView(HaloBaseView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# class MeView(HaloBaseView):
-#     """
-#     View for interaction with self
-#     """
+class MeView(HaloBaseView):
+    """
+    View for interaction with self
+    """
 
-#     authentication_classes = [authentication.TokenAuthentication]
-#     permission_classes = [permissions.AllowAny]
-#     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
-#     def get(self, request, format=None):
-#         """
-#         GET Agent Me in Halo
-#         """
-#         # Get Me from Halo
-#         queryset = self.halo_manager.get_or_create_user(user=None)
-#         serializer = HaloUserSerializer(queryset)
-#         return Response(serializer.data)
+    def get(self, request, format=None):
+        """
+        GET Agent Me in Halo
+        """
+        # Get Me from Halo
+        # queryset = self.halo_manager.get_or_create_user(user=None)
+        # serializer = HaloUserSerializer(queryset)
+        return Response()
 
 
 class CommentView(HaloBaseView):
