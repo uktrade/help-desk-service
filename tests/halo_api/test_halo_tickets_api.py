@@ -51,7 +51,7 @@ class TestTicketViews:
             "assignee_id": 1,
             "comment": [{"id": 2, "note": "note", "who": "who"}],
             "tags": [{"id": 1, "text": "test"}],
-            "custom_fields": [{"id": 1, "value": 1}],
+            "custom_fields": [{"id": 1, "value": "1"}],
             "recipient_email": "user_email",
             "responder": "reportedby",
             "created_at": datetime.datetime.today(),
@@ -61,7 +61,7 @@ class TestTicketViews:
             "actions": [{"id": 2, "outcome": "comment"}],
             "attachments": [{"id": 1, "filename": "a", "isimage": True}],
             "user_id": 1,
-            "customfields": [{"id": 1, "value": 1}],
+            "customfields": [{"id": 1, "value": "1"}],
             "user_email": "test@test.com",  # /PS-IGNORE
             "reportedby": "test",
             "dateoccurred": datetime.datetime.today(),
@@ -115,7 +115,7 @@ class TestTicketViews:
             "actions": [{"id": 2, "outcome": "comment"}],
             "attachments": [{"id": 1, "filename": "a", "isimage": True}],
             "user_id": 1,
-            "customfields": [{"id": 1, "value": 1}],
+            "customfields": [{"id": 1, "value": "1"}],
             "user_email": "test@test.com",  # /PS-IGNORE
             "reportedby": "test",
             "dateoccurred": datetime.datetime.today(),
@@ -191,7 +191,7 @@ class TestTicketViews:
             "actions": [{"id": 2, "outcome": "comment"}],
             "attachments": [{"id": 1, "filename": "a", "isimage": True}],
             "user_id": 1,
-            "customfields": [{"id": 1, "value": 1}],
+            "customfields": [{"id": 1, "value": "1"}],
             "user_email": "test@test.com",  # /PS-IGNORE
             "reportedby": "test",
             "dateoccurred": datetime.datetime.today(),
