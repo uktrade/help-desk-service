@@ -42,7 +42,6 @@ class HaloAPIClient:
                 "Accept": "application/json",
             },
         )
-        print(response.status_code)
         if response.status_code != 200:
             logger.error(f"{response.status_code} response from auth endpoint")
             logger.error(response)
