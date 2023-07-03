@@ -125,9 +125,8 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return Response(serializer.data)
             else:
-                pagenum = self.request.query_params.get("page", None)
-                # print(pagenum)
-                tickets = self.halo_manager.get_tickets(pagenum=pagenum)
+                # pagenum = self.request.query_params.get("page", None)
+                tickets = self.halo_manager.get_tickets()
                 pages = self.paginate_queryset(tickets.tickets, self.request)
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = ZendeskTicketsContainerSerializer({"tickets": pages})

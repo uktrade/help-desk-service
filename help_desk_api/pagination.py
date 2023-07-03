@@ -12,8 +12,6 @@ class CustomPagination(PageNumberPagination):
     http://zendesk.com/api?page=2
     """
 
-    template = "rest_framework/pagination/numbers.html"
-
     def get_paginated_response(self, data):
         return Response(
             OrderedDict(

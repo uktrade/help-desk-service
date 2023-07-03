@@ -60,14 +60,14 @@ class ZendeskCustomField:
 @dataclass
 class ZendeskTag:
     id: int
-    text: str
+    text: Optional[str] = None
 
 
 @dataclass
 class ZendeskAttachment:
     id: int
     filename: str
-    isimage: bool
+    isimage: Optional[bool] = None
 
 
 @dataclass
@@ -101,11 +101,6 @@ class ZendeskTicketContainer:
 @dataclass
 class ZendeskTicketsContainer:
     tickets: List[ZendeskTicket]
-    # page_no: Optional[int] = None
-    # page_size: Optional[int] = None
-    # record_count: Optional[int] = None
-    # meta: Optional[dict] = None
-    # links: Optional[dict] = None
 
 
 class ZendeskException(Exception):

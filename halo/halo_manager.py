@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from halo.data_class import (
     ZendeskComment,
     ZendeskException,
@@ -10,8 +11,6 @@ from halo.data_class import (
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 from halo.halo_to_zendesk import HaloToZendesk
 from halo.zendesk_to_halo import ZendeskToHalo
-
-# from typing import List
 
 
 def reverse_keys(dictionary):
@@ -169,24 +168,26 @@ class HaloManager:
                 comments.append(zendesk_comment)
         return comments
 
-    def get_tickets(self, pagenum: int = None) -> ZendeskTicketsContainer:
+    def get_tickets(self) -> ZendeskTicketsContainer:
+        """
+        GET All Tickets from Halo
+        """
+        # params for payload
         params = {
             "pageinate": "true",
-            "page_size": 100,
+            "page_size": settings.REST_FRAMEWORK["PAGE_SIZE"],
             "page_no": 1,
         }
         halo_response = self.client.get(path="Tickets", params=params)
-        # page_no = halo_response["page_no"]
         page_size = halo_response["page_size"]
         record_count = halo_response["record_count"]
         pages = record_count // page_size
-
+        # TODO: Logic based on page number rather than calling GET multiple times.
         all_tickets = []
         for i in range(1, pages + 2):
             params["page_no"] = i
             halo_response = self.client.get(path="Tickets", params=params)
             all_tickets.extend(halo_response["tickets"])
-        print(len(all_tickets))
         halo_response["tickets"] = all_tickets
         # convert Halo response to Zendesk response
         zendesk_response = HaloToZendesk().get_tickets_response_mapping(halo_response)
