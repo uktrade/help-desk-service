@@ -34,7 +34,6 @@ isort = "^5.10.1"
 mypy = "^0.982"
 
 [tool.poetry.group.testing.dependencies]
-pydantic = "^2.0"
 
 [tool.poetry.group.production.dependencies]
 
