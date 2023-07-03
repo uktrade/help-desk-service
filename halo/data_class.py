@@ -4,12 +4,6 @@ from typing import List, Optional
 
 from pydantic.dataclasses import dataclass
 
-# class Priority(Enum):
-#     URGENT = "Critical"
-#     HIGH = "High"
-#     NORMAL = "Medium"
-#     LOW = "Low"
-
 
 class TicketType(Enum):
     QUESTION = "question"
