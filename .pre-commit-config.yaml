@@ -45,6 +45,6 @@ repos:
     - id: djcss
     - id: djjs
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.25.0
+    rev: v1.31.0
     hooks:
     - id: djlint-django
