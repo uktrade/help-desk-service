@@ -31,17 +31,6 @@ ZENDESK_TO_HALO_STATUS_MAPPING = {
 PRIORITY_MAPPING = {
     "incident": {"low": 4, "normal": 3, "high": 2, "urgent": 1},
 }
-# REVERSE_PRIORITY_MAPPING = {key: reverse_keys(value) for key, value in PRIORITY_MAPPING.items()}
-# TICKET_TYPE_MAPPING = {
-#     1: TicketType.INCIDENT,
-#     2: TicketType.INCIDENT,
-#     3: TicketType.INCIDENT,
-#     24: TicketType.INCIDENT,
-#     21: TicketType.INCIDENT,
-#     27: TicketType.INCIDENT,
-#     28: TicketType.INCIDENT,
-#     29: TicketType.INCIDENT,
-# }
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +80,7 @@ class HaloManager:
                 ]
             # convert Halo response to Zendesk response
             zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_response["ticket"] = [zendesk_response]
             zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         else:
             logging.error("create ticket payload must have ticket and comment")
@@ -148,13 +138,14 @@ class HaloManager:
             logger.error(message)
             raise ZendeskTicketNotFoundException(message)
 
-        if "comment" in zendesk_request["ticket"]:
+        if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
             comment_payload = ZendeskToHalo().update_comment_payload(zendesk_request)
             updated_ticket["comment"] = [
                 self.client.post(path="Actions", payload=[comment_payload])
             ]
         # convert Halo response to Zendesk response
         zendesk_response = HaloToZendesk().get_ticket_response_mapping(updated_ticket)
+        zendesk_response["ticket"] = [zendesk_response]
         zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
         return zendesk_ticket
 

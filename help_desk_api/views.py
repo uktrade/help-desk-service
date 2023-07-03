@@ -151,13 +151,13 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 zendesk_ticket = self.halo_manager.create_ticket(request.data)
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException:
             return Response(
                 "please check payload - " "create ticket payload must have ticket and comment",
