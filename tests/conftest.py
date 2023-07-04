@@ -5,6 +5,11 @@ import pytest
 from help_desk_api.models import HelpDeskCreds
 
 
+@pytest.fixture(autouse=True)
+def enable_db_access_for_all_tests(db):
+    pass
+
+
 @pytest.fixture()
 def zendesk_required_settings(settings):
     settings.REQUIRE_ZENDESK = True
@@ -23,6 +28,16 @@ def zendesk_email():
 @pytest.fixture()
 def zendesk_token():
     return "ABC123"  # /PS-IGNORE
+
+
+@pytest.fixture()
+def client_id():
+    return "client_id"  # /PS-IGNORE
+
+
+@pytest.fixture()
+def client_secret():
+    return "client_secret"  # /PS-IGNORE
 
 
 @pytest.fixture()
@@ -50,7 +65,9 @@ def zendesk_and_halo_creds(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
 
 
 @pytest.fixture()
-def halo_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
+def halo_creds_only(
+    db, zendesk_not_required_settings, zendesk_email, zendesk_token
+) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         # TODO: what about a new service with no Zendesk token?

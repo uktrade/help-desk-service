@@ -18,7 +18,7 @@ repos:
         files: ''
         language: python
         language_version: python3.10
-        # args: [--ner_output_file=ner_output_file.txt] # uncomment to output NER entities
+        args: [--ner_output_file=ner_output_file.txt] # uncomment to output NER entities
         pass_filenames: true
         require_serial: true
     -   id: hooks_version_check

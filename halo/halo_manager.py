@@ -1,23 +1,24 @@
 import logging
-from typing import List
 
-from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
-from halo.interfaces import (
-    HelpDeskBase,
-    HelpDeskComment,
-    HelpDeskException,
-    HelpDeskTicket,
-    HelpDeskTicketNotFoundException,
-    HelpDeskUser,
-    TicketType,
+from django.conf import settings
+from halo.data_class import (
+    ZendeskComment,
+    ZendeskException,
+    ZendeskTicketContainer,
+    ZendeskTicketNotFoundException,
+    ZendeskTicketsContainer,
 )
+from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
+from halo.halo_to_zendesk import HaloToZendesk
+from halo.zendesk_to_halo import ZendeskToHalo
 
 
 def reverse_keys(dictionary):
     return {value: key for key, value in dictionary.items()}
 
 
-STATUS_MAPPING = {
+# Zendesk status - Halo status
+ZENDESK_TO_HALO_STATUS_MAPPING = {
     "new": 1,
     "open": 2,  # in progress
     "pending": 3,  # action requried
@@ -26,17 +27,15 @@ STATUS_MAPPING = {
     "closed": 9,
 }
 
-REVERSE_STATUS_MAPPING = reverse_keys(STATUS_MAPPING)
+# REVERSE_STATUS_MAPPING = reverse_keys(STATUS_MAPPING)
 PRIORITY_MAPPING = {
     "incident": {"low": 4, "normal": 3, "high": 2, "urgent": 1},
 }
-REVERSE_PRIORITY_MAPPING = {key: reverse_keys(value) for key, value in PRIORITY_MAPPING.items()}
-TICKET_TYPE_MAPPING = {1: TicketType.INCIDENT, 27: TicketType.INCIDENT}
 
 logger = logging.getLogger(__name__)
 
 
-class HaloManager(HelpDeskBase):
+class HaloManager:
     def __init__(self, client_id, client_secret):
         """Create a new Halo client - pass credentials to.
         :TODO - correct
@@ -46,59 +45,50 @@ class HaloManager(HelpDeskBase):
             client_secret=client_secret,
         )
 
-    def get_or_create_user(self, user: HelpDeskUser = None) -> HelpDeskUser:
-        """Get or Create a new Halo user.   /PS-IGNORE
-        :param HelpDeskUser
-                full_name: string full name for Halo user.
-                email: string email address text for the Halo user.
-        :returns: HelpDeskUser instance representing Halo user.
-        """
-        if user is not None:
-            transformed_user = self.__transform_helpdesk_user_to_halo_user(user)
-            if transformed_user.get("id"):
-                halo_user = self.client.get(path=f"Users/{transformed_user['id']}")
-                if halo_user and transformed_user.get("email"):
-                    logger.error("update user")
-                    halo_user = self.client.post(path="Users", payload=transformed_user)
-                    logger.error(halo_user)
-            else:
-                halo_user = self.client.post(path="Users", payload=transformed_user)
-        else:
-            transformed_user = self.client.get(path="agent/me")
-            halo_user = {
-                "id": transformed_user["id"],
-                "name": transformed_user["name"],
-                "emailaddress": transformed_user["email"],
-            }
+    def get_user(self, user_id: int):
+        halo_user = self.client.get(path=f"Users/{user_id}")
+        # Need to transform into a Zendesk compatible user structure
+        zendesk_user = halo_user
+        return zendesk_user
 
-        if halo_user is None:
-            message = f"No Halo user found for {transformed_user}"  # Error log /PS-IGNORE,
-            logger.debug(message)
-            raise HelpDeskException(message)
-        return self.__transform_halo_user_to_helpdesk_user(halo_user)
+    # def create_user(self, user_details: ZendeskUserDetails = {}) -> ZendeskUser:
+    #     # Receive Zendesk user and create user in Halo, give back Zendesk user
+    #     halo_payload = "TODO create payload from incoming Zendesk user details"
+    #     halo_user = self.client.post(path="Users", payload=[halo_payload])
+    #     return halo_user
 
-    def create_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
-        """Create a new Zendesk ticket in response to a new user question.
-        :param ticket: HelpDeskTicket with information to create Zendesk ticket.
-        :returns: A HelpDeskTicket instance.
-        """
-        halo_ticket = self.__transform_helpdesk_to_halo_ticket(ticket)
-
-        ticket_response = self.client.post(path="Tickets", payload=[halo_ticket])
-
-        if ticket["comment"]:
-            ticket_response["comment"] = self.client.post(
-                path="Actions",
-                payload=[
-                    self.__transform_comment_to_halo_action(
-                        ticket_response["id"], ticket["comment"]
-                    )
-                ],
+    def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
+        # Create ticket
+        # 3. Manager calls Halo API and returns Halo flavoured return value
+        zendesk_ticket = None
+        if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
+            halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
+            halo_response = self.client.post(path="Tickets", payload=[halo_payload])
+            comment_payload = ZendeskToHalo().create_comment_payload(
+                halo_response["id"], zendesk_request
             )
+            actions_response = self.client.post(path="Actions", payload=[comment_payload])
+            halo_response["comment"] = [actions_response]
+            # if attachements exist upload them
+            if "attachments" in zendesk_request["ticket"]:
+                attachment_payload = zendesk_request["ticket"]["attachments"]
+                attachment_payload["ticket_id"] = halo_response["id"]
+                halo_response["attachments"] = [
+                    self.client.post(
+                        f"Attachment?ticket_id={halo_response['id']}", payload=[attachment_payload]
+                    )
+                ]
+            # convert Halo response to Zendesk response
+            zendesk_response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_response["ticket"] = [zendesk_response]
+            zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
+        else:
+            logging.error("create ticket payload must have ticket and comment")
+            raise ZendeskException
 
-        return self.__transform_object_to_helpdesk_ticket(ticket_response)
+        return zendesk_ticket
 
-    def get_ticket(self, ticket_id: int) -> HelpDeskTicket:
+    def get_ticket(self, ticket_id: int = None) -> ZendeskTicketContainer:
         """Recover the ticket by Halo ID.
         :param ticket_id: The Halo ID of the Ticket.
         :returns: A HelpDeskTicket instance.
@@ -107,196 +97,91 @@ class HaloManager(HelpDeskBase):
         """
         logger.debug(f"Look for Ticket by is Halo ID:<{ticket_id}>")  # /PS-IGNORE
         try:
-            return self.__transform_object_to_helpdesk_ticket(
-                self.client.get(path=f"Tickets/{ticket_id}")
-            )
+            # 3. Manager calls Halo API and
+            # returns Halo flavoured return value
+            halo_response = self.client.get(path=f"Tickets/{ticket_id}")
+            ticket_actions = self.client.get(
+                f"Actions?ticket_id={halo_response['id']}"
+            )  # /PS-IGNORE5
+            comment_list = []
+            for comment in ticket_actions["actions"]:
+                if comment["outcome"] == "comment":
+                    comment_list.append(comment)
+            halo_response["comment"] = comment_list
+            attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
+            halo_response["attachments"] = attachments["attachments"]
+
+            # convert Halo response to Zendesk response
+            response = HaloToZendesk().get_ticket_response_mapping(halo_response)
+            zendesk_response = {"ticket": [response]}
+            zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
+
+            return zendesk_ticket
         except HaloRecordNotFoundException:
             message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
             logger.debug(message)
-            raise HelpDeskTicketNotFoundException(message)
+            raise ZendeskTicketNotFoundException(message)
 
-    def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
-        """Close a ticket in Halo.
-        :param ticket_id: The Halo ticket ID.
-        :returns: HelpDeskTicket instance.
-        """
-        raise NotImplementedError()
-
-    def add_comment(self, ticket_id: int, comment: HelpDeskComment) -> HelpDeskTicket:
-        """Add a comment to an existing ticket.
-        :param ticket_id: id of Halo ticket instance.
-        :param comment: HelpDeskComment instance.
-        :returns: The updated HelpDeskTicket instance.
-        """
-        raise NotImplementedError()
-
-    def update_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
+    def update_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
         """Update an existing ticket.
         :param ticket: HelpDeskTicket ticket.
         :returns: The updated HelpDeskTicket instance.
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
-        halo_ticket = self.__transform_helpdesk_to_halo_ticket(ticket)
-        if not ticket.id:
-            logger.error("No ticket id")
-            raise HelpDeskTicketNotFoundException("No ticket id")
-
-        updated_ticket = self.client.post(path="Tickets", payload=[halo_ticket])
+        halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
+        halo_payload["id"] = zendesk_request["id"]
+        updated_ticket = self.client.post(path="Tickets", payload=[halo_payload])
         if updated_ticket is None:
-            message = f"Could not update ticket with id {ticket.id}"
+            message = f"Could not update ticket with id {zendesk_request['id']}"
             logger.error(message)
-            raise HelpDeskTicketNotFoundException(message)
+            raise ZendeskTicketNotFoundException(message)
 
-        if halo_ticket["comment"]:
-            updated_ticket["comment"] = self.client.post(
-                path="Actions", payload=[halo_ticket["comment"]]
-            )
+        if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
+            comment_payload = ZendeskToHalo().update_comment_payload(zendesk_request)
+            updated_ticket["comment"] = [
+                self.client.post(path="Actions", payload=[comment_payload])
+            ]
+        # convert Halo response to Zendesk response
+        zendesk_response = HaloToZendesk().get_ticket_response_mapping(updated_ticket)
+        zendesk_response["ticket"] = [zendesk_response]
+        zendesk_ticket = ZendeskTicketContainer(**zendesk_response)
+        return zendesk_ticket
 
-        return self.__transform_object_to_helpdesk_ticket(updated_ticket)
-
-    def get_comments(self, ticket_id: int) -> List[HelpDeskComment]:
-        # actions = self.client.get(
-        #     path="Actions", params={ticket_id:ticket_id}
-        # )
-        raise NotImplementedError
-
-    def __transform_comment_to_halo_action(self, ticket_id: int, comment: HelpDeskComment):
-        """Transform from HelpDeskComment to halo comment format.
-        :param ticket_id: id of the ticket comment
-        :param comment: HelpDeskComment instance.
-        :returns: halo action object.
-        """
-        return {
-            "note": comment.body,
-            "ticket_id": ticket_id,
-            "hiddenfromuser": not comment.public,
-            # "who_agentid": comment.author_id,
-            "outcome": "comment",
-        }
-
-    def __transform_halo_action_to_comment(self, halo_comment) -> HelpDeskComment:
-        """Transform from halo comment format to HelpDeskComment.
-        :param halo_comment: Halo Action instance.
-        :returns: halo action object.
-        """
-        return HelpDeskComment(
-            body=halo_comment["note"],
-            public=not halo_comment["hiddenfromuser"],
-            author_id=halo_comment.get("who_agentid"),
-        )
-
-    def __transform_helpdesk_to_halo_ticket(self, ticket: HelpDeskTicket) -> object:
-        """Transform from HelpDeskTicket to halo ticket format.
-        :param ticket: HelpDeskTicket instance.
-        :returns: halo ticket object.
-        """
-        # custom_fields = None
-
-        ticket_user = self.get_or_create_user(ticket.user)
-
-        # if ticket.custom_fields:
-        #     custom_fields = [
-        #         {'id':custom_field.id, 'value':custom_field.value}
-        #         for custom_field in ticket.custom_fields
-        #     ]
-
-        return {
-            "id": ticket.id,
-            "status_id": STATUS_MAPPING[ticket.status] if ticket.status else None,
-            "priority_id": PRIORITY_MAPPING[ticket.ticket_type][ticket.priority]
-            if (ticket.ticket_type and ticket.priority)
-            else None,
-            # "emailcclist": [ticket.recipient_email], #correct?
-            "summary": ticket.subject,
-            "details": ticket.description,
-            "user_id": ticket_user.id,
-            "agent_id": ticket.assignee_id,
-            "team_id": ticket.group_id,
-            "ticket_tags": ", ".join(ticket.tags) if ticket.tags else None,
-            # ticket.service_name field be determined
-            "third_party_id": ticket.external_id,  # /PS-IGNORE
-            # TODO 'custom_fields':custom_fields, #+ [{'id':144,'name':
-            # 'CFemailAddress', 'value': ticket.recipient_email }],
-            "tickettype_id": TICKET_TYPE_MAPPING[ticket.ticket_type]
-            if ticket.ticket_type
-            else None,
-            "comment": self.__transform_comment_to_halo_action(ticket.id, ticket.comment)
-            if ticket.id and ticket.comment
-            else None,
-            "category_1": "Standard Applications>Adobe",
-        }
-
-    def __transform_object_to_helpdesk_ticket(self, ticket: object) -> HelpDeskTicket:
-        """Transform Halo ticket object into HelpDeskTicket instance.
-        :param ticket: Halo ticket object.
-        :returns: HelpDeskTicket instance.
-        """
-        ticket_user, comment = None, None
-
-        if ticket.get("user"):
-            ticket_user = HelpDeskUser(
-                id=ticket["user"]["id"],
-                full_name=ticket["user"]["name"],
-                email=ticket["user"]["emailaddress"],
-            )
-        elif ticket.get("user_id"):
-            ticket_user = HelpDeskUser(id=ticket["user_id"])
-
-        # if getattr(ticket, "custom_fields", None):
-        #     custom_fields = [
-        #         HelpDeskCustomField(id=custom_field.id, value=custom_field.value)
-        #         for custom_field in ticket.custom_fields
-        #     ]
-
-        # Get ticket comments if comments set latest comment
-        ticket_actions = self.client.get(f"Actions?ticket_id={ticket['id']}")
+    def get_comments(self, ticket_id: int) -> list[ZendeskComment]:
+        comments = []
+        ticket_actions = self.client.get(f"Actions?ticket_id={ticket_id}")
         for action in reversed(ticket_actions["actions"]):
             if action["outcome"] == "comment":
-                comment = self.__transform_halo_action_to_comment(action)
+                comment = HaloToZendesk().get_comment_response_mapping(action)
+                zendesk_comment = ZendeskComment(**comment)
+                comments.append(zendesk_comment)
+        return comments
 
-        helpdesk_ticket = HelpDeskTicket(
-            id=ticket["id"],
-            status=REVERSE_STATUS_MAPPING[ticket["status_id"]] if ticket.get("status_id") else None,
-            subject=ticket["summary"],
-            description=ticket.get("details", None),
-            # recipient_email=getattr(ticket, "recipient", None),
-            user=ticket_user,
-            created_at=ticket.get("dateoccurred"),
-            updated_at=ticket.get("flastupdate"),
-            priority=REVERSE_PRIORITY_MAPPING[TICKET_TYPE_MAPPING[ticket["tickettype_id"]].value][
-                ticket.get("priority_id")
-            ],
-            due_at=ticket.get("deadlinedate", None),
-            assignee_id=ticket.get("agent_id", None),
-            group_id=ticket.get("team_id", None),
-            external_id=ticket.get("third_party_id", None),  # /PS-IGNORE
-            tags=(ticket.get("ticket_tags", [])).split(", "),
-            # custom_fields=custom_fields,
-            comment=comment,
-            ticket_type=TICKET_TYPE_MAPPING[ticket["tickettype_id"]]
-            if ticket.get("tickettype_id")
-            else None,
-        )
-        return helpdesk_ticket
-
-    def __transform_helpdesk_user_to_halo_user(self, user: HelpDeskUser) -> object:
-        """Transform HelpDesk user into Halo user object.
-        :param user: HelpDeskUser instance.
-        :returns: Halo User object.
+    def get_tickets(self) -> ZendeskTicketsContainer:
         """
-        if user and (user.id or user.email):
-            return {"id": user.id, "name": user.full_name, "emailaddress": user.email}
-        else:
-            # This should not be possible so raise exception
-            raise HelpDeskException(
-                "Cannot transform user to Halo user",
-            )
-
-    def __transform_halo_user_to_helpdesk_user(self, user: object) -> HelpDeskUser:
-        """Transform Halo user object into HelpDesk user instance.
-        :param user: Halo user object
-        :returns: HelpDeskUser user instance.
+        GET All Tickets from Halo
         """
-        return HelpDeskUser(id=user["id"], full_name=user["name"], email=user["emailaddress"])
+        # params for payload
+        params = {
+            "pageinate": "true",
+            "page_size": settings.REST_FRAMEWORK["PAGE_SIZE"],
+            "page_no": 1,
+        }
+        halo_response = self.client.get(path="Tickets", params=params)
+        page_size = halo_response["page_size"]
+        record_count = halo_response["record_count"]
+        pages = record_count // page_size
+        # TODO: Logic based on page number rather than calling GET multiple times.
+        all_tickets = []
+        for i in range(1, pages + 2):
+            params["page_no"] = i
+            halo_response = self.client.get(path="Tickets", params=params)
+            all_tickets.extend(halo_response["tickets"])
+        halo_response["tickets"] = all_tickets
+        # convert Halo response to Zendesk response
+        zendesk_response = HaloToZendesk().get_tickets_response_mapping(halo_response)
+        zendesk_ticket = ZendeskTicketsContainer(**zendesk_response)
+
+        return zendesk_ticket

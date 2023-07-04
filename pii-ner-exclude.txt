@@ -69,8 +69,6 @@ Run Django
 migrate$(COLOUR_NONE
 Zendesk API
 Jim Example
-Postcode
-Email
 django.contrib import
 DEFAULT_PERMISSION_CLASSES
 Token
@@ -141,6 +139,101 @@ HELP_DESK_INTERFACE
 HELP_DESK_CREDS
 REQUIRE_ZENDESK
 Control
+args
+NER
+https://github.com/pycqa/flake8
+0.0.0.0
+info
+POST
+me.json
+BlankEnum
+'zendesk' - Zendesk
+schemas/BlankEnum
+maxLength
+JSONRenderer
+The Halo ID of the Ticket
+'" Transform from HelpDeskComment to halo comment format.'
+'" Transform from HelpDeskTicket to halo ticket format'
+Open
+Comments Serializer
+Tickets Serializer
+Halo User Serializer
+GET User in Halo
+Create/Update User
+GET Agent Me
+zendesk` - Zendesk
+'schemas/BlankEnum'
+TicketType
+Halo API
+halo_response['id
+CommentView.as_view
+halo.data_class
+ZendeskTicket
+" Create a User in Halo
+AllowAny
+abc
+ABC
+f"Actions?ticket_id={ticket_response['id
+Ticket Payload TODO
+Comment Payload TODO
+MockResponse
+Requests.get
+Get Ticket and Create Ticket Tests
+Token Success
+GET Ticket Success
+GET Ticket Failure
+Critical
+zendesk_request['id
+Comment Create Payload TODO
+Comment Update Payload TODO
+Tags Serializer
+Ticket Mapping
+ZendeskTicketContainer(zendesk_ticket
+print("client_id=
+HALO_SUBDOMAIN}.haloitsm.com
+CustomFields Serializer
+GET Token Success
+GET Token Failure
+Postcode
+Email
 APIViews
 ZenpyAuthentication
+Comment Mapping
+Get Comments Tests
+GET Comment Success
+GET Comment Failure
+"Example User
+Deprtment for International Trade
+Europe
+"halo-only@example.com
+Example User
+isimportantcontact2
+Deprtment for International Trade/UK Trade
+override_org_logo
+defcat1
+defcat2
+defcat3
+defcat4
+allowall_category1
+client_to_invoice
+line1
+Site Invoice Address
+guid
+allowviewclientdocs
+azure_last_login_date
+canviewopps
+job_title
+Get a User
+the Halo API
+the Zendesk API"
+DBT
+int - Zendesk
+CustomPagination
+List Tickets with Pagination Logic
+" Single Ticket Serializer
+Multiple Tickets Serializer
+IntegerField
+MetaFieldSerializer
+print(pagenum
 ENV
+GET All Tickets from Halo

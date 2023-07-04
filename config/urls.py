@@ -19,7 +19,7 @@ openapi_view_kwargs = {
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include(help_desk_api_urls, namespace="api")),
+    path("api/", include(help_desk_api_urls, namespace="api")),
     path(
         "openapi/",
         include(

@@ -1,9 +1,19 @@
+from halo.data_class import ZendeskException
+from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
-from halo.interfaces import HelpDeskTicket, HelpDeskUser
+from rest_framework import authentication, permissions, status
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from help_desk_api.serializers import TicketContainer
+from help_desk_api.pagination import CustomPagination
+from help_desk_api.serializers import (
+    ZendeskCommentSerializer,
+    ZendeskTicketContainerSerializer,
+    ZendeskTicketsContainerSerializer,
+    ZendeskTicketSerializer,
+    ZendeskUserSerializer,
+)
 
 
 class HaloBaseView(APIView):
@@ -12,8 +22,6 @@ class HaloBaseView(APIView):
     """
 
     def initial(self, request, *args, **kwargs):
-        request.help_desk_creds
-
         self.halo_manager = HaloManager(
             client_id=request.help_desk_creds.halo_client_id,
             client_secret=request.help_desk_creds.halo_client_secret,
@@ -25,21 +33,34 @@ class UserView(HaloBaseView):
     View for interaction with user
     """
 
-    def get(self, request, format=None):
-        """
-        Return a ticket
-        """
-        # Get ticket from Halo
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    serializer_class = ZendeskUserSerializer
 
-        return Response()
-
-    def post(self, request, format=None):
+    def get(self, request, *args, **kwargs):
         """
-        Return a ticket
+        Get a user from Halo
         """
-        # Get ticket from Halo
+        # Build User based on ID
 
-        return Response()
+        if self.kwargs.get("id"):
+            # Get User from Halo
+            halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
+            serializer = ZendeskUserSerializer(id=halo_user["id"])
+            return Response(serializer.data)
+        else:
+            # if no user id is passed we show the agent me??
+            return Response()
+
+    def post(self, request, *args, **kwargs):
+        """
+        Create a User in Halo
+        """
+        # Create user in Halo
+        halo_user = self.halo_manager.create_user(request.data)  # ** maybe?
+        serializer = ZendeskUserSerializer(halo_user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MeView(HaloBaseView):
@@ -47,12 +68,17 @@ class MeView(HaloBaseView):
     View for interaction with self
     """
 
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+
     def get(self, request, format=None):
         """
-        Return a ticket
+        GET Agent Me in Halo
         """
-        # Get ticket from Halo
-
+        # Get Me from Halo
+        # queryset = self.halo_manager.get_or_create_user(user=None)
+        # serializer = HaloUserSerializer(queryset)
         return Response()
 
 
@@ -61,59 +87,79 @@ class CommentView(HaloBaseView):
     View for interaction with comment
     """
 
-    def get(self, request, format=None):
-        """
-        Return a ticket
-        """
-        # Get ticket from Halo
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
-        return Response()
-
-
-class TicketView(HaloBaseView):
     def get(self, request, id, format=None):
         """
-        Return a ticket
+        GET comments from Halo
         """
         # Get ticket from Halo
+        queryset = self.halo_manager.get_comments(ticket_id=id)
+        serializer = ZendeskCommentSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-        # snippet = self.get_object(pk)
-        # serializer = SnippetSerializer(snippet)
-        # return Response(serializer.data)
 
-        return Response()
+class TicketView(HaloBaseView, CustomPagination):
+    """
+    View for interacting with tickets
+    """
 
-    def put(self, request, id, format=None):
-        # snippet = self.get_object(pk)
-        # serializer = SnippetSerializer(snippet, data=request.data)
-        # if serializer.is_valid():
-        #     serializer.save()
-        #     return Response(serializer.data)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response()
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ZendeskTicketSerializer
+    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
-    def post(self, request, format=None):
+    def get(self, request, *args, **kwargs):
         """
-        Create a ticket
+        GET ticket/tickets from Halo
         """
-        ticket_serializer = TicketContainer(data=request.data)
+        # 1. View receives Zendesk compatible request variables
+        # 2. View calls manager func with Zendesk class params
+        try:
+            if "id" in self.kwargs:
+                ticket = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketContainerSerializer(ticket)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data)
+            else:
+                # pagenum = self.request.query_params.get("page", None)
+                tickets = self.halo_manager.get_tickets()
+                pages = self.paginate_queryset(tickets.tickets, self.request)
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketsContainerSerializer({"tickets": pages})
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return self.get_paginated_response(serializer.data)
 
-        if ticket_serializer.is_valid(raise_exception=True):
-            help_desk_user = HelpDeskUser(
-                id=36,
+        except HaloClientNotFoundException:
+            return Response(
+                "please check ticket_id - " "a ticket with given id could not be found",
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-            ticket = HelpDeskTicket(
-                subject=ticket_serializer.validated_data["ticket"]["subject"],
-                description=ticket_serializer.validated_data["ticket"]["description"],
-                # priority=ticket_serializer.validated_data["ticket"]["priority"],
-                user=help_desk_user,
+    def post(self, request, *args, **kwargs):
+        """
+        CREATE/UPDATE ticket in Halo
+        """
+        # 1. View receives Zendesk compatible request variables
+        # 2. View calls manager func with Zendesk class params
+        try:
+            if "id" in request.data:
+                zendesk_ticket = self.halo_manager.update_ticket(request.data)
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                zendesk_ticket = self.halo_manager.create_ticket(request.data)
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ZendeskException:
+            return Response(
+                "please check payload - " "create ticket payload must have ticket and comment",
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            result = self.halo_manager.create_ticket(
-                ticket,
-            )
-
-            print("RESULT")
-            print(result)
-
-        return Response("success")
