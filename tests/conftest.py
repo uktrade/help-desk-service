@@ -65,7 +65,9 @@ def zendesk_and_halo_creds(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
 
 
 @pytest.fixture()
-def halo_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
+def halo_creds_only(
+    db, zendesk_not_required_settings, zendesk_email, zendesk_token
+) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         # TODO: what about a new service with no Zendesk token?
