@@ -73,6 +73,15 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
                 "Content-Type": "application/json",
             },
         )
+    elif request.method == "PUT":
+        zendesk_response = requests.put(
+            url,
+            data=request.body.decode("utf8"),
+            headers={
+                "Authorization": f"Basic {encoded_creds.decode('ascii')}",
+                "Content-Type": "application/json",
+            },
+        )
 
     return zendesk_response
 
