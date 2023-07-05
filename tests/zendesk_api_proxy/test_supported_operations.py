@@ -121,3 +121,35 @@ class TestSupportedOperations:
         assert request_obj.method == "POST"
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
+
+
+    # Testing PUT
+    @pytest.mark.parametrize("url", [
+                (reverse("api:ticket", kwargs={"id": 123})),
+    ])
+    @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
+    def test_update_ticket_by_id(
+        self,
+        proxy_zendesk: mock.MagicMock,
+        client: Client,
+        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_creds_only,
+        zendesk_authorization_header,
+        url,
+    ):
+        response = Response()
+        response._content = b"{}"
+        response.status_code = HTTPStatus.OK
+
+        proxy_zendesk.return_value = response
+        client.put(url, headers={"Authorization": zendesk_authorization_header})
+        proxy_zendesk.assert_called_once()
+
+        request_obj, subdomain, email, *_ = proxy_zendesk.call_args[0]  # args passed to proxy_zendesk
+
+        assert request_obj.get_full_path() == url
+        assert request_obj.method == "PUT"
+        assert request_obj.body.decode("utf8") == ""
+        assert subdomain == zendesk_creds_only.zendesk_subdomain
+        assert email == zendesk_creds_only.zendesk_email
+        
