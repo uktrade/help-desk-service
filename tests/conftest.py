@@ -120,3 +120,23 @@ def new_zendesk_ticket():
             "tags": ["request-for-data"],
         }
     }
+
+
+@pytest.fixture(scope="session")
+def new_halo_ticket():
+    """
+    This is an example of a much-abbreviated Halo response on ticket creation
+    """
+    return {
+        "id": 1234,
+        "dateoccurred": "2023-06-29T10:16:08.8378294Z",
+        "summary": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+        "details": "Long load of text here",
+        "user_id": 0,
+        "deadlinedate": "1900-01-01T00:00:00",
+        "tags": [
+            {"id": 0, "text": "first"},
+            {"id": 0, "text": "second"},
+            {"id": 0, "text": "third tag"},
+        ],
+    }
