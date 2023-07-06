@@ -8,9 +8,12 @@ class ZendeskToHalo:
         Ticket Payload
         TODO: map all the fields, atm it is subset
         """
+
+        zendesk_ticket_data = zendesk_request.get("ticket", {})
         halo_payload = {
-            "summary": zendesk_request.get("ticket", {}).get("subject", None),
-            "details": zendesk_request.get("ticket", {}).get("description", None),
+            "summary": zendesk_ticket_data.get("subject", None),
+            "details": zendesk_ticket_data.get("description", None),
+            "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         }
         return halo_payload
 
