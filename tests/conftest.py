@@ -97,3 +97,26 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
     credentials.set_token()
     credentials.save()
     return credentials
+
+
+@pytest.fixture(scope="session")
+def new_zendesk_ticket():
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
+        "ticket": {
+            "custom_fields": [{"id": "numeric_field_id", "value": "field_value"}],
+            "description": "Long load of text here",
+            "id": None,
+            "requester": {
+                "email": "vyvyan.holland@contact-email.com",  # /PS-IGNORE
+                "id": None,
+                "name": "Vyvyan Holland",  # /PS-IGNORE
+            },
+            "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+            "tags": ["request-for-data"],
+        }
+    }
