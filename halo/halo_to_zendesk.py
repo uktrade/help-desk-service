@@ -16,7 +16,7 @@ class HaloToZendesk:
             "external_id": ticket_response["id"],
             "assignee_id": ticket_response["user_id"],
             "comment": ticket_response.get("comment", []),
-            "tags": ticket_response.get("tags", []),
+            "tags": [tag.get("text", "") for tag in ticket_response.get("tags", [])],
             "custom_fields": ticket_response.get("customfields", []),
             "recipient_email": ticket_response.get("user_email", ""),
             "responder": ticket_response.get("reportedby", ""),
