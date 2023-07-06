@@ -52,12 +52,6 @@ class ZendeskCustomField:
 
 
 @dataclass
-class ZendeskTag:
-    id: int
-    text: Optional[str] = None
-
-
-@dataclass
 class ZendeskAttachment:
     id: int
     filename: str
@@ -74,7 +68,7 @@ class ZendeskTicket:
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None
     comment: Optional[List[ZendeskComment]] = None
-    tags: Optional[List[ZendeskTag]] = None
+    tags: Optional[List[str]] = None
     custom_fields: Optional[List[ZendeskCustomField]] = None
     recipient_email: Optional[str] = None
     responder: Optional[str] = None
