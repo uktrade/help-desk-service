@@ -57,9 +57,11 @@ class HaloManager:
     #     halo_user = self.client.post(path="Users", payload=[halo_payload])
     #     return halo_user
 
-    def create_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
+    def create_ticket(self, zendesk_request: dict = None) -> ZendeskTicketContainer:
         # Create ticket
         # 3. Manager calls Halo API and returns Halo flavoured return value
+        if zendesk_request is None:
+            zendesk_request = {}
         zendesk_ticket = None
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
             halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
@@ -123,13 +125,15 @@ class HaloManager:
             logger.debug(message)
             raise ZendeskTicketNotFoundException(message)
 
-    def update_ticket(self, zendesk_request: dict = {}) -> ZendeskTicketContainer:
+    def update_ticket(self, zendesk_request: dict = None) -> ZendeskTicketContainer:
         """Update an existing ticket.
-        :param ticket: HelpDeskTicket ticket.
+        :param zendesk_request: HelpDeskTicket ticket.
         :returns: The updated HelpDeskTicket instance.
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
+        if zendesk_request is None:
+            zendesk_request = {}
         halo_payload = ZendeskToHalo().create_ticket_payload(zendesk_request)
         halo_payload["id"] = zendesk_request["id"]
         updated_ticket = self.client.post(path="Tickets", payload=[halo_payload])
