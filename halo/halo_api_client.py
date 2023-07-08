@@ -51,7 +51,9 @@ class HaloAPIClient:
         cache.set("access_token", response_data["access_token"], 3000)
         return response_data["access_token"]
 
-    def get(self, path, params={}):
+    def get(self, path, params=None):
+        if params is None:
+            params = {}
         logger.error(f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
         response = requests.get(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
