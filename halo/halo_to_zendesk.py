@@ -57,3 +57,11 @@ class HaloToZendesk:
         halo_response["tickets"] = all_tickets
 
         return halo_response
+
+    def get_user_response_mapping(self, user_response):
+        """
+        User mapping
+        """
+        if "emailaddress" in user_response:
+            user_response["email"] = user_response["emailaddress"]
+        return user_response
