@@ -1,22 +1,22 @@
 import logging
 
-from interfaces import (
-    HelpDeskBase,
-    HelpDeskComment,
-    HelpDeskCustomField,
-    HelpDeskException,
-    HelpDeskGroup,
-    HelpDeskTicket,
-    HelpDeskTicketNotFoundException,
-    HelpDeskUser,
+from halo.data_class import (  # ZendeskAttachment,
     Status,
+    ZendeskComment,
+    ZendeskCustomField,
+    ZendeskException,
+    ZendeskGroup,
+    ZendeskTicket,
+    ZendeskTicketNotFoundException,
+    ZendeskUser,
 )
 from zenpy import Zenpy
 from zenpy.lib import exception
-from zenpy.lib.api_objects import Comment as ZendeskComment
-from zenpy.lib.api_objects import CustomField as ZendeskCustomField
-from zenpy.lib.api_objects import Ticket as ZendeskTicket
-from zenpy.lib.api_objects import User as ZendeskUser
+
+# from zenpy.lib.api_objects import Comment as ZendeskComment
+# from zenpy.lib.api_objects import CustomField as ZendeskCustomField
+# from zenpy.lib.api_objects import Ticket as ZendeskTicket
+# from zenpy.lib.api_objects import User as ZendeskUser
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class ZendeskClientNotFoundException(Exception):
     pass
 
 
-class ZendeskManager(HelpDeskBase):
+class ZendeskManager:
     client = None
 
     def __init__(self, **kwargs):
@@ -43,14 +43,14 @@ class ZendeskManager(HelpDeskBase):
             subdomain=kwargs.get("credentials")["subdomain"],
         )
 
-    def get_or_create_user(self, user: HelpDeskUser = None) -> HelpDeskUser:
+    def get_or_create_user(self, user: ZendeskUser = None) -> ZendeskUser:
         """Get or Create a new Zendesk user.   /PS-IGNORE
 
-        :param HelpDeskUser
-                full_name: string full name for Zendesk user.
-                email: string email address text for the Zendesk user.
-
-        :returns: HelpDeskUser instance representing Zendesk user.
+                :param HelpDeskUser
+                        full_name: string full name for Zendesk user.
+                        email: string email address text for the Zendesk user.
+        x
+                :returns: HelpDeskUser instance representing Zendesk user.
         """
         if user is None:
             transformed_user = self.client.users.me()
@@ -65,10 +65,10 @@ class ZendeskManager(HelpDeskBase):
         if zendesk_user is None:
             message = f"No Zendesk user found for {transformed_user}"  # Error log /PS-IGNORE,
             logger.debug(message)
-            raise HelpDeskException(message)
+            raise ZendeskException(message)
         return self.__transform_zendesk_user_to_help_desk_user(zendesk_user)
 
-    def create_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
+    def create_ticket(self, ticket: ZendeskTicket) -> ZendeskTicket:
         """Create a new Zendesk ticket in response to a new user question.
 
         :param ticket: HelpDeskTicket with information to create Zendesk ticket.
@@ -81,7 +81,7 @@ class ZendeskManager(HelpDeskBase):
         )
         return self.__transform_zendesk_to_help_desk_ticket(zendesk_audit.ticket)
 
-    def get_ticket(self, ticket_id: int) -> HelpDeskTicket:
+    def get_ticket(self, ticket_id: int) -> ZendeskTicket:
         """Recover the ticket by Zendesk ID.
 
         :param ticket_id: The Zendesk ID of the Ticket.
@@ -98,9 +98,9 @@ class ZendeskManager(HelpDeskBase):
             message = f"Could not find Zendesk ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
             logger.debug(message)
-            raise HelpDeskTicketNotFoundException(message)
+            raise ZendeskTicketNotFoundException(message)
 
-    def close_ticket(self, ticket_id: int) -> HelpDeskTicket:
+    def close_ticket(self, ticket_id: int) -> ZendeskTicket:
         """Close a ticket in Zendesk.
 
         :param ticket_id: The Zendesk ticket ID.
@@ -119,7 +119,7 @@ class ZendeskManager(HelpDeskBase):
 
         return ticket
 
-    def add_comment(self, ticket_id: int, comment: HelpDeskComment) -> HelpDeskTicket:
+    def add_comment(self, ticket_id: int, comment: ZendeskComment) -> ZendeskTicket:
         """Add a comment to an existing ticket.
 
         :param ticket_id: id of Zendesk ticket instance.
@@ -131,7 +131,7 @@ class ZendeskManager(HelpDeskBase):
         ticket.comment = comment
         return self.update_ticket(ticket)
 
-    def update_ticket(self, ticket: HelpDeskTicket) -> HelpDeskTicket:
+    def update_ticket(self, ticket: ZendeskTicket) -> ZendeskTicket:
         """Update an existing ticket.
 
         :param ticket: HelpDeskTicket ticket.
@@ -147,11 +147,11 @@ class ZendeskManager(HelpDeskBase):
         if ticket_audit is None:
             message = f"Could not update ticket with id  {ticket.id}"
             logger.error(message)
-            raise HelpDeskTicketNotFoundException(message)
+            raise ZendeskTicketNotFoundException(message)
 
         return self.__transform_zendesk_to_help_desk_ticket(ticket_audit.ticket)
 
-    def __transform_help_desk_to_zendesk_ticket(self, ticket: HelpDeskTicket) -> ZendeskTicket:
+    def __transform_help_desk_to_zendesk_ticket(self, ticket: ZendeskTicket) -> ZendeskTicket:
         """Transform from HelpDeskTicket to Zendesk ticket instance.
 
         :param ticket: HelpDeskTicket instance.
@@ -193,7 +193,7 @@ class ZendeskManager(HelpDeskBase):
 
         return ticket
 
-    def __transform_zendesk_to_help_desk_ticket(self, ticket: ZendeskTicket) -> HelpDeskTicket:
+    def __transform_zendesk_to_help_desk_ticket(self, ticket: ZendeskTicket) -> ZendeskTicket:
         """Transform Zendesk ticket into HelpDeskTicket instance.
 
         :param ticket: Zendesk ticket instance.
@@ -203,28 +203,28 @@ class ZendeskManager(HelpDeskBase):
         ticket_user, custom_fields, comment = None, None, None
 
         if getattr(ticket, "requester", None):
-            ticket_user = HelpDeskUser(
+            ticket_user = ZendeskUser(
                 id=ticket.requester.id,
                 full_name=ticket.requester.name,
                 email=ticket.requester.email,
             )
         elif getattr(ticket, "requester_id", None):
-            ticket_user = HelpDeskUser(id=ticket.requester_id)
+            ticket_user = ZendeskUser(id=ticket.requester_id)
 
         if getattr(ticket, "custom_fields", None):
             custom_fields = [
-                HelpDeskCustomField(id=custom_field["id"], value=custom_field["value"])
+                ZendeskCustomField(id=custom_field["id"], value=custom_field["value"])
                 for custom_field in ticket.custom_fields
             ]
 
         if getattr(ticket, "comment", None):
-            comment = HelpDeskComment(
+            comment = ZendeskComment(
                 body=ticket.comment.body,
                 author_id=ticket.comment.author_id,
                 public=ticket.comment.public,
             )
 
-        help_desk_ticket = HelpDeskTicket(
+        help_desk_ticket = ZendeskTicket(
             id=ticket.id,
             status=getattr(ticket, "status", None),
             recipient_email=getattr(ticket, "recipient", None),
@@ -244,7 +244,7 @@ class ZendeskManager(HelpDeskBase):
         )
         return help_desk_ticket
 
-    def __transform_help_desk_user_to_zendesk_user(self, user: HelpDeskUser) -> ZendeskUser:
+    def __transform_help_desk_user_to_zendesk_user(self, user: ZendeskUser) -> ZendeskUser:
         """Transform HelpDesk user into Zendesk user.
 
         :param user: HelpDeskUser instance.
@@ -257,11 +257,11 @@ class ZendeskManager(HelpDeskBase):
             return ZendeskUser(name=user.full_name, email=user.email)
         else:
             # This should not be possible so raise exception
-            raise HelpDeskException(
+            raise ZendeskException(
                 "Cannot transform user to Zendesk user",
             )
 
-    def __transform_zendesk_user_to_help_desk_user(self, user: ZendeskUser) -> HelpDeskUser:
+    def __transform_zendesk_user_to_help_desk_user(self, user: ZendeskUser) -> ZendeskUser:
         """Transform HelpDesk user into Zendesk user.
 
         :param user: HelpDeskUser user instance.
@@ -269,7 +269,7 @@ class ZendeskManager(HelpDeskBase):
         :returns: ZendeskUser instance.
         """
         groups = [
-            HelpDeskGroup(
+            ZendeskGroup(
                 created_at=zendesk_group.created_at,
                 deleted=zendesk_group.deleted,
                 id=zendesk_group.id,
@@ -280,4 +280,4 @@ class ZendeskManager(HelpDeskBase):
             for zendesk_group in list(self.client.users.groups(user))
         ]
 
-        return HelpDeskUser(id=user.id, full_name=user.name, email=user.email, groups=groups)
+        return ZendeskUser(id=user.id, full_name=user.name, email=user.email, groups=groups)

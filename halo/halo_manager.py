@@ -57,6 +57,10 @@ class HaloManager:
     #     halo_user = self.client.post(path="Users", payload=[halo_payload])
     #     return halo_user
 
+    def get_me(self, user_id: int):
+        halo_user = self.client.get(path=f"Users?search={user_id}")
+        return halo_user
+
     def create_ticket(self, zendesk_request: dict = None) -> ZendeskTicketContainer:
         # Create ticket
         # 3. Manager calls Halo API and returns Halo flavoured return value

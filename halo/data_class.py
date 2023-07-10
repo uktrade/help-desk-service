@@ -63,7 +63,7 @@ class ZendeskTicket:
     subject: str
     id: Optional[int] = None
     details: Optional[str] = None
-    user: Optional[List[ZendeskUser]] = None
+    user: Optional[ZendeskUser] = None
     group_id: Optional[int] = None
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None

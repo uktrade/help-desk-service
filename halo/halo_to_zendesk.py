@@ -11,7 +11,7 @@ class HaloToZendesk:
             "id": ticket_response["id"],
             "subject": ticket_response.get("summary", ""),
             "details": ticket_response.get("details", ""),
-            "user": [ticket_response.get("user", [])],
+            "user": ticket_response.get("user", {}),
             "group_id": ticket_response["id"],
             "external_id": ticket_response["id"],
             "assignee_id": ticket_response["user_id"],

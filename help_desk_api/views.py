@@ -74,12 +74,30 @@ class MeView(HaloBaseView):
 
     def get(self, request, format=None):
         """
-        GET Agent Me in Halo
+        GET Me in Halo
         """
-        # Get Me from Halo
-        # queryset = self.halo_manager.get_or_create_user(user=None)
-        # serializer = HaloUserSerializer(queryset)
-        return Response()
+        # TODO:// get the ME user id from zendesk and pass to Halo
+        # from zenpy import Zenpy
+        # credentials = {
+        #     "email": "xyz",
+        #     "token": "1234",
+        #     "subdomain": "uktrade"
+        # }
+        # zendesk_manager = Zenpy(**credentials)
+        # me_user = zendesk_manager.users.me()
+        # print(me_user)
+
+        halo_user = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
+        if halo_user["record_count"] == 1:
+            serializer = ZendeskUserSerializer(halo_user["users"][0])
+            return Response(serializer.data)
+        else:
+            return Response(
+                """please check Other 5 Field on Users,
+                either you did not set on the intended user in Halo or
+                accidentally set it on multiple users""",
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class CommentView(HaloBaseView):

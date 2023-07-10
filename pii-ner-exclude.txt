@@ -237,3 +237,7 @@ MetaFieldSerializer
 print(pagenum
 ENV
 GET All Tickets from Halo
+GET Me
+zendesk_manager.users.me
+CustomField
+ZendeskUser
