@@ -33,7 +33,7 @@ class ZendeskGroup:
 class ZendeskUser:
     id: Optional[int] = None
     name: Optional[str] = None
-    emailaddress: Optional[str] = None
+    email: Optional[str] = None
     site_id: Optional[int] = None
     # groups: Optional[List[ZendeskGroup]] = None
 
