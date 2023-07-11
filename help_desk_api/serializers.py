@@ -119,17 +119,17 @@ class ZendeskUserSerializer(serializers.Serializer):
     to the equivalent Zendesk ID.
     """
 
-    id = serializers.SerializerMethodField(method_name="halo_id_to_zendesk_id")
+    id = serializers.IntegerField()
     name = serializers.CharField()
     email = serializers.EmailField()
 
-    def halo_id_to_zendesk_id(self, instance):
-        return instance["id"]  # TODO: mapping to Zendesk ID
+    # def halo_id_to_zendesk_id(self, instance):
+    #     return instance["id"]  # TODO: mapping to Zendesk ID
 
-    def to_representation(self, data):
-        zendesk_data = {
-            "email": data["emailaddress"],
-            "name": data["name"],
-            "id": data["id"],
-        }
-        return super().to_representation(zendesk_data)
+    # def to_representation(self, data):
+    #     zendesk_data = {
+    #         "email": data["emailaddress"],
+    #         "name": data["name"],
+    #         "id": data["id"],
+    #     }
+    #     return super().to_representation(zendesk_data)

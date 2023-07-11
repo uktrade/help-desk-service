@@ -44,3 +44,9 @@ class ZendeskToHalo:
         else:
             comment_payload = self.create_comment_payload(zendesk_request["id"], zendesk_request)
         return comment_payload
+
+    def create_user_payload(self, zendesk_request):
+        """ """
+        if "email" in zendesk_request:
+            zendesk_request["emailaddress"] = zendesk_request["email"]
+        return zendesk_request

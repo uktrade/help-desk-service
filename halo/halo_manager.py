@@ -7,6 +7,7 @@ from halo.data_class import (
     ZendeskTicketContainer,
     ZendeskTicketNotFoundException,
     ZendeskTicketsContainer,
+    ZendeskUser,
 )
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 from halo.halo_to_zendesk import HaloToZendesk
@@ -48,14 +49,22 @@ class HaloManager:
     def get_user(self, user_id: int):
         halo_user = self.client.get(path=f"Users/{user_id}")
         # Need to transform into a Zendesk compatible user structure
-        zendesk_user = halo_user
-        return zendesk_user
+        zendesk_response = HaloToZendesk().get_user_response_mapping(halo_user)
+        # zendesk_user = halo_user
+        return zendesk_response
 
-    # def create_user(self, user_details: ZendeskUserDetails = {}) -> ZendeskUser:
-    #     # Receive Zendesk user and create user in Halo, give back Zendesk user
-    #     halo_payload = "TODO create payload from incoming Zendesk user details"
-    #     halo_user = self.client.post(path="Users", payload=[halo_payload])
-    #     return halo_user
+    def create_user(self, zendesk_user: dict = {}) -> ZendeskUser:
+        """
+        Receive Zendesk user and create user in Halo, give back Zendesk user.
+        If you need to create users without sending out a verification email,
+        include a "skip_verify_email": true property.
+        If you don't specify a role parameter, the new user is assigned the role of end user.
+        """
+        user_details = ZendeskToHalo().create_user_payload(zendesk_user)
+        halo_response = self.client.post(path="Users", payload=[user_details])
+        zendesk_response = HaloToZendesk().get_user_response_mapping(halo_response)
+        zendesk_user = ZendeskUser(**zendesk_response)
+        return zendesk_user
 
     def get_me(self, user_id: int):
         halo_user = self.client.get(path=f"Users?search={user_id}")

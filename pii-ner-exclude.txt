@@ -241,3 +241,11 @@ GET Me
 zendesk_manager.users.me
 CustomField
 ZendeskUser
+Receive Zendesk
+Get User and Create User Tests
+GET User Success
+GET User Failure
+POST User Success
+POST User Failure
+Update User Success
+Email

@@ -42,25 +42,34 @@ class UserView(HaloBaseView):
         """
         Get a user from Halo
         """
-        # Build User based on ID
-
-        if self.kwargs.get("id"):
-            # Get User from Halo
+        try:
             halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
-            serializer = ZendeskUserSerializer(id=halo_user["id"])
+            serializer = ZendeskUserSerializer(halo_user)
             return Response(serializer.data)
-        else:
-            # if no user id is passed we show the agent me??
-            return Response()
+        except HaloClientNotFoundException:
+            return Response(
+                "please check userid, a user with given id could not be found",
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
     def post(self, request, *args, **kwargs):
         """
         Create a User in Halo
         """
-        # Create user in Halo
-        halo_user = self.halo_manager.create_user(request.data)  # ** maybe?
-        serializer = ZendeskUserSerializer(halo_user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            if "id" in request.data:
+                halo_user = self.halo_manager.create_user(request.data)
+                serializer = ZendeskUserSerializer(halo_user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                halo_user = self.halo_manager.create_user(request.data)
+                serializer = ZendeskUserSerializer(halo_user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ZendeskException:
+            return Response(
+                "please check payload - user payload must have site id",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class MeView(HaloBaseView):
