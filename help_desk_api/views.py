@@ -57,13 +57,13 @@ class UserView(HaloBaseView):
         Create a User in Halo
         """
         try:
+            halo_user = self.halo_manager.create_user(request.data)
+            serializer = ZendeskUserSerializer(halo_user)
             if "id" in request.data:
-                halo_user = self.halo_manager.create_user(request.data)
-                serializer = ZendeskUserSerializer(halo_user)
+                # If "id" exists in payload that means we are updating user
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                halo_user = self.halo_manager.create_user(request.data)
-                serializer = ZendeskUserSerializer(halo_user)
+                # There is no "id" in payload, so we create a User
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException:
             return Response(
@@ -83,7 +83,7 @@ class MeView(HaloBaseView):
 
     def get(self, request, format=None):
         """
-        GET Me in Halo
+        GET Me (self) from Halo
         """
         # TODO:// get the ME user id from zendesk and pass to Halo
         # from zenpy import Zenpy
@@ -96,17 +96,9 @@ class MeView(HaloBaseView):
         # me_user = zendesk_manager.users.me()
         # print(me_user)
 
-        halo_user = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
-        if halo_user["record_count"] == 1:
-            serializer = ZendeskUserSerializer(halo_user["users"][0])
-            return Response(serializer.data)
-        else:
-            return Response(
-                """please check Other 5 Field on Users,
-                either you did not set on the intended user in Halo or
-                accidentally set it on multiple users""",
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
+        serializer = ZendeskUserSerializer(zendesk_response)
+        return Response(serializer.data)
 
 
 class CommentView(HaloBaseView):

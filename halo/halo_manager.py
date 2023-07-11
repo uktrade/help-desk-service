@@ -68,7 +68,8 @@ class HaloManager:
 
     def get_me(self, user_id: int):
         halo_user = self.client.get(path=f"Users?search={user_id}")
-        return halo_user
+        zendesk_response = HaloToZendesk().get_user_me_response_mapping(halo_user)
+        return zendesk_response
 
     def create_ticket(self, zendesk_request: dict = None) -> ZendeskTicketContainer:
         # Create ticket

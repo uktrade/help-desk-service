@@ -1,3 +1,6 @@
+import logging
+
+
 class HaloToZendesk:
     """
     This is a mapping class, where we map the Halo response to Zendesk response
@@ -21,7 +24,7 @@ class HaloToZendesk:
             "recipient_email": ticket_response.get("user_email", ""),
             "responder": ticket_response.get("reportedby", ""),
             "created_at": ticket_response["dateoccurred"],
-            "updated_at": ticket_response["id"],
+            "updated_at": ticket_response["dateoccurred"],
             "due_at": ticket_response["deadlinedate"],
             # "status": ticket_response['id'],
             # "priority": ticket_response["priority"]["name"],
@@ -58,9 +61,25 @@ class HaloToZendesk:
 
         return halo_response
 
+    def get_user_me_response_mapping(self, user_response):
+        """
+        User mapping from Halo to Zendesk
+        """
+        # TODO:// if more than one user handle case differently
+        mapped_user = {}
+        if user_response["record_count"] == 1:
+            if "users" in user_response:
+                for user in user_response["users"]:
+                    mapped_user["id"] = user["id"]
+                    mapped_user["name"] = user["name"]
+                    mapped_user["email"] = user["emailaddress"]
+        else:
+            logging.error("Other 5 is not set or is set on multiple fields")
+        return mapped_user
+
     def get_user_response_mapping(self, user_response):
         """
-        User mapping
+        We convert Halo response to Zendesk response
         """
         if "emailaddress" in user_response:
             user_response["email"] = user_response["emailaddress"]

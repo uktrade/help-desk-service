@@ -1,6 +1,6 @@
 class ZendeskToHalo:
     """
-    This is a mapping class, where we map the incoming payloads to outgoing halo payloads
+    This is a mapping class, where we map the incoming Zendesk payloads to outgoing Halo payloads
     """
 
     def create_ticket_payload(self, zendesk_request):

@@ -249,3 +249,11 @@ POST User Success
 POST User Failure
 Update User Success
 Email
+first 6
+Zendesk User Serializer
+Zendesk Comments Serializer
+Zendesk Tags Serializer
+Zendesk CustomFields Serializer
+Zendesk Tickets Serializer
+Zendesk Single Ticket Serializer
+Zendesk Multiple Tickets Serializer
