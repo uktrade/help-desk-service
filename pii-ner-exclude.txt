@@ -257,3 +257,6 @@ Zendesk CustomFields Serializer
 Zendesk Tickets Serializer
 Zendesk Single Ticket Serializer
 Zendesk Multiple Tickets Serializer
+Get MeView Tests
+GET Me Success
+GET Me Failure
