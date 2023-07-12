@@ -172,8 +172,7 @@ class HaloManager:
         ticket_actions = self.client.get(f"Actions?ticket_id={ticket_id}")
         for action in reversed(ticket_actions["actions"]):
             if action["outcome"] == "comment":
-                comment = HaloToZendesk().get_comment_response_mapping(action)
-                zendesk_comment = ZendeskComment(**comment)
+                zendesk_comment = ZendeskComment(**action)
                 comments.append(zendesk_comment)
         return comments
 

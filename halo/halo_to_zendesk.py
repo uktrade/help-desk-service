@@ -1,4 +1,7 @@
 import logging
+import os
+
+from scripts.utils import utils
 
 
 class HaloToZendesk:
@@ -10,9 +13,10 @@ class HaloToZendesk:
         """
         Ticket Mapping
         """
+        mapped_data = utils.read_mapping(os.path.join(os.getcwd(), "config/mapping.json"))
         zendesk_response = {
             "id": ticket_response["id"],
-            "subject": ticket_response.get("summary", ""),
+            "subject": ticket_response.get(mapped_data["subject"], ""),
             "details": ticket_response.get("details", ""),
             "user": ticket_response.get("user", {}),
             "group_id": ticket_response["id"],
@@ -30,17 +34,6 @@ class HaloToZendesk:
             # "priority": ticket_response["priority"]["name"],
             "ticket_type": "incident",  # ticket_response['tickettype']['name'],
             "attachments": ticket_response.get("attachments", []),
-        }
-        return zendesk_response
-
-    def get_comment_response_mapping(self, comment_response):
-        """
-        Comment Mapping
-        """
-        zendesk_response = {
-            "id": comment_response["id"],
-            "note": comment_response["note"],
-            "who": comment_response["who"],
         }
         return zendesk_response
 
@@ -66,16 +59,16 @@ class HaloToZendesk:
         User mapping from Halo to Zendesk
         """
         # TODO:// if more than one user handle case differently
-        mapped_user = {}
+        zendesk_user = {}
         if user_response["record_count"] == 1:
             if "users" in user_response:
                 for user in user_response["users"]:
-                    mapped_user["id"] = user["id"]
-                    mapped_user["name"] = user["name"]
-                    mapped_user["email"] = user["emailaddress"]
+                    zendesk_user["id"] = user["id"]
+                    zendesk_user["name"] = user["name"]
+                    zendesk_user["email"] = user["emailaddress"]
         else:
             logging.error("Other 5 is not set or is set on multiple fields")
-        return mapped_user
+        return zendesk_user
 
     def get_user_response_mapping(self, user_response):
         """
