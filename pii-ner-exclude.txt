@@ -237,6 +237,10 @@ MetaFieldSerializer
 print(pagenum
 ENV
 GET All Tickets from Halo
+GET Me
+zendesk_manager.users.me
+CustomField
+ZendeskUser
 Receive Zendesk
 Get User and Create User Tests
 GET User Success
@@ -245,3 +249,14 @@ POST User Success
 POST User Failure
 Update User Success
 Email
+first 6
+Zendesk User Serializer
+Zendesk Comments Serializer
+Zendesk Tags Serializer
+Zendesk CustomFields Serializer
+Zendesk Tickets Serializer
+Zendesk Single Ticket Serializer
+Zendesk Multiple Tickets Serializer
+Get MeView Tests
+GET Me Success
+GET Me Failure

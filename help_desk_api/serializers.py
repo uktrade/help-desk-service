@@ -10,18 +10,18 @@ TICKET_PRIORITIES = (
 
 class ZendeskUserSerializer(serializers.Serializer):
     """
-    Halo User Serializer
+    Zendesk User Serializer
     """
 
     id = serializers.IntegerField()
     name = serializers.CharField()
-    emailaddress = serializers.EmailField()
+    email = serializers.EmailField()
     site_id = serializers.IntegerField()
 
 
 class ZendeskCommentSerializer(serializers.Serializer):
     """
-    Comments Serializer
+    Zendesk Comments Serializer
     """
 
     id = serializers.IntegerField()
@@ -31,7 +31,7 @@ class ZendeskCommentSerializer(serializers.Serializer):
 
 class ZendeskTagSerializer(serializers.Serializer):
     """
-    Tags Serializer
+    Zendesk Tags Serializer
     """
 
     id = serializers.IntegerField()
@@ -40,7 +40,7 @@ class ZendeskTagSerializer(serializers.Serializer):
 
 class ZendeskCustomFieldsSerializer(serializers.Serializer):
     """
-    CustomFields Serializer
+    Zendesk CustomFields Serializer
     """
 
     id = serializers.IntegerField()
@@ -49,7 +49,7 @@ class ZendeskCustomFieldsSerializer(serializers.Serializer):
 
 class ZendeskAttachmentSerializer(serializers.Serializer):
     """
-    Tags Serializer
+    Zendesk Tags Serializer
     """
 
     id = serializers.IntegerField()
@@ -59,24 +59,24 @@ class ZendeskAttachmentSerializer(serializers.Serializer):
 
 class ZendeskTicketSerializer(serializers.Serializer):
     """
-    Tickets Serializer
+    Zendesk Tickets Serializer
     """
 
     id = serializers.IntegerField()
     subject = serializers.CharField(max_length=200)
     details = serializers.CharField(max_length=200)
-    user = ZendeskUserSerializer(many=True)
+    user = ZendeskUserSerializer()
     group_id = serializers.CharField()
     external_id = serializers.CharField()
     assignee_id = serializers.CharField()
     comment = ZendeskCommentSerializer(many=True)
-    tags = ZendeskTagSerializer(many=True)
+    tags = serializers.ListField()  # ZendeskTagSerializer(many=True)
     custom_fields = ZendeskCustomFieldsSerializer(many=True)
     recipient_email = serializers.EmailField()
     responder = serializers.CharField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
-    due_at = serializers.CharField()
+    due_at = serializers.DateTimeField()
     # status = serializers.CharField()
     priority = serializers.ChoiceField(
         choices=TICKET_PRIORITIES,
@@ -89,7 +89,7 @@ class ZendeskTicketSerializer(serializers.Serializer):
 
 class ZendeskTicketContainerSerializer(serializers.Serializer):
     """
-    Single Ticket Serializer
+    Zendesk Single Ticket Serializer
     """
 
     ticket = ZendeskTicketSerializer(many=True)
@@ -97,12 +97,9 @@ class ZendeskTicketContainerSerializer(serializers.Serializer):
 
 class ZendeskTicketsContainerSerializer(serializers.Serializer):
     """
-    Multiple Tickets Serializer
+    Zendesk Multiple Tickets Serializer
     """
 
-    #     # page_no = serializers.IntegerField()
-    #     # page_size = serializers.IntegerField()
-    #     # record_count = serializers.IntegerField()
     tickets = ZendeskTicketSerializer(many=True)
 
 

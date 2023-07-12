@@ -57,13 +57,13 @@ class UserView(HaloBaseView):
         Create a User in Halo
         """
         try:
+            halo_user = self.halo_manager.create_user(request.data)
+            serializer = ZendeskUserSerializer(halo_user)
             if "id" in request.data:
-                halo_user = self.halo_manager.create_user(request.data)
-                serializer = ZendeskUserSerializer(halo_user)
+                # If "id" exists in payload that means we are updating user
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                halo_user = self.halo_manager.create_user(request.data)
-                serializer = ZendeskUserSerializer(halo_user)
+                # There is no "id" in payload, so we create a User
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException:
             return Response(
@@ -83,12 +83,22 @@ class MeView(HaloBaseView):
 
     def get(self, request, format=None):
         """
-        GET Agent Me in Halo
+        GET Me (self) from Halo
         """
-        # Get Me from Halo
-        # queryset = self.halo_manager.get_or_create_user(user=None)
-        # serializer = HaloUserSerializer(queryset)
-        return Response()
+        # TODO:// get the ME user id from zendesk and pass to Halo
+        # from zenpy import Zenpy
+        # credentials = {
+        #     "email": "xyz",
+        #     "token": "1234",
+        #     "subdomain": "uktrade"
+        # }
+        # zendesk_manager = Zenpy(**credentials)
+        # me_user = zendesk_manager.users.me()
+        # print(me_user)
+
+        zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
+        serializer = ZendeskUserSerializer(zendesk_response)
+        return Response(serializer.data)
 
 
 class CommentView(HaloBaseView):

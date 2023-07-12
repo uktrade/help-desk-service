@@ -181,3 +181,51 @@ class TestUserViews:
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.update_ticket(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"
+
+
+class TestMeView:
+    """
+    Get MeView Tests
+    """
+
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_get_user_me_success(self, mock_post, mock_get):
+        """
+        GET Me Success
+        """
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "record_count": 1,
+            "users": [
+                {
+                    "id": 1,
+                    "name": "name",
+                    "emailaddress": "test@test.com",  # /PS-IGNORE
+                }
+            ],
+        }
+
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        user = halo_manager.get_me(1)
+        assert isinstance(user, dict)
+        assert user["id"] == 1
+        assert "email" in user  # this checks the transformation bit
+
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_get_user_me_failure(self, mock_post, mock_get):
+        """
+        GET Me Failure
+        """
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+
+        mock_get.return_value.status_code = 400
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        with pytest.raises(HaloClientNotFoundException) as excinfo:
+            halo_manager.get_me(1)
+        assert excinfo.typename == "HaloClientNotFoundException"

@@ -1,7 +1,9 @@
 import datetime
+import re
 from enum import Enum
 from typing import List, Optional
 
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 
@@ -63,7 +65,7 @@ class ZendeskTicket:
     subject: str
     id: Optional[int] = None
     details: Optional[str] = None
-    user: Optional[List[ZendeskUser]] = None
+    user: Optional[ZendeskUser] = None
     group_id: Optional[int] = None
     external_id: Optional[int] = None
     assignee_id: Optional[int] = None
@@ -79,6 +81,13 @@ class ZendeskTicket:
     priority: Optional[str] = None
     ticket_type: Optional[TicketType] = None
     attachments: Optional[List[ZendeskAttachment]] = None
+
+    @field_validator("created_at", "updated_at", mode="before")
+    def strip_nanosedonds(cls, v):
+        if isinstance(v, str):
+            # remove any digits after first 6 after the dot
+            return re.sub(r"(\.\d{6})\d+", r"\g<1>", v)
+        return v
 
 
 @dataclass

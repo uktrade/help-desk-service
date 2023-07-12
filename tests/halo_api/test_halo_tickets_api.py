@@ -75,6 +75,8 @@ class TestTicketViews:
         assert isinstance(ticket.ticket, list)
         assert isinstance(ticket.ticket[0], ZendeskTicket)
         assert ticket.ticket[0].subject == "summary"
+        assert isinstance(ticket.ticket[0].tags, list)
+        assert ticket.ticket[0].tags[0] == "test"
 
     @patch("requests.get")
     @patch("requests.post")
