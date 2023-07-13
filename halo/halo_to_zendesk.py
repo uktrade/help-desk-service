@@ -1,6 +1,6 @@
 import logging
-import os
 
+from django.conf import settings
 from scripts.utils import utils
 
 
@@ -9,14 +9,16 @@ class HaloToZendesk:
     This is a mapping class, where we map the Halo response to Zendesk response
     """
 
+    def __init__(self):
+        self.mapped_data = utils.read_mapping(settings.BASE_DIR / "config/mapping.json")
+
     def get_ticket_response_mapping(self, ticket_response):
         """
         Ticket Mapping
         """
-        mapped_data = utils.read_mapping(os.path.join(os.getcwd(), "config/mapping.json"))
         zendesk_response = {
             "id": ticket_response["id"],
-            "subject": ticket_response.get(mapped_data["subject"], ""),
+            "subject": ticket_response.get(self.mapped_data["subject"], ""),
             "details": ticket_response.get("details", ""),
             "user": ticket_response.get("user", {}),
             "group_id": ticket_response["id"],
@@ -65,15 +67,15 @@ class HaloToZendesk:
                 for user in user_response["users"]:
                     zendesk_user["id"] = user["id"]
                     zendesk_user["name"] = user["name"]
-                    zendesk_user["email"] = user["emailaddress"]
+                    zendesk_user["email"] = user[self.mapped_data["email"]]
         else:
             logging.error("Other 5 is not set or is set on multiple fields")
         return zendesk_user
 
-    def get_user_response_mapping(self, user_response):
-        """
-        We convert Halo response to Zendesk response
-        """
-        if "emailaddress" in user_response:
-            user_response["email"] = user_response["emailaddress"]
-        return user_response
+    # def get_user_response_mapping(self, user_response):
+    #     """
+    #     We convert Halo response to Zendesk response
+    #     """
+    #     if self.mapped_data['email'] in user_response:
+    #         user_response["email"] = user_response[self.mapped_data['email']]
+    #     return user_response

@@ -8,15 +8,15 @@ TICKET_PRIORITIES = (
 )
 
 
-class ZendeskUserSerializer(serializers.Serializer):
-    """
-    Zendesk User Serializer
-    """
+# class ZendeskUserSerializer(serializers.Serializer):
+#     """
+#     Zendesk User Serializer
+#     """
 
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    email = serializers.EmailField()
-    site_id = serializers.IntegerField()
+#     id = serializers.IntegerField()
+#     name = serializers.CharField()
+#     email = serializers.EmailField()
+#     site_id = serializers.IntegerField()
 
 
 class ZendeskCommentSerializer(serializers.Serializer):
@@ -57,6 +57,57 @@ class ZendeskAttachmentSerializer(serializers.Serializer):
     isimage = serializers.BooleanField()
 
 
+class ZendeskToHaloUserSerializer(serializers.Serializer):
+    site_id = serializers.IntegerField()
+    name = serializers.CharField()
+    emailaddress = serializers.EmailField()
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+        zendesk_data = {
+            "emailaddress": data["email"],
+            "name": data["name"],
+            "site_id": data["site_id"],
+        }
+        return super().to_representation(zendesk_data)
+
+
+class HaloToZendeskUserSerializer(serializers.Serializer):
+    """
+    Halo User Serializer (despite the name)
+
+    The only fields that seem to be used within DBT systems are:
+    name: str - Full name of the user
+    email: str - Email address of the user
+    id: int - Zendesk ID of the user
+
+    This will have to map the Halo ID
+    to the equivalent Zendesk ID.
+    """
+
+    id = serializers.SerializerMethodField(method_name="halo_id_to_zendesk_id")
+    name = serializers.CharField()
+    email = serializers.EmailField()
+
+    def halo_id_to_zendesk_id(self, instance):
+        return instance["id"]  # TODO: mapping to Zendesk ID
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+        zendesk_data = {
+            "email": data["emailaddress"],
+            "name": data["name"],
+            "id": data["id"],
+        }
+        return super().to_representation(zendesk_data)
+
+
 class ZendeskTicketSerializer(serializers.Serializer):
     """
     Zendesk Tickets Serializer
@@ -65,7 +116,7 @@ class ZendeskTicketSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     subject = serializers.CharField(max_length=200)
     details = serializers.CharField(max_length=200)
-    user = ZendeskUserSerializer()
+    user = HaloToZendeskUserSerializer()
     group_id = serializers.CharField()
     external_id = serializers.CharField()
     assignee_id = serializers.CharField()
@@ -101,32 +152,3 @@ class ZendeskTicketsContainerSerializer(serializers.Serializer):
     """
 
     tickets = ZendeskTicketSerializer(many=True)
-
-
-class ZendeskUserSerializer(serializers.Serializer):
-    """
-    Halo User Serializer (despite the name)
-
-    The only fields that seem to be used within DBT systems are:
-    name: str - Full name of the user
-    email: str - Email address of the user
-    id: int - Zendesk ID of the user
-
-    This will have to map the Halo ID
-    to the equivalent Zendesk ID.
-    """
-
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    email = serializers.EmailField()
-
-    # def halo_id_to_zendesk_id(self, instance):
-    #     return instance["id"]  # TODO: mapping to Zendesk ID
-
-    # def to_representation(self, data):
-    #     zendesk_data = {
-    #         "email": data["emailaddress"],
-    #         "name": data["name"],
-    #         "id": data["id"],
-    #     }
-    #     return super().to_representation(zendesk_data)

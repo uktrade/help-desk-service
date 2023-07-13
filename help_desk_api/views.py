@@ -8,11 +8,12 @@ from rest_framework.views import APIView
 
 from help_desk_api.pagination import CustomPagination
 from help_desk_api.serializers import (
+    HaloToZendeskUserSerializer,
     ZendeskCommentSerializer,
     ZendeskTicketContainerSerializer,
     ZendeskTicketsContainerSerializer,
     ZendeskTicketSerializer,
-    ZendeskUserSerializer,
+    ZendeskToHaloUserSerializer,
 )
 
 
@@ -36,7 +37,7 @@ class UserView(HaloBaseView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
-    serializer_class = ZendeskUserSerializer
+    # serializer_class = HaloToZendeskUserSerializer
 
     def get(self, request, *args, **kwargs):
         """
@@ -44,7 +45,7 @@ class UserView(HaloBaseView):
         """
         try:
             halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
-            serializer = ZendeskUserSerializer(halo_user)
+            serializer = HaloToZendeskUserSerializer(halo_user)
             return Response(serializer.data)
         except HaloClientNotFoundException:
             return Response(
@@ -57,8 +58,9 @@ class UserView(HaloBaseView):
         Create a User in Halo
         """
         try:
-            halo_user = self.halo_manager.create_user(request.data)
-            serializer = ZendeskUserSerializer(halo_user)
+            halo_user = ZendeskToHaloUserSerializer(request.data)
+            halo_response = self.halo_manager.create_user(halo_user)
+            serializer = HaloToZendeskUserSerializer(halo_response)
             if "id" in request.data:
                 # If "id" exists in payload that means we are updating user
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -97,7 +99,7 @@ class MeView(HaloBaseView):
         # print(me_user)
 
         zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
-        serializer = ZendeskUserSerializer(zendesk_response)
+        serializer = HaloToZendeskUserSerializer(zendesk_response)
         return Response(serializer.data)
 
 

@@ -261,3 +261,7 @@ Get MeView Tests
 GET Me Success
 GET Me Failure
 config/mapping.json
+ZendeskUserSerializer(serializers
+Zendesk User
+Serializer
+EmailField
