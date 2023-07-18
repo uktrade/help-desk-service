@@ -26,7 +26,7 @@ class TestClamAVScan():
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {'malware': False, 'reason': None, 'time': 0.0049}
         av_passed = av_scan_file(path)
-        assert av_passed == True
+        assert av_passed is True
 
 
     @pytest.mark.parametrize("path", [
@@ -37,7 +37,7 @@ class TestClamAVScan():
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {'malware': True, 'reason': 'Win.Test.EICAR_HDB-1', 'time': 0.0057}
         av_passed = av_scan_file(path)
-        assert av_passed == False
+        assert av_passed is False
 
     
     @patch("requests.get")
@@ -62,6 +62,6 @@ class TestClamAVScan():
     
     @mock.patch("halo.clam_av.pathlib")
     def test_no_connection_if_ext_exempt(self, mocker ):
-        assert skip_file_extension(EICAR) == False
+        assert skip_file_extension(EICAR) is False
 
     
