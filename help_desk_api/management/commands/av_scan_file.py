@@ -1,7 +1,8 @@
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from halo.clam_av import check_av_service, av_scan_file, skip_file_extension, CLAM_AV_HOST, CLAM_AV_PATH
+from halo.clam_av import check_av_service, av_scan_file, \
+           skip_file_extension, CLAM_AV_HOST, CLAM_AV_PATH
 
 
 class Command(BaseCommand):
