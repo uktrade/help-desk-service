@@ -1,8 +1,8 @@
 import logging
 import pathlib
 from base64 import b64encode
-import requests
 
+import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -86,12 +86,3 @@ def av_scan_file(file_name):
         av_passed = True
 
     return av_passed
-
-
-if __name__ == "__main__":
-    FILENAME = settings.BASE_DIR / "tests/help_desk_api/eicar.txt"
-
-    if not skip_file_extension(FILENAME):
-        if check_av_service(CLAM_AV_HOST, CLAM_AV_PATH) == "OK":
-            if av_scan_file(FILENAME) == "OK":
-                print("proceed to Uploading the file")
