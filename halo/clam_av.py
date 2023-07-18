@@ -1,10 +1,8 @@
-import json
+
 import logging
 import pathlib
 from base64 import b64encode
 import requests
-import json
-from http.client import HTTPConnection
 
 from django.conf import settings
 
@@ -75,13 +73,12 @@ def av_scan_file(file_name):
         msg = "Malformed response from AV server"
         logger.warning(msg)
         av_passed = False
-        av_reason = msg
 
         raise MalformedAntiVirusResponseException()
 
     if av_results["malware"]:
         av_passed = False
-        av_reason = av_results["reason"]
+        # av_reason = av_results["reason"]
         msg = f"Malware found in user uploaded file {file_name}, exiting upload process"
         logger.warning(msg)
         av_passed = False
