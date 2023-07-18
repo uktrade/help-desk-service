@@ -14,7 +14,7 @@ class ZendeskToHaloCommentSerializer(serializers.Serializer):
     """
 
     ticket_id = serializers.IntegerField()
-    id = serializers.IntegerField()
+    # id = serializers.IntegerField()
     outcome = serializers.CharField()
     note = serializers.CharField()
 
@@ -25,9 +25,9 @@ class ZendeskToHaloCommentSerializer(serializers.Serializer):
     def to_representation(self, data):
         zendesk_data = {
             "ticket_id": data["ticket_id"],
-            "id": data.get(
-                "id",
-            ),
+            # "id": data.get(
+            #     "id",
+            # ),
             "outcome": "comment",
             "note": data["ticket"]["comment"]["body"],
         }
@@ -135,7 +135,7 @@ class ZendeskToHaloTicketSerializer(serializers.Serializer):
 
     summary = serializers.CharField()
     details = serializers.CharField()
-    # tags = serializers.CharField()
+    tags = serializers.ListField()
 
     def validate(self, data):
         return data
@@ -145,7 +145,7 @@ class ZendeskToHaloTicketSerializer(serializers.Serializer):
         halo_payload = {
             "summary": zendesk_ticket_data.get("subject", None),
             "details": zendesk_ticket_data.get("description", None),
-            # "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
+            "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         }
         return super().to_representation(halo_payload)
 

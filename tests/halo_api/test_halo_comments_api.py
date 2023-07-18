@@ -4,8 +4,6 @@ import pytest
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 
-from help_desk_api.serializers import HaloToZendeskCommentSerializer
-
 
 class TestCommentsViews:
     """
@@ -28,9 +26,9 @@ class TestCommentsViews:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         comment = halo_manager.get_comments(123)
-        assert isinstance(comment[0], HaloToZendeskCommentSerializer)
+        assert isinstance(comment[0], dict)
         assert isinstance(comment, list)
-        assert comment[0].note == "note"
+        assert comment[0]["note"] == "note"
 
     @patch("requests.get")
     @patch("requests.post")

@@ -273,3 +273,15 @@ Zendesk to Halo Ticket Example Payload
 ZendeskTicketSerializer
 ZendeskComment
 ZendeskTicketsContainer
+halo_manager.update_ticket(request_data
+assert isinstance(ticket
+assert isinstance(ticket['ticket'
+assert isinstance(ticket['ticket'][0]
+POST Ticket Failure
+assert excinfo.typename
+halo_manager.update_ticket(request_data
+assert isinstance(ticket
+assert isinstance(ticket['ticket'
+assert isinstance(ticket['ticket'][0]
+POST Ticket Failure
+assert excinfo.typename
