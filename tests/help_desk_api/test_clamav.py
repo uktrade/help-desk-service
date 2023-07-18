@@ -1,15 +1,14 @@
-from unittest.mock import patch
 from unittest import mock
+from unittest.mock import patch
+
 import pytest
-
-from halo.clam_av import (
-    check_av_service,
-    av_scan_file,
-    skip_file_extension,
-    CLAM_AV_HOST,
-)
-
 from django.conf import settings
+from halo.clam_av import (
+    CLAM_AV_HOST,
+    av_scan_file,
+    check_av_service,
+    skip_file_extension,
+)
 
 EICAR = settings.BASE_DIR / "tests/help_desk_api/eicar.txt"
 CLEAN = settings.BASE_DIR / "tests/help_desk_api/clean_file.txt"
