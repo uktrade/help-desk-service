@@ -7,7 +7,6 @@ from halo.clam_av import (
     av_scan_file,
     skip_file_extension,
     CLAM_AV_HOST,
-    CLAM_AV_PATH,
 )
 
 from django.conf import settings
