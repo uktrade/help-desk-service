@@ -2,7 +2,7 @@
 from unittest.mock import patch
 from unittest import mock
 import pytest
-#from halo.clam_av import *
+
 from halo.clam_av import av_scan_file, check_av_service, skip_file_extension, CLAM_AV_HOST
 
 from django.conf import settings
@@ -22,7 +22,7 @@ class TestClamAVScan():
                 (CLEAN),
     ])
     @patch("requests.post")
-    def test_eicar(self, mock_post, path):
+    def test_av_scan_malware_not_found(self, mock_post, path):
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {'malware': False, 'reason': None, 'time': 0.0049}
         av_passed = av_scan_file(path)
@@ -33,7 +33,7 @@ class TestClamAVScan():
                 (EICAR),
     ])
     @patch("requests.post")
-    def test_eicar(self, mock_post, path):
+    def test_av_scan_malware_found(self, mock_post, path):
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {'malware': True, 'reason': 'Win.Test.EICAR_HDB-1', 'time': 0.0057}
         av_passed = av_scan_file(path)
