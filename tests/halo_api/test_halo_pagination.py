@@ -1,8 +1,9 @@
 import datetime
 from unittest.mock import patch
 
-from halo.data_class import ZendeskTicketsContainer
 from halo.halo_manager import HaloManager
+
+from help_desk_api.serializers import HaloToZendeskTicketsContainerSerializer
 
 
 class TestTicketViews:
@@ -57,5 +58,5 @@ class TestTicketViews:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         ticket = halo_manager.get_tickets()
-        assert isinstance(ticket, ZendeskTicketsContainer)
+        assert isinstance(ticket, HaloToZendeskTicketsContainerSerializer)
         assert isinstance(ticket.tickets, list)

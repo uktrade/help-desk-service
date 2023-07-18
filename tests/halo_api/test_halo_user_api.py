@@ -2,12 +2,12 @@ from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest
-from halo.data_class import ZendeskUser
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 from tests.fixture_data.halo.user import user as halo_user
 
 from help_desk_api.models import HelpDeskCreds
+from help_desk_api.serializers import HaloToZendeskUserSerializer
 from help_desk_api.views import UserView
 
 
@@ -116,7 +116,7 @@ class TestUserViews:
 
         request_data = {"id": 1, "name": "name", "email": "test@email.com"}  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
-        assert isinstance(user, ZendeskUser)
+        assert isinstance(user, HaloToZendeskUserSerializer)
         assert user.id == 123
 
     @patch("requests.post")
@@ -158,7 +158,7 @@ class TestUserViews:
 
         request_data = {"id": 1, "name": "test"}
         user = halo_manager.create_user(request_data)
-        assert isinstance(user, ZendeskUser)
+        assert isinstance(user, HaloToZendeskUserSerializer)
         assert user.name == "test"
 
     @patch("requests.post")

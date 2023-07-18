@@ -2,9 +2,14 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-from halo.data_class import ZendeskException, ZendeskTicket, ZendeskTicketContainer
+from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
 from halo.halo_manager import HaloManager
+
+from help_desk_api.serializers import (
+    HaloToZendeskTicketContainerSerializer,
+    HaloToZendeskTicketSerializer,
+)
 
 
 class TestTicketViews:
@@ -71,9 +76,9 @@ class TestTicketViews:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         ticket = halo_manager.get_ticket(123)
-        assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket, HaloToZendeskTicketContainerSerializer)
         assert isinstance(ticket.ticket, list)
-        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert isinstance(ticket.ticket[0], HaloToZendeskTicketSerializer)
         assert ticket.ticket[0].subject == "summary"
         assert isinstance(ticket.ticket[0].tags, list)
         assert ticket.ticket[0].tags[0] == "test"
@@ -142,9 +147,9 @@ class TestTicketViews:
             }
         }
         ticket = halo_manager.create_ticket(request_data)
-        assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket, HaloToZendeskTicketContainerSerializer)
         assert isinstance(ticket.ticket, list)
-        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert isinstance(ticket.ticket[0], HaloToZendeskTicketSerializer)
         assert ticket.ticket[0].subject == "summary"
 
     @patch("requests.post")
@@ -217,9 +222,9 @@ class TestTicketViews:
             },
         }
         ticket = halo_manager.update_ticket(request_data)
-        assert isinstance(ticket, ZendeskTicketContainer)
+        assert isinstance(ticket, HaloToZendeskTicketContainerSerializer)
         assert isinstance(ticket.ticket, list)
-        assert isinstance(ticket.ticket[0], ZendeskTicket)
+        assert isinstance(ticket.ticket[0], HaloToZendeskTicketSerializer)
         assert ticket.ticket[0].subject == "summary"
 
     @patch("requests.post")

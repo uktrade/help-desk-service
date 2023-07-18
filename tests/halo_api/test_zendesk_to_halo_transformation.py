@@ -1,12 +1,11 @@
-from halo.zendesk_to_halo import ZendeskToHalo
+from help_desk_api.serializers import ZendeskToHaloTicketSerializer
 
 
 class TestZendeskToHaloTransformation:
     def test_tags(self, new_zendesk_ticket):
-        transformer = ZendeskToHalo()
         expected_tags = {tag for tag in new_zendesk_ticket["ticket"]["tags"]}
 
-        halo_equivalent = transformer.create_ticket_payload(new_zendesk_ticket)
+        halo_equivalent = ZendeskToHaloTicketSerializer(new_zendesk_ticket)
 
         assert "tags" in halo_equivalent
         assert len(halo_equivalent["tags"]) == len(new_zendesk_ticket["ticket"]["tags"])

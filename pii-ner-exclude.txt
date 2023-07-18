@@ -265,3 +265,11 @@ ZendeskUserSerializer(serializers
 Zendesk User
 Serializer
 EmailField
+ZendeskTicketContainer
+Zendesk Attachments
+Zendesk Payload
+Halo Payload
+Zendesk to Halo Ticket Example Payload
+ZendeskTicketSerializer
+ZendeskComment
+ZendeskTicketsContainer
