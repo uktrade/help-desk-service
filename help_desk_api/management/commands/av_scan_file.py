@@ -1,8 +1,12 @@
-
 from django.conf import settings
 from django.core.management import BaseCommand
-from halo.clam_av import check_av_service, av_scan_file, \
-           skip_file_extension, CLAM_AV_HOST, CLAM_AV_PATH
+from halo.clam_av import (
+    check_av_service,
+    av_scan_file,
+    skip_file_extension,
+    CLAM_AV_HOST,
+    CLAM_AV_PATH,
+)
 
 
 class Command(BaseCommand):
@@ -25,6 +29,5 @@ class Command(BaseCommand):
         path = settings.BASE_DIR / f"tests/help_desk_api/{filename}"
         if not skip_file_extension(path):
             if check_av_service(CLAM_AV_HOST, CLAM_AV_PATH) == "OK":
-                if av_scan_file(path) == 'OK':
+                if av_scan_file(path) == "OK":
                     print("proceed to Uploading the file")
-
