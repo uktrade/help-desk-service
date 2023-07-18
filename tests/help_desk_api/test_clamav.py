@@ -3,7 +3,8 @@ from unittest.mock import patch
 from unittest import mock
 import pytest
 
-from halo.clam_av import av_scan_file, check_av_service, skip_file_extension, CLAM_AV_HOST
+from halo.clam_av import av_scan_file, check_av_service, \
+                         skip_file_extension, CLAM_AV_HOST
 
 from django.conf import settings
 
@@ -17,14 +18,17 @@ CLAM_AV_PATH_NOT_OK = "/v3"
 
 class TestClamAVScan():
 
-    # †est different file paths by using the @pytest.mark.parametrize decorator
+    # †est different file paths with the @pytest.mark.parametrize decorator
     @pytest.mark.parametrize("path", [
                 (CLEAN),
     ])
     @patch("requests.post")
     def test_av_scan_malware_not_found(self, mock_post, path):
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {'malware': False, 'reason': None, 'time': 0.0049}
+        mock_post.return_value.json.return_value = {
+                                        'malware': False, 
+                                        'reason': None, 
+                                        'time': 0.0049}
         av_passed = av_scan_file(path)
         assert av_passed is True
 
@@ -35,7 +39,10 @@ class TestClamAVScan():
     @patch("requests.post")
     def test_av_scan_malware_found(self, mock_post, path):
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {'malware': True, 'reason': 'Win.Test.EICAR_HDB-1', 'time': 0.0057}
+        mock_post.return_value.json.return_value = {
+                                      'malware': True, 
+                                      'reason': 'Win.Test.EICAR_HDB-1', 
+                                      'time': 0.0057}
         av_passed = av_scan_file(path)
         assert av_passed is False
 
