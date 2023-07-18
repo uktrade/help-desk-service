@@ -79,7 +79,8 @@ def av_scan_file(file_name):
     if av_results["malware"]:
         av_passed = False
         # av_reason = av_results["reason"]
-        msg = f"Malware found in user uploaded file {file_name}, exiting upload process"
+        msg = f"Malware found in user uploaded file {file_name}, \
+        exiting upload process"
         logger.warning(msg)
         av_passed = False
     else:
@@ -89,7 +90,8 @@ def av_scan_file(file_name):
 
 
 if __name__ == "__main__":
-    FILENAME = "/Users/nikosbaltas/uktrade_dev/help-desk-service/tests/help_desk_api/eicar.txt"
+    FILENAME = settings.BASE_DIR / "tests/help_desk_api/eicar.txt"
+
     if not skip_file_extension(FILENAME):
         if check_av_service(CLAM_AV_HOST, CLAM_AV_PATH) == "OK":
             if av_scan_file(FILENAME) == 'OK':
