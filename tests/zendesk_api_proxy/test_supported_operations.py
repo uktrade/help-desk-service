@@ -1,12 +1,11 @@
 from http import HTTPStatus
 from unittest import mock
-import pytest
 
+import pytest
 from django.test import Client
 from django.urls import reverse
 from requests import Response
-from zendesk_api_proxy.middleware import get_view_class
-from zendesk_api_proxy.middleware import method_supported
+from zendesk_api_proxy.middleware import get_view_class, method_supported
 
 
 class TestSupportedOperations:
