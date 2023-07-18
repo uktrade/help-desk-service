@@ -2,7 +2,8 @@
 from unittest.mock import patch
 from unittest import mock
 import pytest
-from halo.clam_av import *
+#from halo.clam_av import *
+from halo.clam_av import av_scan_file, check_av_service, skip_file_extension, CLAM_AV_HOST
 
 from django.conf import settings
 
