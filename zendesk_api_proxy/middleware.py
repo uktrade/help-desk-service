@@ -19,16 +19,18 @@ from help_desk_api.utils import get_zenpy_request_vars
 
 logger = logging.getLogger(__name__)
 
+
 def get_view_class(path):
     view_class = None
-    
+
     for url_pattern in api_url_patterns[0].url_patterns:
-        if url_pattern.pattern.match(path.replace("/api/", "")):   
+        if url_pattern.pattern.match(path.replace("/api/", "")):
             view_class = url_pattern.lookup_str
             return view_class
 
     if not view_class:
         return False
+
 
 def method_supported(path, method):
     view_class = get_view_class(path)
@@ -112,7 +114,7 @@ class ZendeskAPIProxyMiddleware:
         django_response = None
 
         supported_endpoint = method_supported(request.path, request.method.upper())
-        
+
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             zendesk_response = self.make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
