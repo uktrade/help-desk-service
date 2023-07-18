@@ -1,4 +1,3 @@
-
 import logging
 import pathlib
 from base64 import b64encode
@@ -23,6 +22,7 @@ CLAM_AV_IGNORE_EXTENSIONS = [".png", ".pdf"]
 class AntiVirusServiceErrorException(Exception):
     pass
 
+
 class MalformedAntiVirusResponseException(Exception):
     pass
 
@@ -45,13 +45,12 @@ def check_av_service(CLAM_AV_HOST, CLAM_AV_PATH):
         return "OK"
     else:
         return "NOT OK"
-    
 
 
 def av_scan_file(file_name):
-    '''
+    """
     Function that POSTs a file to av service for scanning
-    '''
+    """
     credentials = b64encode(
         bytes(
             f"{CLAM_AV_USERNAME}:{CLAM_AV_PASSWORD}",
@@ -64,7 +63,7 @@ def av_scan_file(file_name):
         headers={
             "Authorization": f"Basic {credentials}",
         },
-        files={"file": open(file_name, "rb")}
+        files={"file": open(file_name, "rb")},
     )
 
     av_results = response.json()
@@ -94,5 +93,5 @@ if __name__ == "__main__":
 
     if not skip_file_extension(FILENAME):
         if check_av_service(CLAM_AV_HOST, CLAM_AV_PATH) == "OK":
-            if av_scan_file(FILENAME) == 'OK':
+            if av_scan_file(FILENAME) == "OK":
                 print("proceed to Uploading the file")
