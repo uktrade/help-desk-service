@@ -185,3 +185,8 @@ OPENAPI_CONFIG = {
     and translates Halo API responses into Zendesk API responses.
     """,  # /PS-IGNORE
 }
+
+CLAM_AV_USERNAME = env("CLAM_AV_USERNAME", default="")
+CLAM_AV_PASSWORD = env("CLAM_AV_PASSWORD", default="")
+CLAM_AV_URL = env("CLAM_AV_URL", default="")
+CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
