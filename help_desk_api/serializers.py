@@ -8,13 +8,12 @@ TICKET_PRIORITIES = (
 )
 
 
-class ZendeskToHaloCommentSerializer(serializers.Serializer):
+class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     """
     Zendesk Comments Serializer
     """
 
     ticket_id = serializers.IntegerField()
-    # id = serializers.IntegerField()
     outcome = serializers.CharField()
     note = serializers.CharField()
 
@@ -25,9 +24,30 @@ class ZendeskToHaloCommentSerializer(serializers.Serializer):
     def to_representation(self, data):
         zendesk_data = {
             "ticket_id": data["ticket_id"],
-            # "id": data.get(
-            #     "id",
-            # ),
+            "outcome": "comment",
+            "note": data["ticket"]["comment"]["body"],
+        }
+        return super().to_representation(zendesk_data)
+
+
+class ZendeskToHaloUpdateCommentSerializer(serializers.Serializer):
+    """
+    Zendesk Comments Serializer
+    """
+
+    ticket_id = serializers.IntegerField()
+    id = serializers.IntegerField()
+    outcome = serializers.CharField()
+    note = serializers.CharField()
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+        zendesk_data = {
+            "ticket_id": data["ticket_id"],
+            "id": data["ticket"]["comment"]["id"],
             "outcome": "comment",
             "note": data["ticket"]["comment"]["body"],
         }
@@ -63,7 +83,7 @@ class HaloToZendeskAttachmentSerializer(serializers.Serializer):
     isimage = serializers.BooleanField()
 
 
-class ZendeskToHaloUserSerializer(serializers.Serializer):
+class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
     """
     Zendesk Payload is converted to Halo Payload
     """
@@ -81,6 +101,28 @@ class ZendeskToHaloUserSerializer(serializers.Serializer):
             "emailaddress": data["email"],
             "name": data["name"],
             "site_id": data["site_id"],
+        }
+        return super().to_representation(zendesk_data)
+
+
+class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
+    """
+    Zendesk Payload is converted to Halo Payload
+    """
+
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    emailaddress = serializers.EmailField()
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+        zendesk_data = {
+            "emailaddress": data["email"],
+            "name": data["name"],
+            "id": data["id"],
         }
         return super().to_representation(zendesk_data)
 
@@ -111,14 +153,14 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
 
     def to_representation(self, data):
         zendesk_data = {
-            "email": data["emailaddress"],
-            "name": data["name"],
-            "id": data["id"],
+            "email": data.get("emailaddress", ""),
+            "name": data.get("name", ""),
+            "id": data.get("id", ""),
         }
         return super().to_representation(zendesk_data)
 
 
-class ZendeskToHaloTicketSerializer(serializers.Serializer):
+class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
     Example Payload:
@@ -143,6 +185,41 @@ class ZendeskToHaloTicketSerializer(serializers.Serializer):
     def to_representation(self, data):
         zendesk_ticket_data = data.get("ticket", {})
         halo_payload = {
+            "summary": zendesk_ticket_data.get("subject", None),
+            "details": zendesk_ticket_data.get("description", None),
+            "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
+        }
+        return super().to_representation(halo_payload)
+
+
+class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
+    """
+    Zendesk to Halo Ticket
+    Example Payload:
+    {
+        "ticket_id": 123,
+        "ticket": {
+            "comment": {
+            "body": "test"
+            },
+            "priority": "urgent",
+            "subject": "test"
+        }
+    }
+    """
+
+    id = serializers.IntegerField()
+    summary = serializers.CharField()
+    details = serializers.CharField()
+    tags = serializers.ListField()
+
+    def validate(self, data):
+        return data
+
+    def to_representation(self, data):
+        zendesk_ticket_data = data.get("ticket", {})
+        halo_payload = {
+            "id": data["ticket_id"],
             "summary": zendesk_ticket_data.get("subject", None),
             "details": zendesk_ticket_data.get("description", None),
             "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
@@ -185,7 +262,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     def to_representation(self, data):
         zendesk_response = {
             "id": data["id"],
-            "subject": data.get("subject", ""),
+            "subject": data.get("summary", ""),
             "details": data.get("details", ""),
             "user": data.get("user", {}),
             "group_id": data["id"],

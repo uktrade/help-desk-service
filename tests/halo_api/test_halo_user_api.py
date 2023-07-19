@@ -7,10 +7,7 @@ from halo.halo_manager import HaloManager
 from tests.fixture_data.halo.user import user as halo_user
 
 from help_desk_api.models import HelpDeskCreds
-from help_desk_api.serializers import (
-    HaloToZendeskUserSerializer,
-    ZendeskToHaloUserSerializer,
-)
+from help_desk_api.serializers import HaloToZendeskUserSerializer
 
 
 @pytest.fixture
@@ -117,8 +114,7 @@ class TestUserViews:
         mock_post.side_effects = fake_responses
 
         request_data = {"site_id": 1, "name": "name", "email": "test@email.com"}  # /PS-IGNORE
-        payload = ZendeskToHaloUserSerializer(request_data)
-        user = halo_manager.create_user(payload)
+        user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["id"] == 123
 
@@ -140,8 +136,7 @@ class TestUserViews:
 
         request_data = {"site_id": 1, "name": "name", "email": "test@test.com"}  # /PS-IGNORE
         with pytest.raises(HaloClientNotFoundException) as excinfo:
-            payload = ZendeskToHaloUserSerializer(request_data)
-            halo_manager.create_user(payload)
+            halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"
 
     @patch("requests.post")
@@ -149,7 +144,7 @@ class TestUserViews:
         """
         Update User Success
         """
-        mock_ticket_post = {"id": 1, "name": "test", "email": "test@test.com"}  # /PS-IGNORE
+        mock_ticket_post = {"id": 1, "name": "test", "emailaddress": "test@test.com"}  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
         fake_responses[0].return_value.status_code = 200
@@ -160,33 +155,31 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"site_id": 1, "name": "test", "email": "x@test.co"}  # /PS-IGNORE
-        payload = ZendeskToHaloUserSerializer(request_data)
-        user = halo_manager.create_user(payload)
+        request_data = {"id": 1, "name": "x", "email": "test@test.com"}  # /PS-IGNORE
+        user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
-        assert user["name"] == "test"
+        assert user["emailaddress"] == "test@test.com"  # /PS-IGNORE
 
-    # @patch("requests.post")
-    # def test_update_ticket_failure(self, mock_post):
-    #     """
-    #     POST Ticket Failure
-    #     """
-    #     fake_responses = [mock_post, mock_post]
-    #     fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
-    #     fake_responses[0].return_value.status_code = 200
-    #     mock_post.side_effects = fake_responses
+    @patch("requests.post")
+    def test_update_ticket_failure(self, mock_post):
+        """
+        POST Ticket Failure
+        """
+        fake_responses = [mock_post, mock_post]
+        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.status_code = 200
+        mock_post.side_effects = fake_responses
 
-    #     mock_ticket_post = {}
-    #     halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-    #     fake_responses[1].return_value.json.return_value = mock_ticket_post
-    #     fake_responses[1].return_value.status_code = 400
-    #     mock_post.side_effects = fake_responses
+        mock_ticket_post = {}
+        halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
+        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.status_code = 400
+        mock_post.side_effects = fake_responses
 
-    #     request_data = {"id": 1, "name": "test"}
-    #     with pytest.raises(HaloClientNotFoundException) as excinfo:
-    #         payload = ZendeskToHaloUserSerializer(request_data)
-    #         halo_manager.update_ticket(payload)
-    #     assert excinfo.typename == "HaloClientNotFoundException"
+        request_data = {"id": 1, "name": "test", "email": "test@x.com"}  # /PS-IGNORE
+        with pytest.raises(HaloClientNotFoundException) as excinfo:
+            halo_manager.create_user(request_data)
+        assert excinfo.typename == "HaloClientNotFoundException"
 
 
 class TestMeView:

@@ -5,9 +5,12 @@ from halo.data_class import ZendeskException, ZendeskTicketNotFoundException
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 
 from help_desk_api.serializers import (
-    ZendeskToHaloCommentSerializer,
-    ZendeskToHaloTicketSerializer,
-    ZendeskToHaloUserSerializer,
+    ZendeskToHaloCreateCommentSerializer,
+    ZendeskToHaloCreateTicketSerializer,
+    ZendeskToHaloCreateUserSerializer,
+    ZendeskToHaloUpdateCommentSerializer,
+    ZendeskToHaloUpdateTicketSerializer,
+    ZendeskToHaloUpdateUserSerializer,
 )
 
 
@@ -47,14 +50,17 @@ class HaloManager:
         halo_response = self.client.get(path=f"Users/{user_id}")
         return halo_response
 
-    def create_user(self, halo_user: ZendeskToHaloUserSerializer = None) -> dict:
+    def create_user(self, zendesk_request: dict = None) -> dict:
         """
         Receive Zendesk user and create user in Halo, give back Zendesk user.
         If you need to create users without sending out a verification email,
         include a "skip_verify_email": true property.
         If you don't specify a role parameter, the new user is assigned the role of end user.
         """
-
+        if "id" in zendesk_request:
+            halo_user = ZendeskToHaloUpdateUserSerializer(zendesk_request)
+        else:
+            halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
 
@@ -98,11 +104,11 @@ class HaloManager:
         if zendesk_request is None:
             zendesk_request = {}
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
-            halo_payload = ZendeskToHaloTicketSerializer(zendesk_request)
+            halo_payload = ZendeskToHaloCreateTicketSerializer(zendesk_request)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
 
             zendesk_request["ticket_id"] = halo_response["id"]
-            comment_payload = ZendeskToHaloCommentSerializer(zendesk_request)
+            comment_payload = ZendeskToHaloCreateCommentSerializer(zendesk_request)
             actions_response = self.client.post(path="Actions", payload=[comment_payload.data])
 
             halo_response["comment"] = [actions_response]
@@ -130,8 +136,7 @@ class HaloManager:
         """
         if zendesk_request is None:
             zendesk_request = {}
-        halo_payload = ZendeskToHaloTicketSerializer(zendesk_request)
-        # halo_payload["id"] = zendesk_request["id"]
+        halo_payload = ZendeskToHaloUpdateTicketSerializer(zendesk_request)
         updated_ticket = self.client.post(path="Tickets", payload=[halo_payload.data])
         if updated_ticket is None:
             message = f"Could not update ticket with id {zendesk_request['id']}"
@@ -139,11 +144,18 @@ class HaloManager:
             raise ZendeskTicketNotFoundException(message)
 
         if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
-            zendesk_request["ticket_id"] = updated_ticket["id"]
-            comment_payload = ZendeskToHaloCommentSerializer(zendesk_request)
-            updated_ticket["comment"] = [
-                self.client.post(path="Actions", payload=[comment_payload])
-            ]
+            if "id" in zendesk_request["ticket"]["comment"]:
+                zendesk_request["ticket_id"] = updated_ticket["id"]
+                comment_payload = ZendeskToHaloUpdateCommentSerializer(zendesk_request)
+                updated_ticket["comment"] = [
+                    self.client.post(path="Actions", payload=[comment_payload.data])
+                ]
+            else:
+                zendesk_request["ticket_id"] = updated_ticket["id"]
+                comment_payload = ZendeskToHaloCreateCommentSerializer(zendesk_request)
+                updated_ticket["comment"] = [
+                    self.client.post(path="Actions", payload=[comment_payload.data])
+                ]
 
         return {"ticket": [updated_ticket]}
 
