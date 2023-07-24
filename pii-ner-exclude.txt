@@ -285,3 +285,4 @@ assert isinstance(ticket['ticket'
 assert isinstance(ticket['ticket'][0]
 POST Ticket Failure
 assert excinfo.typename
+tag2

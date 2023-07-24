@@ -50,7 +50,7 @@ class TestTicketViews:
             "external_id": 1,
             "assignee_id": 1,
             "comment": [{"id": 2, "note": "note", "who": "who"}],
-            "tags": [{"id": 1, "text": "test"}],
+            "tags": ["tag1", "tag2"],
             "custom_fields": [{"id": 1, "value": "1"}],
             "recipient_email": "user_email",
             "responder": "reportedby",
@@ -76,7 +76,7 @@ class TestTicketViews:
         assert isinstance(ticket["ticket"][0], dict)
         assert ticket["ticket"][0]["subject"] == "summary"
         assert isinstance(ticket["ticket"][0]["tags"], list)
-        assert ticket["ticket"][0]["tags"][0]["text"] == "test"
+        assert ticket["ticket"][0]["tags"][0] == "tag1"
 
     @patch("requests.get")
     @patch("requests.post")

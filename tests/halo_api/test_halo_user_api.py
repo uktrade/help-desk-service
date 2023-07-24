@@ -158,6 +158,7 @@ class TestUserViews:
         request_data = {"id": 1, "name": "x", "email": "test@test.com"}  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
+        assert user["name"] == "test"
         assert user["emailaddress"] == "test@test.com"  # /PS-IGNORE
 
     @patch("requests.post")
