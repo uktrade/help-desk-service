@@ -183,7 +183,6 @@ class TestSupportedOperations:
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
 
-
     # Testing PUT
     @pytest.mark.parametrize(
         "url",
