@@ -26,7 +26,7 @@ def get_zenpy_request_vars(request):
 class ZenpyTriggers:
     def __init__(self, triggers) -> None:
         super().__init__()
-        self._triggers = triggers
+        self._triggers = triggers["triggers"]
 
     def filter_function(self, item):
         if "actions" not in item:
