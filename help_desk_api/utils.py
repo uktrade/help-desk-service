@@ -23,6 +23,63 @@ def get_zenpy_request_vars(request):
     return token, email
 
 
+class ZenpyMacros:
+    def __init__(self, macros) -> None:
+        super().__init__()
+        self._macros = macros["macros"]
+
+    @property
+    def macros(self):
+        return self._macros
+
+    @property
+    def unique_actions(self):
+        actions = [action["field"] for macro in self.macros for action in macro["actions"]]
+        return sorted(list(set(actions)))
+
+    @property
+    def plaintext_comments(self):
+        comments = [
+            action["value"]
+            for macro in self.macros
+            for action in macro["actions"]
+            if isinstance(action["value"], str) and action["field"] == "comment_value"
+        ]
+        comments += [
+            action["value"][1]
+            for macro in self.macros
+            for action in macro["actions"]
+            if isinstance(action["value"], list) and action["field"] == "comment_value"
+        ]
+        return sorted(list(set(comments)))
+
+    @property
+    def html_comments(self):
+        comments = [
+            action["value"]
+            for macro in self.macros
+            for action in macro["actions"]
+            if isinstance(action["value"], str) and action["field"] == "comment_value_html"
+        ]
+        comments += [
+            action["value"][1]
+            for macro in self.macros
+            for action in macro["actions"]
+            if isinstance(action["value"], list) and action["field"] == "comment_value_html"
+        ]
+        return sorted(list(set(comments)))
+
+    @property
+    def subjects(self):
+        comments = [
+            action["value"]
+            for macro in self.macros
+            for action in macro["actions"]
+            if action["field"] == "subject"
+        ]
+        return sorted(list(set(comments)))
+
+
 class ZenpyTriggers:
     def __init__(self, triggers) -> None:
         super().__init__()
