@@ -260,3 +260,29 @@ Zendesk Multiple Tickets Serializer
 Get MeView Tests
 GET Me Success
 GET Me Failure
+config/mapping.json
+ZendeskUserSerializer(serializers
+Zendesk User
+Serializer
+EmailField
+ZendeskTicketContainer
+Zendesk Attachments
+Zendesk Payload
+Halo Payload
+Zendesk to Halo Ticket Example Payload
+ZendeskTicketSerializer
+ZendeskComment
+ZendeskTicketsContainer
+halo_manager.update_ticket(request_data
+assert isinstance(ticket
+assert isinstance(ticket['ticket'
+assert isinstance(ticket['ticket'][0]
+POST Ticket Failure
+assert excinfo.typename
+halo_manager.update_ticket(request_data
+assert isinstance(ticket
+assert isinstance(ticket['ticket'
+assert isinstance(ticket['ticket'][0]
+POST Ticket Failure
+assert excinfo.typename
+tag2

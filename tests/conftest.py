@@ -139,4 +139,5 @@ def new_halo_ticket():
             {"id": 0, "text": "second"},
             {"id": 0, "text": "third tag"},
         ],
+        "user": {"id": 1, "name": "test", "emailaddress": "test@test.co"},  # /PS-IGNORE
     }
