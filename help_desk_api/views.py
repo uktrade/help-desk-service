@@ -8,11 +8,10 @@ from rest_framework.views import APIView
 
 from help_desk_api.pagination import CustomPagination
 from help_desk_api.serializers import (
-    ZendeskCommentSerializer,
-    ZendeskTicketContainerSerializer,
-    ZendeskTicketsContainerSerializer,
-    ZendeskTicketSerializer,
-    ZendeskUserSerializer,
+    HaloToZendeskCommentSerializer,
+    HaloToZendeskTicketContainerSerializer,
+    HaloToZendeskTicketsContainerSerializer,
+    HaloToZendeskUserSerializer,
 )
 
 
@@ -36,7 +35,6 @@ class UserView(HaloBaseView):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
-    serializer_class = ZendeskUserSerializer
 
     def get(self, request, *args, **kwargs):
         """
@@ -44,7 +42,7 @@ class UserView(HaloBaseView):
         """
         try:
             halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
-            serializer = ZendeskUserSerializer(halo_user)
+            serializer = HaloToZendeskUserSerializer(halo_user)
             return Response(serializer.data)
         except HaloClientNotFoundException:
             return Response(
@@ -57,8 +55,8 @@ class UserView(HaloBaseView):
         Create a User in Halo
         """
         try:
-            halo_user = self.halo_manager.create_user(request.data)
-            serializer = ZendeskUserSerializer(halo_user)
+            halo_response = self.halo_manager.create_user(request.data)
+            serializer = HaloToZendeskUserSerializer(halo_response)
             if "id" in request.data:
                 # If "id" exists in payload that means we are updating user
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -97,7 +95,7 @@ class MeView(HaloBaseView):
         # print(me_user)
 
         zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
-        serializer = ZendeskUserSerializer(zendesk_response)
+        serializer = HaloToZendeskUserSerializer(zendesk_response["users"][0])  # Hardcoded
         return Response(serializer.data)
 
 
@@ -116,7 +114,7 @@ class CommentView(HaloBaseView):
         """
         # Get ticket from Halo
         queryset = self.halo_manager.get_comments(ticket_id=id)
-        serializer = ZendeskCommentSerializer(queryset, many=True)
+        serializer = HaloToZendeskCommentSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -127,7 +125,6 @@ class TicketView(HaloBaseView, CustomPagination):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    serializer_class = ZendeskTicketSerializer
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
 
     def get(self, request, *args, **kwargs):
@@ -138,17 +135,17 @@ class TicketView(HaloBaseView, CustomPagination):
         # 2. View calls manager func with Zendesk class params
         try:
             if "id" in self.kwargs:
-                ticket = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+                halo_response = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
                 # 4. View uses serializer class to transform Halo format to Zendesk
-                serializer = ZendeskTicketContainerSerializer(ticket)
+                serializer = HaloToZendeskTicketContainerSerializer(halo_response)
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return Response(serializer.data)
             else:
                 # pagenum = self.request.query_params.get("page", None)
                 tickets = self.halo_manager.get_tickets()
-                pages = self.paginate_queryset(tickets.tickets, self.request)
+                pages = self.paginate_queryset(tickets["tickets"], self.request)
                 # 4. View uses serializer class to transform Halo format to Zendesk
-                serializer = ZendeskTicketsContainerSerializer({"tickets": pages})
+                serializer = HaloToZendeskTicketsContainerSerializer({"tickets": pages})
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return self.get_paginated_response(serializer.data)
 
@@ -165,16 +162,16 @@ class TicketView(HaloBaseView, CustomPagination):
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
         try:
-            if "id" in request.data:
+            if "ticket_id" in request.data:
                 zendesk_ticket = self.halo_manager.update_ticket(request.data)
                 # 4. View uses serializer class to transform Halo format to Zendesk
-                serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
+                serializer = HaloToZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 zendesk_ticket = self.halo_manager.create_ticket(request.data)
                 # 4. View uses serializer class to transform Halo format to Zendesk
-                serializer = ZendeskTicketContainerSerializer(zendesk_ticket)
+                serializer = HaloToZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException:
