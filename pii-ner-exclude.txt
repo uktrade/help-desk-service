@@ -260,3 +260,6 @@ Zendesk Multiple Tickets Serializer
 Get MeView Tests
 GET Me Success
 GET Me Failure
+Slack & Bot
+SLACK_CLIENT_ID
+Slack

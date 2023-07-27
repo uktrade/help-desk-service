@@ -190,3 +190,16 @@ CLAM_AV_USERNAME = env("CLAM_AV_USERNAME", default="")
 CLAM_AV_PASSWORD = env("CLAM_AV_PASSWORD", default="")
 CLAM_AV_URL = env("CLAM_AV_URL", default="")
 CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
+
+# Slack & Bot credentials:
+SLACK_CLIENT_ID = env("SLACK_CLIENT_ID", default="")
+SLACK_CLIENT_SECRET = env("SLACK_CLIENT_SECRET", default="")
+SLACK_BOT_USER_TOKEN = env("SLACK_BOT_USER_TOKEN", default="")
+SLACK_VERIFICATION_TOKEN = env("SLACK_VERIFICATION_TOKEN", default="")
+# where to exchange the request token for an access token:
+# Ex: 'https://slack.com/api/oauth.access'
+SLACK_OAUTH_URI = env("SLACK_OAUTH_URI", default="")
+# The base uri on which '/channel_id/message_id/' is added to form the direct
+# link to the message on Slack:
+# Ex: 'https://<YOUR WORKSPACE>.slack.com/archives'
+SLACK_WORKSPACE_URI = env("SLACK_WORKSPACE_URI", default="")
