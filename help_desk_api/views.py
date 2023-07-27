@@ -179,3 +179,12 @@ class TicketView(HaloBaseView, CustomPagination):
                 "please check payload - " "create ticket payload must have ticket and comment",
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class UploadsView(HaloBaseView):
+    """
+    View for uploading attachments
+    """
+
+    def post(self, request, *args, **kwargs):
+        pass

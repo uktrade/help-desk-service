@@ -58,21 +58,23 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
     zendesk_response = None
 
     # Make request to Zendesk API
+    content_type = request.headers.get("Content-Type", default="application/json")
     if request.method == "GET":  # /PS-IGNORE
         zendesk_response = requests.get(
             url,
             headers={
                 "Authorization": f"Basic {encoded_creds.decode('ascii')}",  # /PS-IGNORE
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
             },
         )
+    # data=request.body.decode("utf8"),
     elif request.method == "POST":
         zendesk_response = requests.post(
             url,
-            data=request.body.decode("utf8"),
+            data=request.body,
             headers={
                 "Authorization": f"Basic {encoded_creds.decode('ascii')}",
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
             },
         )
     elif request.method == "PUT":
@@ -81,7 +83,7 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
             data=request.body.decode("utf8"),
             headers={
                 "Authorization": f"Basic {encoded_creds.decode('ascii')}",
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
             },
         )
 

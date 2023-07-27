@@ -138,6 +138,52 @@ class TestSupportedOperations:
         assert subdomain == zendesk_creds_only.zendesk_subdomain
         assert email == zendesk_creds_only.zendesk_email
 
+    @pytest.mark.parametrize(
+        "url",
+        [
+            (reverse("api:uploads")),
+        ],
+    )
+    @mock.patch("zendesk_api_proxy.middleware.proxy_zendesk")
+    def test_post_attachment(
+        self,
+        proxy_zendesk: mock.MagicMock,
+        client: Client,
+        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_creds_only,
+        zendesk_authorization_header,
+        url,
+    ):
+
+        response = Response()
+        response._content = b"{}"
+        response.status_code = HTTPStatus.OK
+
+        file_name = "map.png"
+        url = f"{url}?filename={file_name}"
+        content_type = "image/png"
+        headers = {"Content-Type": content_type, "Authorization": zendesk_authorization_header}
+
+        proxy_zendesk.return_value = response
+
+        with open(file_name, "rb") as fp:
+            f = fp.read()
+            client.post(url, headers=headers, data=f, content_type="application/octet-stream")
+
+        proxy_zendesk.assert_called_once()
+
+        request_obj, subdomain, email, token, query_string = proxy_zendesk.call_args[
+            0
+        ]  # args passed to proxy_zendesk
+
+        assert request_obj.body == f
+        assert file_name in query_string
+        assert request_obj.get_full_path() == url
+        assert request_obj.method == "POST"
+        assert subdomain == zendesk_creds_only.zendesk_subdomain
+        assert email == zendesk_creds_only.zendesk_email
+
+
     # Testing PUT
     @pytest.mark.parametrize(
         "url",
