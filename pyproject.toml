@@ -27,6 +27,8 @@ pydantic = "^2.0"
 debugpy = "^1.6.7"
 slackclient = "^2.9.4"
 slackeventsapi = "^3.0.1"
+emoji = "^2.7.0"
+bs4 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

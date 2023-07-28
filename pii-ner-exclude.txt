@@ -289,3 +289,23 @@ assert isinstance(ticket['ticket'][0]
 POST Ticket Failure
 assert excinfo.typename
 tag2
+Halo WebHook Token
+"Handle Halo Events with
+"Handle the POSTed
+f'Raw POSTed data:\n{pprint.pformat(request.data
+Webhook JSON
+"Handle the raw event
+Handle Halo Comment Events
+"Handle the comment trigger event we have been POSTed
+Primary
+the Halo URL
+Convert
+BeautifulSoup
+html.parser
+r'(http|https):(\/\/)(.*?)\|
+MAILER
+🌴
+channel_id
+"Send a message
+POSTed data:\n{pprint.pformat(request.data
+r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\|

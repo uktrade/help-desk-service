@@ -191,6 +191,10 @@ CLAM_AV_PASSWORD = env("CLAM_AV_PASSWORD", default="")
 CLAM_AV_URL = env("CLAM_AV_URL", default="")
 CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
 
+
+# Halo WebHook Token
+HALO_WEBHOOK_TOKEN = env("HALO_WEBHOOK_TOKEN", default="")
+
 # Slack & Bot credentials:
 SLACK_CLIENT_ID = env("SLACK_CLIENT_ID", default="")
 SLACK_CLIENT_SECRET = env("SLACK_CLIENT_SECRET", default="")
