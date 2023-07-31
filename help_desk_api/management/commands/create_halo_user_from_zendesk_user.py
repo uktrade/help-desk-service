@@ -83,9 +83,10 @@ class Command(BaseCommand):
             else:
                 if cnt < 4:
                     print("Creating a halo user", user_data[i]['id'])
-                #response = halo_client.create_user(
-                #    user_data
-                #)
+                    print(user_data[i])
+                    response = halo_client.create_user(
+                        user_data[i]
+                    )
 
 
 class ZenDeskInit(object):
