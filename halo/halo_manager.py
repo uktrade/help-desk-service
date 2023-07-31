@@ -51,7 +51,7 @@ class HaloManager:
         return halo_response
 
     def get_users(self):
-        halo_response = self.client.get(path=f"Users/")
+        halo_response = self.client.get(path="Users/")
         return halo_response
 
     def create_user(self, zendesk_request: dict = None) -> dict:
