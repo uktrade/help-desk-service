@@ -49,6 +49,11 @@ class HaloManager:
     def get_user(self, user_id: int) -> dict:
         halo_response = self.client.get(path=f"Users/{user_id}")
         return halo_response
+    
+    def get_users(self):
+        halo_response = self.client.get(path=f"Users/")
+        return halo_response
+
 
     def create_user(self, zendesk_request: dict = None) -> dict:
         """
@@ -57,10 +62,15 @@ class HaloManager:
         include a "skip_verify_email": true property.
         If you don't specify a role parameter, the new user is assigned the role of end user.
         """
-        if "id" in zendesk_request:
-            halo_user = ZendeskToHaloUpdateUserSerializer(zendesk_request)
-        else:
-            halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
+        halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
+        halo_response = self.client.post(path="Users", payload=[halo_user.data])
+        return halo_response
+    
+    def update_user(self, zendesk_request: dict = None) -> dict:
+        """
+        Receive Zendesk user and update user in Halo, give back Zendesk user.
+        """
+        halo_user = ZendeskToHaloUpdateUserSerializer(zendesk_request)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
 
