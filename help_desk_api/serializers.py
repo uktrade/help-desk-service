@@ -91,6 +91,7 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
     site_id = serializers.IntegerField(default=1)
     name = serializers.CharField()
     emailaddress = serializers.EmailField()
+    other5 = serializers.IntegerField()
 
     def validate(self, data):
         # validate
@@ -100,6 +101,7 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         zendesk_data = {
             "emailaddress": data["email"],
             "name": data["name"],
+            "other5": data["id"],
             "site_id": data["site_id"],
         }
         return super().to_representation(zendesk_data)
@@ -113,6 +115,7 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     emailaddress = serializers.EmailField()
+    other5 = serializers.IntegerField()
 
     def validate(self, data):
         # validate
@@ -122,7 +125,8 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
         zendesk_data = {
             "emailaddress": data["email"],
             "name": data["name"],
-            "id": data["id"],
+            "other5": data["id"],
+            "site_id": data["site_id"]
         }
         return super().to_representation(zendesk_data)
 
