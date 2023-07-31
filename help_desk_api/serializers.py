@@ -126,7 +126,7 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
             "emailaddress": data["email"],
             "name": data["name"],
             "other5": data["id"],
-            "site_id": data["site_id"]
+            "site_id": data["site_id"],
         }
         return super().to_representation(zendesk_data)
 
