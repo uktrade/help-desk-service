@@ -140,4 +140,11 @@ def new_halo_ticket():
             {"id": 0, "text": "third tag"},
         ],
         "user": {"id": 1, "name": "test", "emailaddress": "test@test.co"},  # /PS-IGNORE
+        "actions": [{"id": 2, "outcome": "comment"}],
+        "attachments": [{"id": 1, "filename": "a", "isimage": True}],
     }
+
+
+@pytest.fixture(scope="session")
+def access_token():
+    return {"access_token": "fake-access-token"}  # /PS-IGNORE
