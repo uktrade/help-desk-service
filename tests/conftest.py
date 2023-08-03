@@ -140,7 +140,7 @@ def new_halo_ticket():
             {"id": 0, "text": "third tag"},
         ],
         "user": {"id": 1, "name": "test", "emailaddress": "test@test.co"},  # /PS-IGNORE
-        "actions": [{"id": 2, "outcome": "comment", "note": "test", "who": "test"}],
+        "actions": [{"id": 2, "outcome": "comment", "note": "test"}],
         "attachments": [{"id": 1, "filename": "a", "isimage": True}],
     }
 
