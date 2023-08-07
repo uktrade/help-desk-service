@@ -113,7 +113,7 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"site_id": 1, "name": "name", "email": "test@email.com"}  # /PS-IGNORE
+        request_data = {"site_id": 1, "name": "name", "email": "test@email.com", "id": 123}  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["id"] == 123
@@ -134,7 +134,7 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 400
         mock_post.side_effects = fake_responses
 
-        request_data = {"site_id": 1, "name": "name", "email": "test@test.com"}  # /PS-IGNORE
+        request_data = {"site_id": 1, "name": "name", "email": "test@test.com", "id": 1}  # /PS-IGNORE
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"
@@ -155,7 +155,7 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"id": 1, "name": "x", "email": "test@test.com"}  # /PS-IGNORE
+        request_data = {"id": 1, "name": "x", "email": "test@test.com", "site_id": 1}  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["name"] == "test"
@@ -177,7 +177,7 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 400
         mock_post.side_effects = fake_responses
 
-        request_data = {"id": 1, "name": "test", "email": "test@x.com"}  # /PS-IGNORE
+        request_data = {"id": 1, "name": "test", "email": "test@x.com", "site_id": 1}  # /PS-IGNORE
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"
