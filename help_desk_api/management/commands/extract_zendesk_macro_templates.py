@@ -1,32 +1,22 @@
 import json
-import pathlib
 from datetime import datetime
 
 from django.conf import settings
-from django.core.management import BaseCommand
 
 from help_desk_api.utils import ZenpyMacros
 
+from .zendesk_data_base_command import ZendeskDataBaseCommand
 
-class Command(BaseCommand):
-    help = "Extract email variable names from Zendesk JSON, e.g. triggers and macros"  # /PS-IGNORE
 
-    def __init__(self, stdout=None, stderr=None, **kwargs):
-        super().__init__(stdout, stderr, **kwargs)
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-i", "--input", type=pathlib.Path, required=True, help="Input file path"
-        )
-        parser.add_argument(
-            "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
-        )
+class Command(ZendeskDataBaseCommand):
+    help = "Extract macro templates from Zendesk JSON"  # /PS-IGNORE
 
     def handle(self, *args, **options):
-        with open(options["input"], "r") as input_file:
-            macros = json.load(input_file)
+        macro_data = self.load_zendesk_data(
+            credentials=options["credentials"], file_path=options["inputfile"]
+        )
 
-        macros = ZenpyMacros(macros)
+        macros = ZenpyMacros(macro_data)
 
         content = {
             "plaintext_comments": macros.plaintext_comments,
