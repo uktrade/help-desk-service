@@ -63,12 +63,12 @@ class TestUserViews:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_user_success(self, mock_post, mock_get):
+    def test_get_user_success(self, mock_post, mock_get, access_token):
         """
         GET User Success
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
@@ -84,12 +84,12 @@ class TestUserViews:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_user_failure(self, mock_post, mock_get):
+    def test_get_user_failure(self, mock_post, mock_get, access_token):
         """
         GET User Failure
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 400
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
@@ -98,13 +98,13 @@ class TestUserViews:
         assert excinfo.typename == "HaloClientNotFoundException"
 
     @patch("requests.post")
-    def test_post_user_success(self, mock_post):
+    def test_post_user_success(self, mock_post, access_token):
         """
         POST User Success
         """
         mock_ticket_post = {"id": 123, "name": "dummy name", "email": "test@test.com"}  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
-        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
         mock_post.side_effects = fake_responses
 
@@ -119,12 +119,12 @@ class TestUserViews:
         assert user["id"] == 123
 
     @patch("requests.post")
-    def test_post_user_failure(self, mock_post):
+    def test_post_user_failure(self, mock_post, access_token):
         """
         POST User Failure
         """
         fake_responses = [mock_post, mock_post]
-        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
         mock_post.side_effects = fake_responses
 
@@ -140,13 +140,13 @@ class TestUserViews:
         assert excinfo.typename == "HaloClientNotFoundException"
 
     @patch("requests.post")
-    def test_update_user_success(self, mock_post):
+    def test_update_user_success(self, mock_post, access_token):
         """
         Update User Success
         """
         mock_ticket_post = {"id": 1, "name": "test", "emailaddress": "test@test.com"}  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
-        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
         mock_post.side_effects = fake_responses
 
@@ -162,12 +162,12 @@ class TestUserViews:
         assert user["emailaddress"] == "test@test.com"  # /PS-IGNORE
 
     @patch("requests.post")
-    def test_update_ticket_failure(self, mock_post):
+    def test_update_ticket_failure(self, mock_post, access_token):
         """
         POST Ticket Failure
         """
         fake_responses = [mock_post, mock_post]
-        fake_responses[0].return_value.json.return_value = {"access_token": "fake-access-token"}
+        fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
         mock_post.side_effects = fake_responses
 
@@ -190,12 +190,12 @@ class TestMeView:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_user_me_success(self, mock_post, mock_get):
+    def test_get_user_me_success(self, mock_post, mock_get, access_token):
         """
         GET Me Success
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
@@ -218,12 +218,12 @@ class TestMeView:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_user_me_failure(self, mock_post, mock_get):
+    def test_get_user_me_failure(self, mock_post, mock_get, access_token):
         """
         GET Me Failure
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 400
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")

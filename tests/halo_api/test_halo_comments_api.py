@@ -12,12 +12,12 @@ class TestCommentsViews:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_comment_success(self, mock_post, mock_get):
+    def test_get_comment_success(self, mock_post, mock_get, access_token):
         """
         GET Comment Success
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
@@ -32,12 +32,12 @@ class TestCommentsViews:
 
     @patch("requests.get")
     @patch("requests.post")
-    def test_get_comment_failure(self, mock_post, mock_get):
+    def test_get_comment_failure(self, mock_post, mock_get, access_token):
         """
         GET Comment Failure
         """
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"access_token": "fake-access-token"}
+        mock_post.return_value.json.return_value = access_token
 
         mock_get.return_value.status_code = 400
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")

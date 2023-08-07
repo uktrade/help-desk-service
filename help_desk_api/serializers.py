@@ -61,7 +61,7 @@ class HaloToZendeskCommentSerializer(serializers.Serializer):
 
     id = serializers.IntegerField()
     note = serializers.CharField()
-    who = serializers.CharField()
+    outcome = serializers.CharField()
 
 
 class HaloToZendeskCustomFieldsSerializer(serializers.Serializer):
@@ -243,7 +243,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     group_id = serializers.CharField()
     external_id = serializers.CharField()
     assignee_id = serializers.CharField()
-    comment = HaloToZendeskCommentSerializer(many=True)
+    actions = HaloToZendeskCommentSerializer(many=True)
     tags = serializers.ListField()
     custom_fields = HaloToZendeskCustomFieldsSerializer(many=True)
     recipient_email = serializers.EmailField()
@@ -272,7 +272,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
             "group_id": data["id"],
             "external_id": data["id"],
             "assignee_id": data["id"],
-            "comment": data.get("comment", []),
+            "actions": data.get("actions", []),
             "tags": [tag.get("text", "") for tag in data.get("tags", [])],
             "custom_fields": data.get("customfields", []),
             "recipient_email": data.get("user_email", ""),
