@@ -1,4 +1,5 @@
 import base64
+import re
 
 from rest_framework import authentication, exceptions
 
@@ -140,3 +141,29 @@ class ZenpyTriggers:
                     }
                 )
         return emails
+
+
+class PlaceholderMapper:
+    _mappings = {
+        "#{{ticket.id}}": "[$FAULTID]($LINKTOREQUESTUSER)",
+        "{{ticket.id}}": "$FAULTID",  # /PS-IGNORE
+        "{{ticket.requester.email}}": "$USEREMAILADDRESS",
+        "{{ticket.requester.first_name}}": "$FIRSTNAME",  # /PS-IGNORE
+        "{{ticket.title}}": "$SYMPTOM",  # /PS-IGNORE
+        "{{ticket.description}}": "$SYMPTOM2",
+        "{{ticket.group.name}}": "$SECTION",
+        "{{ticket.link}}": "$LINKTOREQUESTUSER",
+        "{{ticket.status}}": "$STATUS",
+        "{{ticket.requester.name}}": "$USERNAME",
+        "{{ticket.assignee.name}}": "$ASSIGNEDTO",  # /PS-IGNORE
+    }
+    _mapping_re = None
+
+    @property
+    def mapping_re(self):
+        if self._mapping_re is None:
+            self._mapping_re = re.compile("|".join(self._mappings.keys()))
+        return self._mapping_re
+
+    def map(self, text):
+        return self.mapping_re.sub(lambda match: self._mappings[match.group()], text)
