@@ -211,7 +211,7 @@ class TestMeView:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         user = halo_manager.get_me(1)
-        print(user)
+        #print(user)
         assert isinstance(user, dict)
         assert user["users"][0]["id"] == 1
         assert "emailaddress" in user["users"][0]  # this checks the transformation bit
