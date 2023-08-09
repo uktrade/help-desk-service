@@ -108,14 +108,14 @@ def new_zendesk_ticket():
     """
     return {
         "ticket": {
-            #"custom_fields": [{"id": "numeric_field_id", "value": "field_value"}],
+            # "custom_fields": [{"id": "numeric_field_id", "value": "field_value"}],
             "description": "Long load of text here",
-            #"id": None,
-            #"requester": {
+            # "id": None,
+            # "requester": {
             #    "email": "vyvyan.holland@contact-email.com",  # /PS-IGNORE
             #    "id": None,
             #    "name": "Vyvyan Holland",  # /PS-IGNORE
-            #},
+            # },
             "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
             "tags": ["request-for-data"],
         }
