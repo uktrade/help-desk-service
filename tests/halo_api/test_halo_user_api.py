@@ -113,7 +113,12 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"site_id": 1, "name": "name", "email": "test@email.com", "id": 123}  # /PS-IGNORE
+        request_data = {
+            "site_id": 1,
+            "name": "name",
+            "email": "test@email.com",
+            "id": 123,
+        }  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["id"] == 123
@@ -134,7 +139,12 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 400
         mock_post.side_effects = fake_responses
 
-        request_data = {"site_id": 1, "name": "name", "email": "test@test.com", "id": 1}  # /PS-IGNORE
+        request_data = {
+            "site_id": 1,
+            "name": "name",
+            "email": "test@test.com",
+            "id": 1,
+        }  # /PS-IGNORE
         with pytest.raises(HaloClientNotFoundException) as excinfo:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientNotFoundException"
@@ -211,7 +221,7 @@ class TestMeView:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         user = halo_manager.get_me(1)
-        #print(user)
+        # print(user)
         assert isinstance(user, dict)
         assert user["users"][0]["id"] == 1
         assert "emailaddress" in user["users"][0]  # this checks the transformation bit
