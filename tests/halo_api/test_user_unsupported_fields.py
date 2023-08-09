@@ -4,14 +4,17 @@ from unittest.mock import MagicMock, patch
 import pytest
 from halo.halo_manager import HaloManager
 
-from help_desk_api.serializers import ZendeskFieldsNotSupportedException
-from help_desk_api.serializers import HaloSerializerException
+from help_desk_api.serializers import (
+    HaloSerializerException,
+    ZendeskFieldsNotSupportedException,
+)
 
 
 class TestUnsupportedFields:
-    '''
+    """
     POST payload for User and Ticket with Zendesk fields not supported by Halo
-    '''
+    """
+
     @patch("requests.post")
     def test_update_user_failure(self, mock_post, access_token):
         """
@@ -32,13 +35,12 @@ class TestUnsupportedFields:
         user_data = {
             "name": "name",  # /PS-IGNORE
             "email": "test@test.com",
-            "id": 1, 
+            "id": 1,
             "my_address": "125 Zen Street",
         }
         with pytest.raises(ZendeskFieldsNotSupportedException) as excinfo:
             halo_manager.update_user(user_data)
         assert excinfo.typename == "ZendeskFieldsNotSupportedException"
-
 
     @patch("requests.post")
     def test_create_user_failure(self, mock_post, access_token):
@@ -61,13 +63,12 @@ class TestUnsupportedFields:
             "name": "name",  # /PS-IGNORE
             "email": "test@test.com",
             "id": 1,
-            "site_id": 1, 
+            "site_id": 1,
             "any_address": "125 Zen Street",
         }
         with pytest.raises(ZendeskFieldsNotSupportedException) as excinfo:
             halo_manager.create_user(user_data)
         assert excinfo.typename == "ZendeskFieldsNotSupportedException"
-
 
     @patch("requests.post")
     def test_create_ticket_failure(self, mock_post, access_token):
@@ -88,18 +89,15 @@ class TestUnsupportedFields:
         # payload for creating ticket with unsupported field
         ticket_data = {
             "ticket": {
-                "comment": {
-                "body": "The smoke is not very colorful."
-                },
-            "priority": "urgent",
-            "subject": "My printer is again on fire!",
-            "assignee_id": 123,
+                "comment": {"body": "The smoke is not very colorful."},
+                "priority": "urgent",
+                "subject": "My printer is again on fire!",
+                "assignee_id": 123,
             }
         }
         with pytest.raises(ZendeskFieldsNotSupportedException) as excinfo:
             halo_manager.create_ticket(ticket_data)
         assert excinfo.typename == "ZendeskFieldsNotSupportedException"
-
 
     @patch("requests.post")
     def test_update_ticket_failure(self, mock_post, access_token):
