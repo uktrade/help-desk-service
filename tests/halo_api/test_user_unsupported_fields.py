@@ -1,13 +1,9 @@
-from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from halo.halo_manager import HaloManager
 
-from help_desk_api.serializers import (
-    HaloSerializerException,
-    ZendeskFieldsNotSupportedException,
-)
+from help_desk_api.serializers import ZendeskFieldsNotSupportedException
 
 
 class TestUnsupportedFields:
