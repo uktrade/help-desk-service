@@ -3,11 +3,7 @@ from copy import deepcopy
 from rest_framework import serializers
 
 
-class HaloSerializerException(Exception):
-    pass
-
-
-class ZendeskFieldsNotSupportedException(HaloSerializerException):
+class ZendeskFieldsNotSupportedException(Exception):
     pass
 
 
