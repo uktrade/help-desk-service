@@ -14,10 +14,7 @@ from rest_framework.views import APIView
 # Needed for inspect
 from help_desk_api import views  # noqa F401
 from help_desk_api.models import HelpDeskCreds
-from help_desk_api.serializers import (
-    HaloSerializerException,
-    ZendeskFieldsNotSupportedException,
-)
+from help_desk_api.serializers import ZendeskFieldsNotSupportedException
 from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
