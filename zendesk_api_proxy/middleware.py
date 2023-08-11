@@ -7,13 +7,14 @@ import sys
 import requests
 from django.contrib.auth.hashers import check_password
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 
 # Needed for inspect
 from help_desk_api import views  # noqa F401
 from help_desk_api.models import HelpDeskCreds
+from help_desk_api.serializers import ZendeskFieldsNotSupportedException
 from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
@@ -123,8 +124,13 @@ class ZendeskAPIProxyMiddleware:
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
-            django_response = self.make_halo_request(help_desk_creds, request, supported_endpoint)
-
+            try:
+                django_response = self.make_halo_request(
+                    help_desk_creds, request, supported_endpoint
+                )
+            except ZendeskFieldsNotSupportedException as e:
+                logger.debug(f"BAD REQUEST: {e}")
+                django_response = HttpResponseBadRequest(f"Incorrect payload: {e}", status=400)
         return zendesk_response or django_response
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
