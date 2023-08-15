@@ -5,6 +5,7 @@ import logging
 import sys
 
 import requests
+import sentry_sdk
 from django.contrib.auth.hashers import check_password
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
@@ -104,7 +105,8 @@ class ZendeskAPIProxyMiddleware:
         try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
-        except APIException:
+        except APIException as exc:
+            sentry_sdk.capture_exception(exc)
             return self.get_response(request)
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
@@ -129,6 +131,7 @@ class ZendeskAPIProxyMiddleware:
                     help_desk_creds, request, supported_endpoint
                 )
             except ZendeskFieldsNotSupportedException as e:
+                sentry_sdk.capture_exception(e)
                 logger.debug(f"BAD REQUEST: {e}")
                 django_response = HttpResponseBadRequest(f"Incorrect payload: {e}", status=400)
         return zendesk_response or django_response
