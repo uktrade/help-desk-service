@@ -10,10 +10,14 @@ from .zendesk_data_base_command import ZendeskDataBaseCommand
 
 class Command(ZendeskDataBaseCommand):
     help = "Extract email variable names from Zendesk JSON, e.g. triggers and macros"  # /PS-IGNORE
+    api_response_content_field = "triggers"
+    api_start_url_path = "/api/v2/triggers.json"
 
     def handle(self, *args, **options):
         trigger_data = self.load_zendesk_data(
-            credentials=options["credentials"], file_path=options["inputfile"]
+            token=options["zendesktoken"],
+            credentials=options["credentials"],
+            file_path=options["inputfile"],
         )
         triggers = ZenpyTriggers(trigger_data)
         unique_emails = triggers.unique_emails
