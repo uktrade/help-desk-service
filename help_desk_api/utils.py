@@ -1,5 +1,6 @@
 import base64
 import re
+from collections import defaultdict
 
 from rest_framework import authentication, exceptions
 
@@ -39,36 +40,28 @@ class ZenpyMacros:
         return sorted(list(set(actions)))
 
     @property
-    def plaintext_comments(self):
-        comments = [
-            action["value"]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], str) and action["field"] == "comment_value"
-        ]
-        comments += [
-            action["value"][1]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], list) and action["field"] == "comment_value"
-        ]
-        return sorted(list(set(comments)))
+    def with_plaintext_comments(self):
+        output = defaultdict(list)
+        for macro in self.macros:
+            for action in macro["actions"]:
+                if action["field"] == "comment_value":
+                    if isinstance(action["value"], str):
+                        output[macro["raw_title"]].append(action["value"])
+                    elif isinstance(action["value"], list):
+                        output[macro["raw_title"]].append(action["value"][1])
+        return output
 
     @property
-    def html_comments(self):
-        comments = [
-            action["value"]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], str) and action["field"] == "comment_value_html"
-        ]
-        comments += [
-            action["value"][1]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], list) and action["field"] == "comment_value_html"
-        ]
-        return sorted(list(set(comments)))
+    def with_html_comments(self):
+        output = defaultdict(list)
+        for macro in self.macros:
+            for action in macro["actions"]:
+                if action["field"] == "comment_value_html":
+                    if isinstance(action["value"], str):
+                        output[macro["raw_title"]].append(action["value"])
+                    elif isinstance(action["value"], list):
+                        output[macro["raw_title"]].append(action["value"][1])
+        return output
 
     @property
     def subjects(self):
