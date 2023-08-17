@@ -1,5 +1,4 @@
-#from rest_framework.schemas.openapi import SchemaGenerator
-from drf_spectacular.generators import SchemaGenerator
+from rest_framework.schemas.openapi import SchemaGenerator
 
 
 class FullDisclosureSchemaGenerator(SchemaGenerator):

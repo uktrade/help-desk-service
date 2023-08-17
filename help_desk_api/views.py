@@ -196,5 +196,6 @@ class UploadsView(HaloBaseView):
     """
 
     serializer_class = HaloToZendeskTicketContainerSerializer
+
     def post(self, request, *args, **kwargs):
         pass
