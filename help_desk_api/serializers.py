@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 
 class ZendeskFieldsNotSupportedException(Exception):
@@ -188,6 +189,7 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
     name = serializers.CharField()
     email = serializers.EmailField()
 
+    @extend_schema_field({'type':"string",})
     def halo_id_to_zendesk_id(self, instance):
         return instance["id"]  # TODO: mapping to Zendesk ID
 
