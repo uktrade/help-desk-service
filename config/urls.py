@@ -1,4 +1,4 @@
-from django.conf import settings
+# from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (
@@ -14,7 +14,6 @@ urlpatterns = [
     path("api/", include(help_desk_api_urls, namespace="api")),
 ]
 
-# path('openapi/ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 urlpatterns += [
     path("openapi/", SpectacularAPIView.as_view(), name="schema"),
     path(
