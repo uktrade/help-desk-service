@@ -25,6 +25,8 @@ pyyaml = "^6.0"
 sentry-sdk = "^1.25.1"
 pydantic = "^2.0"
 debugpy = "^1.6.7"
+drf-yasg = "^1.21.7"
+drf-spectacular = "^0.26.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

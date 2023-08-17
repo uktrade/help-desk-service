@@ -17,7 +17,7 @@ zenpy.Zenpy.uploads - POST /api/v2/uploads
 
 urlpatterns = [
     path(
-        "api/",
+        "",
         include(
             [
                 path("v2/tickets.json", TicketView.as_view(), name="tickets"),
