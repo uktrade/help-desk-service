@@ -9,11 +9,6 @@ from drf_spectacular.views import (
 
 from help_desk_api import urls as help_desk_api_urls
 
-# from rest_framework import permissions, renderers
-# from rest_framework.schemas import get_schema_view
-
-# from help_desk_api.schema import FullDisclosureSchemaGenerator
-
 
 urlpatterns = [
     path("admin/", admin.site.urls),
