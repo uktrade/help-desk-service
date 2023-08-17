@@ -7,6 +7,9 @@ from rest_framework.schemas import get_schema_view
 from help_desk_api import urls as help_desk_api_urls
 from help_desk_api.schema import FullDisclosureSchemaGenerator
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+
+'''
 openapi_view_kwargs = {
     "title": settings.OPENAPI_CONFIG.get("title", ""),
     "description": settings.OPENAPI_CONFIG.get("description", "").strip(),
@@ -16,10 +19,29 @@ openapi_view_kwargs = {
     "renderer_classes": [renderers.OpenAPIRenderer],
     "generator_class": FullDisclosureSchemaGenerator,
 }
+'''
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(help_desk_api_urls, namespace="api")),
+    
+]
+
+#path('openapi/ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+urlpatterns += [
+    path('openapi/', SpectacularAPIView.as_view(), name='schema'),
+    path(
+        "openapi/swagger-ui/",
+        SpectacularSwaggerView.as_view(
+            template_name="swagger-ui.html", url_name="schema"
+        ),
+        name="swagger-ui",
+    ),
+    #path('openapi/ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('openapi/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    ]
+
+'''
     path(
         "openapi/",
         include(
@@ -56,4 +78,4 @@ urlpatterns = [
             ]
         ),
     ),
-]
+'''
