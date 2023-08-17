@@ -15,9 +15,9 @@ from pathlib import Path
 
 import environ
 
-#import rest_framework
-#from help_desk_api.schema import FullDisclosureSchemaGenerator
-#from rest_framework import permissions, renderers
+# import rest_framework
+# from help_desk_api.schema import FullDisclosureSchemaGenerator
+# from rest_framework import permissions, renderers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -163,23 +163,23 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # /PS-IGNORE
     "DEFAULT_GENERATOR_CLASS": "help_desk_api.schema.FullDisclosureSchemaGenerator",
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Help Desk Service',
-    'DESCRIPTION': 'Acts as a proxy server for Zendesk API requests',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Help Desk Service",  # /PS-IGNORE
+    "DESCRIPTION": "Acts as a proxy server for Zendesk API requests",  # /PS-IGNORE
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
     #'DEFAULT_GENERATOR_CLASS': 'help_desk_api.schema.FullDisclosureSchemaGenerator',
-    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
-    'SERVE PUBLIC': True,
-    'SERVE_AUTHENTICATION': None,
+    # 'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    # 'SERVE PUBLIC': True,
+    "SERVE_AUTHENTICATION": [],
     #'COMPONENT_SPLIT_REQUEST': True,
     #'SWAGGER_UI_SETTINGS': {
     #    'url': 'openapi/ui/schema.yml',
-    #}
+    # }
 }
 
 # Help desk interface
