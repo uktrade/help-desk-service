@@ -173,10 +173,6 @@ SPECTACULAR_SETTINGS = {
     "SERVE_AUTHENTICATION": [],
 }
 
-# Help desk interface
-HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
-HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
-
 AUTH_USER_MODEL = "user.User"
 
 HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
