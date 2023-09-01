@@ -12,6 +12,8 @@ from halo.halo_manager import HaloManager
 
 from help_desk_api.models import HelpDeskCreds
 
+from pprint import pprint
+
 
 class Command(BaseCommand):
     help = "Create user on Halo from Zendesk records"  # /PS-IGNORE
@@ -37,7 +39,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         zendesk_email = options["credentials"]
-        url = "https://uktrade.zendesk.com/" + options["url"]
+        url = "https://uktrade.zendesk.com/api/v2/users.json?page[size]=100"
 
         # Get credentials for halo client and create one
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
@@ -64,8 +66,8 @@ class Command(BaseCommand):
             if user_data[i]["id"] in zen_user_ids:
                 print("User already exists with id=", user_data[i]["id"])
             else:
-                print("Creating user ", user_data[i]["name"])
-                response = halo_client.create_user(user_data[i])
+                print("Creating user ", user_data[i]["id"], "name:", user_data[i]["name"])
+                #response = halo_client.create_user(user_data[i])
 
 
 class ZenDeskInit(object):
@@ -92,12 +94,18 @@ class ZenUsersApi(object):
         self.url = url
 
     def get_users(self, url):
-        no_of_pages = 1
+        no_of_pages = 363
 
         zendesk_users_all = []
         zendesk_users = []
         counter = 0
-        while url:
+        users = {}
+        users["meta"] = {"has_more": True}
+
+        while users["meta"]["has_more"]:
+            # Counter is used to control how many pages to get at each run
+            counter += 1
+            print("COUNT=", counter)
             response = self.session.get(url)
             # 429 indicates too many requests
             # Retry-after tells us how long to wait before making another request
@@ -110,16 +118,15 @@ class ZenUsersApi(object):
                 sys.exit()
 
             users = response.json()
+            #pprint(users)
             zendesk_users = [
-                {"email": user["email"], "id": user["id"], "name": user["name"], "site_id": 18}
+                {"email": user["email"], "id": user["id"], "name": user["name"], 
+                 "role": user["role"], "default_group_id": user["default_group_id"], "site_id": 18}
                 for user in users["users"]
             ]
             zendesk_users_all += zendesk_users
 
-            # Counter is used to control how many pages to get at each run
-            counter += 1
-            url = users["next_page"]
-
+            url = users["links"]["next"]
             if counter > no_of_pages:
                 # exit while loop
                 break
