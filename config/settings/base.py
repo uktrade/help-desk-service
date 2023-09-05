@@ -29,6 +29,7 @@ DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 # Server secrets
 VCAP_SERVICES = env.json("VCAP_SERVICES", {})
