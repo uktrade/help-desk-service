@@ -29,12 +29,12 @@ DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 # Server secrets
 VCAP_SERVICES = env.json("VCAP_SERVICES", {})
 
 # Application definition
-
 DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,6 +48,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "multiselectfield",
+    "drf_spectacular",
 ]
 
 SERVICE_APPS = [
@@ -158,11 +159,20 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # /PS-IGNORE
 }
 
-# Help desk interface
-HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
-HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Help Desk Service",  # /PS-IGNORE
+    "DESCRIPTION": """
+    Acts as a proxy server for Zendesk API requests,
+    translates Zendesk API requests into Halo API requests,
+    and translates Halo API responses into Zendesk API responses.
+    """,  # /PS-IGNORE
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_AUTHENTICATION": [],
+}
 
 AUTH_USER_MODEL = "user.User"
 
@@ -177,6 +187,7 @@ CACHES = {
 
 REQUIRE_ZENDESK = env("REQUIRE_ZENDESK", default=False)
 
+'''
 OPENAPI_CONFIG = {
     "title": "Help Desk Service",
     "description": """
@@ -185,6 +196,7 @@ OPENAPI_CONFIG = {
     and translates Halo API responses into Zendesk API responses.
     """,  # /PS-IGNORE
 }
+'''
 
 CLAM_AV_USERNAME = env("CLAM_AV_USERNAME", default="")
 CLAM_AV_PASSWORD = env("CLAM_AV_PASSWORD", default="")

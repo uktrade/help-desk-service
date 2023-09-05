@@ -2,4 +2,7 @@ applications:
 - name: help-desk-service
   memory: 512M
   buildpacks:
-  - python_buildpack
+    - python_buildpack
+  services:
+    - help-desk-service-postgres
+    - help-desk-service-redis

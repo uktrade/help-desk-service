@@ -32,6 +32,8 @@ class UserView(HaloBaseView):
     View for interaction with user
     """
 
+    serializer_class = HaloToZendeskUserSerializer
+
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
@@ -75,6 +77,8 @@ class MeView(HaloBaseView):
     View for interaction with self
     """
 
+    serializer_class = HaloToZendeskUserSerializer
+
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
@@ -104,6 +108,8 @@ class CommentView(HaloBaseView):
     View for interaction with comment
     """
 
+    serializer_class = HaloToZendeskCommentSerializer
+
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
@@ -122,6 +128,9 @@ class TicketView(HaloBaseView, CustomPagination):
     """
     View for interacting with tickets
     """
+
+    serializer_class = HaloToZendeskTicketContainerSerializer
+    serializer_class = HaloToZendeskTicketsContainerSerializer
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -185,6 +194,8 @@ class UploadsView(HaloBaseView):
     """
     View for uploading attachments
     """
+
+    serializer_class = HaloToZendeskTicketContainerSerializer
 
     def post(self, request, *args, **kwargs):
         pass
