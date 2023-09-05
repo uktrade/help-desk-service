@@ -75,6 +75,8 @@ class ZenpyMacros:
 
 
 class ZenpyTriggers:
+    notification_action_fields = ("notification_user", "notification_group")
+
     def __init__(self, triggers) -> None:
         super().__init__()
         self._triggers = triggers["triggers"]
@@ -83,7 +85,7 @@ class ZenpyTriggers:
         if "actions" not in item:
             return False
         for action in item["actions"]:
-            if action["field"] == "notification_user":
+            if action["field"] in self.notification_action_fields:
                 return True
         return False
 
@@ -95,7 +97,9 @@ class ZenpyTriggers:
 
     def email_action_only(self, trigger):
         email_actions = [
-            action for action in trigger["actions"] if action["field"] == "notification_user"
+            action
+            for action in trigger["actions"]
+            if action["field"] in self.notification_action_fields
         ]
         reduced_trigger = {"title": trigger["title"], "email_actions": email_actions}
         return reduced_trigger
