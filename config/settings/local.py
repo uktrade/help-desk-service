@@ -10,9 +10,3 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
 ]
 REST_FRAMEWORK["DEFAULT_PAGINATION_CLASS"] = "help_desk_api.pagination.CustomPagination"
 REST_FRAMEWORK["PAGE_SIZE"] = 100
-
-sentry_sdk.init(
-    os.environ.get("SENTRY_DSN"),
-    environment=os.environ.get("SENTRY_ENVIRONMENT"),
-    integrations=[DjangoIntegration()],
-)
