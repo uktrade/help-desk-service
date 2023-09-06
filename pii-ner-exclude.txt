@@ -287,3 +287,4 @@ POST Ticket Failure
 assert excinfo.typename
 tag2
 Data Workspace
+PUT
