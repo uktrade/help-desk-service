@@ -102,6 +102,8 @@ class ZendeskAPIProxyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Log to Sentry here
+        # Hopefully all we need is f"Help Desk Service API called, requst: {request.body}"
         try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
