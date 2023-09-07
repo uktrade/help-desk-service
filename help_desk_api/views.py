@@ -47,11 +47,9 @@ class UserView(HaloBaseView):
         """
         Get a user from Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         try:
             halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
             serializer = HaloToZendeskUserSerializer(halo_user)
-            logger.debug(f"VIEW RESPONSE: {serializer.data}")
             return Response(serializer.data)
         except HaloClientNotFoundException as error:
             sentry_sdk.capture_exception(error)
@@ -64,11 +62,9 @@ class UserView(HaloBaseView):
         """
         Create a User in Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         try:
             halo_response = self.halo_manager.create_user(request.data)
             serializer = HaloToZendeskUserSerializer(halo_response)
-            logger.debug(f"VIEW RESPONSE: {serializer.data}")
             if "id" in request.data:
                 # If "id" exists in payload that means we are updating user
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -98,7 +94,6 @@ class MeView(HaloBaseView):
         """
         GET Me (self) from Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         # TODO:// get the ME user id from zendesk and pass to Halo
         # from zenpy import Zenpy
         # credentials = {
@@ -112,10 +107,9 @@ class MeView(HaloBaseView):
         try:
             zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
             serializer = HaloToZendeskUserSerializer(zendesk_response["users"][0])  # Hardcoded
-            logger.debug(f"VIEW RESPONSE: {serializer.data}")
             return Response(serializer.data)
-        except ZendeskException as error:
-            sentry_sdk.capture_exception(error)
+        except ZendeskException as exp:
+            sentry_sdk.capture_exception(exp)
             return Response(
                 "please check user_id",
                 status=status.HTTP_400_BAD_REQUEST,
@@ -137,11 +131,9 @@ class CommentView(HaloBaseView):
         """
         GET comments from Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         # Get ticket from Halo
         queryset = self.halo_manager.get_comments(ticket_id=id)
         serializer = HaloToZendeskCommentSerializer(queryset, many=True)
-        logger.debug(f"VIEW RESPONSE: {serializer.data}")
         return Response(serializer.data)
 
 
@@ -161,7 +153,6 @@ class TicketView(HaloBaseView, CustomPagination):
         """
         GET ticket/tickets from Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
         try:
@@ -170,7 +161,6 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = HaloToZendeskTicketContainerSerializer(halo_response)
                 # 5. Serialized data (in Zendesk format) sent to caller
-                logger.debug(f"VIEW RESPONSE: {serializer.data}")
                 return Response(serializer.data)
             else:
                 # pagenum = self.request.query_params.get("page", None)
@@ -179,7 +169,6 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = HaloToZendeskTicketsContainerSerializer({"tickets": pages})
                 # 5. Serialized data (in Zendesk format) sent to caller
-                logger.debug(f"VIEW RESPONSE: {serializer.data}")
                 return self.get_paginated_response(serializer.data)
 
         except HaloClientNotFoundException:
@@ -192,7 +181,6 @@ class TicketView(HaloBaseView, CustomPagination):
         """
         CREATE/UPDATE ticket in Halo
         """
-        logger.debug(f"VIEW REQUEST: {request}")
         # 1. View receives Zendesk compatible request variables
         # 2. View calls manager func with Zendesk class params
         try:
@@ -201,14 +189,12 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = HaloToZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
-                logger.debug(f"VIEW RESPONSE: {serializer.data}")
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 zendesk_ticket = self.halo_manager.create_ticket(request.data)
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = HaloToZendeskTicketContainerSerializer(zendesk_ticket)
                 # 5. Serialized data (in Zendesk format) sent to caller
-                logger.debug(f"VIEW RESPONSE: {serializer.data}")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException:
             return Response(
