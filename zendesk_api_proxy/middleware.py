@@ -102,6 +102,7 @@ class ZendeskAPIProxyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        logger.debug(f"MIDDLEWARE REQUEST: {request}")
         try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
@@ -134,6 +135,8 @@ class ZendeskAPIProxyMiddleware:
                 sentry_sdk.capture_exception(e)
                 logger.debug(f"BAD REQUEST: {e}")
                 django_response = HttpResponseBadRequest(f"Incorrect payload: {e}", status=400)
+        logger.debug(f"MIDDLEWARE ZENDESK_RESPONSE: {zendesk_response}")
+        logger.debug(f"MIDDLEWARE DJANGO_RESPONSE: {django_response}")
         return zendesk_response or django_response
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
