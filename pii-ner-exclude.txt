@@ -288,6 +288,3 @@ assert excinfo.typename
 tag2
 Data Workspace
 PUT
-f"VIEW RESPONSE
-f"MIDDLEWARE ZENDESK_RESPONSE
-f"MIDDLEWARE

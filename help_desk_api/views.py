@@ -1,5 +1,3 @@
-import logging
-
 import sentry_sdk
 from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
@@ -16,8 +14,6 @@ from help_desk_api.serializers import (
     HaloToZendeskTicketsContainerSerializer,
     HaloToZendeskUserSerializer,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class HaloBaseView(APIView):
