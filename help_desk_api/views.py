@@ -104,8 +104,8 @@ class MeView(HaloBaseView):
             zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
             serializer = HaloToZendeskUserSerializer(zendesk_response["users"][0])  # Hardcoded
             return Response(serializer.data)
-        except ZendeskException as error:
-            sentry_sdk.capture_exception(error)
+        except ZendeskException as exp:
+            sentry_sdk.capture_exception(exp)
             return Response(
                 "please check user_id",
                 status=status.HTTP_400_BAD_REQUEST,
