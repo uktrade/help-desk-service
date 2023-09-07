@@ -154,7 +154,7 @@ class ZendeskAPIProxyMiddleware:
     def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
         # Don't need to call the below in Halo because error will be raised anyway
         if not supported_endpoint:
-            logger.warning(f"{request.path()} is not supported by this service")
+            logger.warning(f"{request.path} is not supported by this service")
         proxy_response = proxy_zendesk(
             request,
             help_desk_creds.zendesk_subdomain,
