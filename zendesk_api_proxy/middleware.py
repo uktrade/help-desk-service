@@ -105,7 +105,13 @@ class ZendeskAPIProxyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        logger.warning(f"Help Desk Service request received, body: {request.body.decode('utf-8')}")
+        try:
+            request_log = request.body.decode('utf-8')
+        except Exception:
+            request_log = request.body
+
+        logger.warning(f"Help Desk Service request received, body: {request_log}")
+
         try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
