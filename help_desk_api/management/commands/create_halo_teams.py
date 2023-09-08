@@ -8,7 +8,9 @@ from django.core.management import BaseCommand
 
 # from halo.halo_api_client import HaloAPIClient
 from halo.halo_manager import HaloManager
+
 from help_desk_api.models import HelpDeskCreds
+
 
 class Command(BaseCommand):
     help = "Create Teams on Halo from Zendesk Groups"  # /PS-IGNORE
@@ -46,7 +48,7 @@ class Command(BaseCommand):
         group_data = zendesk_init.get_groups()
 
         response = halo_client.get_teams()
-        
+
         zen_group_names = []
         for i in range(len(response)):
             if response[i]["name"]:
@@ -58,7 +60,7 @@ class Command(BaseCommand):
                 print("Team already exists with name: ", group_data[i]["name"])
             else:
                 print("Creating team ", group_data[i]["id"], "name:", group_data[i]["name"])
-                #response = halo_client.create_team(group_data[i])
+                # response = halo_client.create_team(group_data[i])
 
 
 class ZenDeskInit(object):
@@ -75,7 +77,7 @@ class ZenDeskInit(object):
         session = requests.Session()
         session.auth = (username, password)
         return session
-    
+
     def get_groups(self):
         return self._api.get_groups(self.groups_url)
 
@@ -110,8 +112,7 @@ class ZenDeskApi(object):
 
             groups = response.json()
             zendesk_groups = [
-                {"id": group["id"], "name": group["name"]} 
-                for group in groups["groups"]
+                {"id": group["id"], "name": group["name"]} for group in groups["groups"]
             ]
             zendesk_groups_all += zendesk_groups
 
@@ -119,7 +120,5 @@ class ZenDeskApi(object):
             if counter > no_of_pages:
                 # exit while loop
                 break
-        
+
         return zendesk_groups_all
-    
-    
