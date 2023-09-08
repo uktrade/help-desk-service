@@ -165,8 +165,7 @@ class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
 
         acceptable_user_fields = set(self.get_fields())
         data.pop("id")
-        halo_payload = {"is_agent": True, 
-                        "team": data.pop("default_group_id", None)}
+        halo_payload = {"is_agent": True, "team": data.pop("default_group_id", None)}
         halo_payload.update(**data)
         unsupported_fields = set(halo_payload.keys()) - acceptable_user_fields
 
@@ -176,6 +175,7 @@ class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
             )
         else:
             return super().to_representation(halo_payload)
+
 
 class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
     """
