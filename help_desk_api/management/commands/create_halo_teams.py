@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 print("Team already exists with name: ", group_data[i]["name"])
             else:
                 print("Creating team ", group_data[i]["id"], "name:", group_data[i]["name"])
-                # response = halo_client.create_team(group_data[i])
+                halo_client.create_team(group_data[i])
 
 
 class ZenDeskInit(object):
