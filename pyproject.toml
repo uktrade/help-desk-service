@@ -28,6 +28,8 @@ debugpy = "^1.6.7"
 drf-yasg = "^1.21.7"
 drf-spectacular = "^0.26.4"
 waitress = "^2.1.2"
+boto3 = "^1.28.43"
+aws-lambda-powertools = "^2.23.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
