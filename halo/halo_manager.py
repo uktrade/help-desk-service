@@ -5,14 +5,14 @@ from halo.data_class import ZendeskException, ZendeskTicketNotFoundException
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 
 from help_desk_api.serializers import (
+    ZendeskToHaloCreateAgentSerializer,
     ZendeskToHaloCreateCommentSerializer,
+    ZendeskToHaloCreateTeamSerializer,
     ZendeskToHaloCreateTicketSerializer,
     ZendeskToHaloCreateUserSerializer,
-    ZendeskToHaloCreateAgentSerializer,
     ZendeskToHaloUpdateCommentSerializer,
     ZendeskToHaloUpdateTicketSerializer,
     ZendeskToHaloUpdateUserSerializer,
-    ZendeskToHaloCreateTeamSerializer,
 )
 
 
@@ -55,15 +55,19 @@ class HaloManager:
     def get_users(self):
         halo_response = self.client.get(path="Users/")
         return halo_response
-    
+
     def get_agents(self):
         halo_response = self.client.get(path="Agent/")
         return halo_response
-    
+
+    def get_agent(self, agent_id: int) -> dict:
+        halo_response = self.client.get(path=f"Agent/{agent_id}")
+        return halo_response
+
     def get_teams(self):
         halo_response = self.client.get(path="Team/")
         return halo_response
-    
+
     def create_team(self, zendesk_request: dict = None) -> dict:
         """
         Receive Zendesk group and create team in Halo, give back Zendesk group.
@@ -82,7 +86,7 @@ class HaloManager:
         halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
-    
+
     def create_agent(self, zendesk_request: dict = None) -> dict:
         """
         Receive Zendesk agent and create agent in Halo, give back Zendesk agent.
