@@ -75,7 +75,7 @@ def map_zen_agents_to_halo(agent_data, halo_client):
             print("Agent already exists with name=", agent_data[i]["name"])
         else:
             print("Creating Agent ", "name:", agent_data[i]["name"])
-            # response = halo_client.create_agent(agent_data[i])
+            halo_client.create_agent(agent_data[i])
 
 
 def map_zen_users_to_halo(end_user_data, halo_client):
@@ -99,7 +99,7 @@ def map_zen_users_to_halo(end_user_data, halo_client):
             print("User already exists with id=", end_user_data[i]["id"])
         else:
             print("Creating user ", end_user_data[i]["id"], "name:", end_user_data[i]["name"])
-            # response = halo_client.create_user(user_data[i])
+            halo_client.create_user(end_user_data[i])
 
 
 class ZenDeskInit(object):
