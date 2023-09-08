@@ -2,10 +2,11 @@
 
 import sys
 import time
+
 import requests
 from django.core.management import BaseCommand
-
 from halo.halo_manager import HaloManager
+
 from help_desk_api.models import HelpDeskCreds
 
 
@@ -34,7 +35,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         zendesk_email = options["credentials"]
         url = "https://uktrade.zendesk.com/api/v2/users.json?page[size]=100"
-        
+
         # Get credentials for halo client and create one
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
         halo_client = HaloManager(credentials.halo_client_id, credentials.halo_client_secret)
@@ -44,7 +45,7 @@ class Command(BaseCommand):
         # Get Zendesk users to be mapped to halo
         zendesk_init.get_users(url)
 
-        end_user_data = zendesk_init.get_end_users() 
+        end_user_data = zendesk_init.get_end_users()
         agent_data = zendesk_init.get_agents()
         admin_data = zendesk_init.get_admins()
 
@@ -52,34 +53,36 @@ class Command(BaseCommand):
         map_zen_users_to_halo(end_user_data, halo_client)
         # Map/Copy zendesk agents to halo
         map_zen_agents_to_halo(agent_data, halo_client)
+        # Need to examine roles for admin user
+        map_zen_agents_to_halo(admin_data, halo_client)
 
-        
+
 def map_zen_agents_to_halo(agent_data, halo_client):
-    '''
+    """
     The Zendesk agents are copied to halo
     If a Zendesk agent name exists in Halo it is skipped
-    '''
+    """
     response = halo_client.get_agents()
     zen_agent_names = []
-        
+
     for i in range(len(response)):
         if response[i].get("name"):
             name = response[i]["name"]
             zen_agent_names.append(name)
-        
+
     for i in range(len(agent_data)):
         if agent_data[i]["name"] in zen_agent_names:
             print("Agent already exists with name=", agent_data[i]["name"])
         else:
             print("Creating Agent ", "name:", agent_data[i]["name"])
-            #response = halo_client.create_agent(agent_data[i])
+            # response = halo_client.create_agent(agent_data[i])
 
 
 def map_zen_users_to_halo(end_user_data, halo_client):
-    '''
+    """
     The Zendesk end_users are copied to halo
-    If a Zendesk user id is in field other5 in Halo it is skipped 
-    '''
+    If a Zendesk user id is in field other5 in Halo it is skipped
+    """
     id = 0
     halo_users_from_zen = {}
     zen_user_ids = []
@@ -96,7 +99,8 @@ def map_zen_users_to_halo(end_user_data, halo_client):
             print("User already exists with id=", end_user_data[i]["id"])
         else:
             print("Creating user ", end_user_data[i]["id"], "name:", end_user_data[i]["name"])
-            #response = halo_client.create_user(user_data[i])
+            # response = halo_client.create_user(user_data[i])
+
 
 class ZenDeskInit(object):
     def __init__(self, zenUrl=None, email=None):
@@ -115,7 +119,7 @@ class ZenDeskInit(object):
     def get_users(self, url):
         self.users = self._users.get_all_users(url)
         return self.users
-    
+
     def get_end_users(self):
         return self._users.get_end_users(self.users)
 
@@ -125,15 +129,16 @@ class ZenDeskInit(object):
     def get_admins(self):
         return self._users.get_admins(self.users)
 
+
 class ZenUsersApi(object):
     def __init__(self, url, session):
         self.session = session
         self.url = url
 
     def get_all_users(self, url):
-        '''
+        """
         Get all Zendesk users including agents and admins
-        '''
+        """
         no_of_pages = 3
 
         zendesk_users_all = []
@@ -159,8 +164,14 @@ class ZenUsersApi(object):
 
             users = response.json()
             zendesk_users = [
-                {"email": user["email"], "id": user["id"], "name": user["name"], 
-                 "role": user["role"], "default_group_id": user["default_group_id"], "site_id": 18}
+                {
+                    "email": user["email"],
+                    "id": user["id"],
+                    "name": user["name"],
+                    "role": user["role"],
+                    "default_group_id": user["default_group_id"],
+                    "site_id": 18,
+                }
                 for user in users["users"]
             ]
             zendesk_users_all += zendesk_users
@@ -171,28 +182,45 @@ class ZenUsersApi(object):
                 break
 
         return zendesk_users_all
-    
+
     def get_end_users(self, users):
         zendesk_end_users = [
-            {"email": user["email"], "id": user["id"], "name": user["name"],
-               "role": user["role"], "site_id": 18}
-              for user in users if user["role"] == 'end-user'
+            {
+                "email": user["email"],
+                "id": user["id"],
+                "name": user["name"],
+                "role": user["role"],
+                "site_id": 18,
+            }
+            for user in users
+            if user["role"] == "end-user"
         ]
         return zendesk_end_users
 
     def get_agents(self, users):
         zendesk_agents = [
-            {"email": user["email"], "id": user["id"], "name": user["name"],
-               "default_group_id": user["default_group_id"]}
-              for user in users if user["role"] == 'agent'
+            {
+                "email": user["email"],
+                "id": user["id"],
+                "name": user["name"],
+                "default_group_id": user["default_group_id"],
+            }
+            for user in users
+            if user["role"] == "agent"
         ]
         return zendesk_agents
 
     def get_admins(self, users):
         zendesk_admins = [
-            {"email": user["email"], "id": user["id"], "name": user["name"],
-               "role": user["role"], "default_group_id": user["default_group_id"], "site_id": 18}
-              for user in users if user["role"] == 'admin'
+            {
+                "email": user["email"],
+                "id": user["id"],
+                "name": user["name"],
+                "role": user["role"],
+                "default_group_id": user["default_group_id"],
+                "site_id": 18,
+            }
+            for user in users
+            if user["role"] == "admin"
         ]
         return zendesk_admins
-
