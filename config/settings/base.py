@@ -29,6 +29,7 @@ DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 # Server secrets
 VCAP_SERVICES = env.json("VCAP_SERVICES", {})
@@ -172,10 +173,6 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "SERVE_AUTHENTICATION": [],
 }
-
-# Help desk interface
-HELP_DESK_INTERFACE = env("HELP_DESK_INTERFACE", default="")
-HELP_DESK_CREDS = env.dict("HELP_DESK_CREDS", default={})
 
 AUTH_USER_MODEL = "user.User"
 
