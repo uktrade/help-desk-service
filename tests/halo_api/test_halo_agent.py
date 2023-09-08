@@ -7,7 +7,6 @@ from halo.halo_manager import HaloManager
 from tests.fixture_data.halo.user import user as halo_user
 
 from help_desk_api.models import HelpDeskCreds
-from help_desk_api.serializers import HaloToZendeskUserSerializer
 
 
 @pytest.fixture
@@ -53,7 +52,7 @@ class TestAgentViews:
         agent = halo_manager.get_agent(1)
         assert isinstance(agent, dict)
         assert agent["id"] == 1
-        assert agent["is_agent"] == True
+        assert agent["is_agent"]
 
     @patch("requests.get")
     @patch("requests.post")
@@ -87,7 +86,7 @@ class TestAgentViews:
         mock_post.side_effects = fake_responses
 
         request_data = {
-            "default_group_id": 1,
+            "site_id": 1,
             "name": "name",
             "email": "test@email.com",
             "id": 123,
@@ -113,7 +112,7 @@ class TestAgentViews:
         mock_post.side_effects = fake_responses
 
         request_data = {
-            "default_group_id": 1,
+            "site_id": 1,
             "name": "name",
             "email": "test@test.com",
             "id": 1,
@@ -127,7 +126,12 @@ class TestAgentViews:
         """
         Update Agent Success
         """
-        mock_agent_post = {"id": 1, "name": "test", "emailaddress": "test@test.com", "default_group_id": 1}  # /PS-IGNORE
+        mock_agent_post = {
+            "id": 1,
+            "name": "test",
+            "email": "test@test.com",
+            "default_group_id": 1,
+        }  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
@@ -138,10 +142,13 @@ class TestAgentViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"id": 1, "name": "x", "email": "test@test.com", "default_group_id": 1}  # /PS-IGNORE
+        request_data = {
+            "id": 1,
+            "name": "x",
+            "email": "test@test.com",
+            "default_group_id": 1,
+        }  # /PS-IGNORE
         agent = halo_manager.create_agent(request_data)
         assert isinstance(agent, dict)
         assert agent["name"] == "test"
         assert agent["email"] == "test@test.com"  # /PS-IGNORE
-
-
