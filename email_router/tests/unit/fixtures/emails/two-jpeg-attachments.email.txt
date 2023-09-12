@@ -57,7 +57,9 @@ Content-Type: multipart/alternative; boundary="00000000000094956805f998c42c"
 --00000000000094956805f998c42c
 Content-Type: text/plain; charset="UTF-8"
 
-"Actually it's JPEG" yeah, yeah, whatever.
+{{ message_text}}
+
+text/plain
 
 -- 
 Communications with the Department for International Trade may be 
@@ -66,7 +68,9 @@ automatically logged, monitored and/or recorded for legal purposes.
 --00000000000094956805f998c42c
 Content-Type: text/html; charset="UTF-8"
 
-<div dir="ltr">&quot;Actually it&#39;s JPEG&quot; yeah, yeah, whatever.</div>
+<div dir="ltr">Posted at {{ timestamp }}: {{ message_text}}</div>
+<br>
+text/html part
 
 <br>
 <span style="color:rgb(34,34,34);font-family:arial,sans-serif;font-size:12.8px;background-color:rgb(255,255,255)">Communications with the Department for International Trade may be automatically logged, monitored and/or recorded for legal purposes.</span>
