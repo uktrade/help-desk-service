@@ -1,6 +1,6 @@
 from email.message import EmailMessage
 
-from email_router.ses_email_receiving.email_parser.parsed_email import ParsedEmail
+from email_router.ses_email_receiving.email_utils import ParsedEmail
 
 
 class TestParsedEmail:

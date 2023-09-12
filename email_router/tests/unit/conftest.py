@@ -3,7 +3,7 @@ from email.parser import BytesParser
 from pathlib import Path
 
 import pytest
-from email_router.ses_email_receiving.email_parser.parsed_email import ParsedEmail
+from email_router.ses_email_receiving.email_utils import ParsedEmail
 
 
 @pytest.fixture(scope="session")
