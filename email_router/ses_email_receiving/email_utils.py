@@ -1,3 +1,5 @@
+import mimetypes
+from datetime import datetime
 from email import policy
 from email.message import EmailMessage
 from email.parser import BytesParser
@@ -27,4 +29,14 @@ class ParsedEmail:
 
     @property
     def attachments(self):
-        return list(self.message.iter_attachments())
+        attachment: EmailMessage
+        for attachment in self.message.iter_attachments():
+            content_type = attachment.get_content_type()
+            extension = mimetypes.guess_extension(content_type, strict=False) or ".dat"
+            timestamp = datetime.utcnow().isoformat()
+            filename = attachment.get_filename(failobj=f"attachment-{timestamp}{extension}")
+            yield {
+                "content_type": content_type,
+                "filename": filename,
+                "payload": attachment.get_payload(),
+            }
