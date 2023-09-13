@@ -148,3 +148,13 @@ def new_halo_ticket():
 @pytest.fixture(scope="session")
 def access_token():
     return {"access_token": "fake-access-token"}  # /PS-IGNORE
+
+
+@pytest.fixture(scope="session")
+def attachment_filename():
+    return "test_filename.dat"
+
+
+@pytest.fixture(scope="session")
+def attachment_data():
+    return "Some string".encode("utf-8")
