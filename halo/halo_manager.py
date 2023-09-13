@@ -1,3 +1,4 @@
+import base64
 import logging
 
 from django.conf import settings
@@ -199,4 +200,12 @@ class HaloManager:
             all_tickets.extend(halo_response["tickets"])
         halo_response["tickets"] = all_tickets
 
+        return halo_response
+
+    def upload_file(self, filename: str, data: bytes):
+        params = {
+            "filename": filename,
+            "data_base64": base64.b64encode(data).decode("ascii"),  # /PS-IGNORE
+        }
+        halo_response = self.client.post(path="Attachment", payload=params)
         return halo_response
