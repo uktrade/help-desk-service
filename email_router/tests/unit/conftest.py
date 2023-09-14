@@ -8,19 +8,19 @@ from email_router.ses_email_receiving.email_utils import ParsedEmail
 from requests import Response
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def email_bytes():
     fixture_path = Path(__file__).parent / "fixtures/emails/two-jpeg-attachments.email.txt"
     with open(fixture_path, "rb") as file:
         yield file
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def email_message(email_bytes):
     return BytesParser(policy=policy.default).parse(email_bytes)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def parsed_email(email_bytes):
     return ParsedEmail(raw_bytes=email_bytes)
 
