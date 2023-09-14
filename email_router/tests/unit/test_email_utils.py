@@ -89,7 +89,7 @@ class TestAPIClient:
         mock_requests.post.assert_called_once_with(
             "http://localhost:8000/api/v2/tickets.json",  # /PS-IGNORE
             headers={
-                "Content_Type": "application/json",
+                "Content-Type": "application/json",
             },
             auth=client.auth,
             data=json.dumps(expected_ticket_data),
