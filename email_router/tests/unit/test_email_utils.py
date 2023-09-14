@@ -42,7 +42,7 @@ class TestParsedEmail:
 
     @mock.patch("mimetypes.guess_extension")  # /PS-IGNORE
     @mock.patch("email_router.ses_email_receiving.email_utils.datetime")
-    def test_attachment_gets_default_filename(
+    def test_attachment_without_filename_gets_default_filename(
         self, mock_datetime: MagicMock, mock_guess_extension: MagicMock, parsed_email
     ):
         mock_guess_extension.return_value = None
