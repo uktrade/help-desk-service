@@ -3,6 +3,7 @@ from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 from rest_framework import authentication, permissions, status
+from rest_framework.parsers import FileUploadParser
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -204,7 +205,20 @@ class UploadsView(HaloBaseView):
     View for uploading attachments
     """
 
+    parser_classes = [
+        FileUploadParser,
+    ]
     serializer_class = HaloToZendeskTicketContainerSerializer
 
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            filename = request.query_params.get("filename", None)
+            data = request.body
+            halo_response = self.halo_manager.upload_file(filename=filename, data=data)
+            return Response(halo_response, status=status.HTTP_400_BAD_REQUEST)
+        except ZendeskException as error:
+            sentry_sdk.capture_exception(error)
+            return Response(
+                "File upload failed",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
