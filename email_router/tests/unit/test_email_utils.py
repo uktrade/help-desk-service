@@ -112,7 +112,10 @@ class TestAPIClient:
         mock_requests.post.assert_called_once_with(
             "http://localhost:8000/api/v2/uploads.json",  # /PS-IGNORE
             params={"filename": attachment["filename"]},
-            headers={"Content-Type": attachment["content_type"]},
+            headers={
+                "Content-Type": attachment["content_type"],
+                "Content-Disposition": "attachment;filename=padana-2.jpg",
+            },
             auth=expected_auth,
             data=attachment["payload"],
         )

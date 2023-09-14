@@ -41,8 +41,13 @@ class ParsedEmail:
             extension = mimetypes.guess_extension(content_type, strict=False) or ".dat"
             timestamp = datetime.utcnow().isoformat()
             filename = attachment.get_filename(failobj=f"attachment-{timestamp}{extension}")
+            content_disposition = attachment.get_content_disposition()
+            if content_disposition is None:
+                # DRF insists on this for parsing a file upload…
+                content_disposition = "attachment"
             yield {
                 "content_type": content_type,
+                "content_disposition": content_disposition,
                 "filename": filename,
                 "payload": attachment.get_content(),
             }
@@ -66,7 +71,13 @@ class APIClient:
         upload_tokens = []
         for attachment in attachments:
             params = {"filename": attachment["filename"]}
-            headers = {"Content-Type": attachment["content_type"]}
+            disposition_header = (
+                f"{attachment['content_disposition']};filename={attachment['filename']}"
+            )
+            headers = {
+                "Content-Type": attachment["content_type"],
+                "Content-Disposition": disposition_header,
+            }
             upload_response = requests.post(
                 upload_url,
                 params=params,
