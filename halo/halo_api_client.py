@@ -81,7 +81,7 @@ class HaloAPIClient:
         )
         logger.error(response)
         if response.status_code != 201:
-            logger.error(f"{response.status_code} response from get endpoint")
+            logger.error(f"{response.status_code} response from POST endpoint")
             logger.error(response.json())
             raise HaloClientNotFoundException()
         return response.json()
