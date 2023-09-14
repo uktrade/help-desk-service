@@ -85,11 +85,11 @@ class APIClient:
         ticket_data = {
             "ticket": {
                 "subject": message.subject,
-                "requester": message.sender,
+                # "requester": message.sender,
                 "comment": {
                     "body": message.payload,
                 },
-                "group_id": 10372467296924,
+                # "group_id": 10372467296924,
             }
         }
         if uploads:

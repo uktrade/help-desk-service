@@ -80,12 +80,10 @@ class TestAPIClient:
         expected_ticket_data = {
             "ticket": {
                 "subject": parsed_email.subject,
-                "requester": parsed_email.sender,
                 "comment": {
                     "body": parsed_email.payload,
                     "uploads": mocked_upload_tokens,
                 },
-                "group_id": 10372467296924,
             }
         }
         mock_requests.post.assert_called_once_with(
