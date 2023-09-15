@@ -202,10 +202,12 @@ class HaloManager:
 
         return halo_response
 
-    def upload_file(self, filename: str, data: bytes):
+    def upload_file(self, filename: str, data: bytes, content_type: str = "text/plain"):
+        file_content_base64 = base64.b64encode(data).decode("ascii")  # /PS-IGNORE
+        payload = f"data:{content_type};base64,{file_content_base64}"
         params = {
             "filename": filename,
-            "data_base64": base64.b64encode(data).decode("ascii"),  # /PS-IGNORE
+            "data_base64": payload,  # /PS-IGNORE
         }
-        halo_response = self.client.post(path="Attachment", payload=params)
+        halo_response = self.client.post(path="Attachment", payload=[params])
         return halo_response

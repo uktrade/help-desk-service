@@ -13,6 +13,7 @@ from help_desk_api.serializers import (
     HaloToZendeskCommentSerializer,
     HaloToZendeskTicketContainerSerializer,
     HaloToZendeskTicketsContainerSerializer,
+    HaloToZendeskUploadSerializer,
     HaloToZendeskUserSerializer,
 )
 
@@ -214,8 +215,13 @@ class UploadsView(HaloBaseView):
         try:
             filename = request.query_params.get("filename", None)
             data = request.body
-            halo_response = self.halo_manager.upload_file(filename=filename, data=data)
-            return Response(halo_response, status=status.HTTP_400_BAD_REQUEST)
+            halo_response = self.halo_manager.upload_file(
+                filename=filename,
+                data=data,
+                content_type=request.headers.get("Content-Type", "text/plain"),
+            )
+            serializer = HaloToZendeskUploadSerializer(halo_response)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ZendeskException as error:
             sentry_sdk.capture_exception(error)
             return Response(
