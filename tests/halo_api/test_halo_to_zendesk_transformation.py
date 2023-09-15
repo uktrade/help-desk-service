@@ -1,4 +1,7 @@
-from help_desk_api.serializers import HaloToZendeskTicketSerializer
+from help_desk_api.serializers import (
+    HaloToZendeskTicketSerializer,
+    HaloToZendeskUploadSerializer,
+)
 
 
 class TestHaloToZendeskTransformation:
@@ -11,3 +14,14 @@ class TestHaloToZendeskTransformation:
         assert len(zendesk_equivalent.data["tags"]) == len(new_halo_ticket["tags"])
         for tag in zendesk_equivalent.data["tags"]:
             assert tag in expected_tags
+
+
+class TestHaloToZendeskUploadSerializer:
+    def test_to_representation(self, halo_upload_response_body):
+        serializer = HaloToZendeskUploadSerializer(instance=halo_upload_response_body)
+
+        data = serializer.data
+
+        assert "upload" in data
+        assert "token" in data["upload"]
+        assert data["upload"]["token"] == halo_upload_response_body["id"]

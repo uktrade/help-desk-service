@@ -158,3 +158,21 @@ def attachment_filename():
 @pytest.fixture(scope="session")
 def attachment_data():
     return "Some string".encode("utf-8")
+
+
+@pytest.fixture(scope="session")
+def halo_upload_response_body():
+    return {
+        "third_party_id": "",
+        "content_type": "image/jpeg",
+        "id": 218,
+        "filename": "padana-2.jpg",
+        "datecreated": "2023-09-15T11:11:37.9383455Z",
+        "note": "",
+        "filesize": 84061,
+        "type": 0,
+        "unique_id": 0,
+        "desc": "padana-2.jpg",
+        "isimage": False,
+        "data": "/9j/4AAQSk",
+    }
