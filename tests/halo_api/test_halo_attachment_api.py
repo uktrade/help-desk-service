@@ -24,9 +24,9 @@ class TestHaloAttachmentAPI:
         halo_manager.upload_file(attachment_filename, attachment_data)
 
         actual_payload = json.loads(mock_post.call_args[1]["data"])[0]
+        base64_payload = base64.b64encode(attachment_data).decode("ascii")  # /PS-IGNORE
+        expected_payload = f"data:text/plain;base64,{base64_payload}"
         assert "filename" in actual_payload
         assert actual_payload["filename"] == attachment_filename
         assert "data_base64" in actual_payload
-        assert actual_payload["data_base64"] == base64.b64encode(  # /PS-IGNORE
-            attachment_data
-        ).decode("ascii")
+        assert actual_payload["data_base64"] == expected_payload
