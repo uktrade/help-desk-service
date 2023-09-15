@@ -106,7 +106,6 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {"emailaddress": data.pop("email", None), "other5": data.pop("id", None)}
         halo_payload.update(**data)
@@ -145,7 +144,6 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {
             "emailaddress": data.pop("email", None),
@@ -233,7 +231,6 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         return data
 
     def validate_fields(self, data):
-
         acceptable_ticket_fields = set(self.get_fields())
 
         data_copy = deepcopy(data)
@@ -296,7 +293,6 @@ class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
         return data
 
     def validate_fields(self, data):
-
         # fields defined in this serializer
         acceptable_ticket_fields = set(self.get_fields())
 
@@ -407,3 +403,14 @@ class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):
     """
 
     tickets = HaloToZendeskTicketSerializer(many=True)
+
+
+class HaloToZendeskUploadSerializer(serializers.Serializer):
+    token = serializers.SerializerMethodField()
+
+    def get_token(self, instance):
+        return instance["id"]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        return {"upload": representation}
