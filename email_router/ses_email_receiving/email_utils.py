@@ -56,6 +56,17 @@ class ParsedEmail:
                 "payload": attachment.get_content(),
             }
 
+    @property
+    def recipient(self):
+        """
+        The email address to which the ticket was sent
+        TODO: consider whether, if there are multiple recipients
+            or CC and BCC recipients,  /PS-IGNORE
+            we should actively search for one at our custom domain
+            Also, we could supply a default, maybe?
+        """
+        return self.message.get("To")
+
 
 class APIClient:
     def __init__(self, zendesk_email, zendesk_token) -> None:
