@@ -7,6 +7,7 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 
 import requests
+from markdown import markdown
 
 
 class ParsedEmail:
@@ -31,7 +32,10 @@ class ParsedEmail:
 
     @property
     def payload(self):
-        return self.body.get_content()
+        payload = self.body.get_content()
+        if self.body.get_content_type() == "text/plain":
+            payload = markdown(payload)
+        return payload
 
     @property
     def attachments(self):
