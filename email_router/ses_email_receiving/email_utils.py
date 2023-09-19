@@ -92,6 +92,7 @@ class APIClient:
             headers = {
                 "Content-Type": attachment["content_type"],
                 "Content-Disposition": disposition_header,
+                "Accept": "application/json",
             }
             upload_response = requests.post(
                 upload_url,
@@ -105,21 +106,19 @@ class APIClient:
             upload_tokens.append(upload_token)
         return upload_tokens
 
-    def create_ticket(self, message, uploads=None):
+    def create_ticket(self, message: ParsedEmail, uploads=None):
         ticket_creation_url = "http://localhost:8000/api/v2/tickets.json"  # /PS-IGNORE
         content_type = "application/json"
         ticket_data = {
             "ticket": {
                 "subject": message.subject,
-                # "requester": message.sender,
                 "comment": {
                     "body": message.payload,
                 },
-                # "group_id": 10372467296924,
             }
         }
         if uploads:
-            ticket_data["ticket"]["comment"]["uploads"] = uploads
+            ticket_data["ticket"]["comment"]["attachments"] = uploads
         zendesk_response = requests.post(
             ticket_creation_url,
             headers={
