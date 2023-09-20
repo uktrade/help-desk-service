@@ -91,6 +91,33 @@ class HaloToZendeskAttachmentSerializer(serializers.Serializer):
     isimage = serializers.BooleanField()
 
 
+class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
+    """
+    Zendesk Group payload is converted to Halo Team payload
+    """
+
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+
+        acceptable_team_fields = set(self.get_fields())
+        halo_payload = {"id": data.pop("id", None), "name": data.pop("name", None)}
+        halo_payload.update(**data)
+        unsupported_fields = set(halo_payload.keys()) - acceptable_team_fields
+
+        if unsupported_fields:
+            raise ZendeskFieldsNotSupportedException(
+                f"The field(s) {unsupported_fields} are not supported in Halo"
+            )
+        else:
+            return super().to_representation(halo_payload)
+
+
 class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
     """
     Zendesk Payload is converted to Halo Payload
@@ -119,15 +146,35 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         else:
             return super().to_representation(halo_payload)
 
-        """
-        zendesk_data = {
-            "emailaddress": data["email"],
-            "name": data["name"],
-            "other5": data["id"],
-            "site_id": data["site_id"],
-        }
-        return super().to_representation(zendesk_data)
-        """
+
+class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
+    """
+    Zendesk Payload is converted to Halo Payload
+    """
+
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    is_agent = serializers.BooleanField(default=True)
+    team = serializers.CharField()
+
+    def validate(self, data):
+        # validate
+        return data
+
+    def to_representation(self, data):
+
+        acceptable_user_fields = set(self.get_fields())
+        data.pop("id")
+        halo_payload = {"is_agent": True, "team": data.pop("default_group_id", None)}
+        halo_payload.update(**data)
+        unsupported_fields = set(halo_payload.keys()) - acceptable_user_fields
+
+        if unsupported_fields:
+            raise ZendeskFieldsNotSupportedException(
+                f"The field(s) {unsupported_fields} are not supported in Halo"
+            )
+        else:
+            return super().to_representation(halo_payload)
 
 
 class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
@@ -228,6 +275,10 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     summary = serializers.CharField()
     details = serializers.CharField()
     tags = serializers.ListField()
+    team = serializers.CharField()
+    user_name = serializers.CharField()
+    user_email = serializers.EmailField()
+    site_id = serializers.IntegerField()
 
     def validate(self, data):
         return data
@@ -244,6 +295,9 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             "tags": ticket.pop("tags", []),
         }
         # find unsupported Zendesk fields
+        ticket.pop("id", None)
+        ticket.pop("requester_id", None)
+        ticket.pop("group_id", None)
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
         ticket.pop("priority", None)  # Not used by HALO currently
         halo_payload.update(**ticket)
@@ -257,9 +311,15 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             "summary": zendesk_ticket_data.get("subject", None),
             "details": zendesk_ticket_data.get("description", None),
             "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
+            "user_name": zendesk_ticket_data.get("user_name", None),
+            "user_email": zendesk_ticket_data.get("user_email", None),
+            "team": zendesk_ticket_data.get("team", None),
+            "site_id": zendesk_ticket_data.get("site_id", None),
         }
+        print("In serializer payload=",halo_payload)
 
         unsupported_fields = self.validate_fields(data)
+        print("UNSUPPORTED FIELDS:", unsupported_fields)
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
