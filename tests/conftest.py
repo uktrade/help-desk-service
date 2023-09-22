@@ -107,17 +107,26 @@ def new_zendesk_ticket():
     on Data Workspace  /PS-IGNORE
     """
     return {
+        "description": "Long load of text here",
+        "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+        "tags": ["request-for-data"],
+    }
+
+
+@pytest.fixture(scope="session")
+def new_zendesk_ticket_with_comment_attachments():
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
         "ticket": {
-            # "custom_fields": [{"id": "numeric_field_id", "value": "field_value"}],
-            "description": "Long load of text here",
-            # "id": None,
-            # "requester": {
-            #    "email": "vyvyan.holland@contact-email.com",  # /PS-IGNORE
-            #    "id": None,
-            #    "name": "Vyvyan Holland",  # /PS-IGNORE
-            # },
-            "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
-            "tags": ["request-for-data"],
+            "comment": {
+                "body": "Initial comment is the way descriptions ought to be added",
+                "attachments": [7, 14, 21],
+            },
+            "subject": "Test for attachments",  # /PS-IGNORE
         }
     }
 
@@ -141,7 +150,11 @@ def new_halo_ticket():
         ],
         "user": {"id": 1, "name": "test", "emailaddress": "test@test.co"},  # /PS-IGNORE
         "actions": [{"id": 2, "outcome": "comment", "note": "test"}],
-        "attachments": [{"id": 1, "filename": "a", "isimage": True}],
+        "attachments": [
+            {"id": 7, "filename": "a", "isimage": True},
+            {"id": 14, "filename": "b", "isimage": True},
+            {"id": 21, "filename": "c", "isimage": True},
+        ],
     }
 
 
