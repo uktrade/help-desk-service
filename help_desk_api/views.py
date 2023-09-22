@@ -145,7 +145,7 @@ class TicketView(HaloBaseView, CustomPagination):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, *args, **kwargs):
         """
