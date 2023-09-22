@@ -276,6 +276,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         # find unsupported Zendesk fields
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
         ticket.pop("priority", None)  # Not used by HALO currently
+        ticket.pop("recipient", None)  # TODO: add proper support
         halo_payload.update(**ticket)
 
         unsupported_fields = set(halo_payload.keys()) - acceptable_ticket_fields
@@ -292,6 +293,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         #     "details": zendesk_ticket_data.get("description", None),
         #     "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         # }
+        recipient = zendesk_ticket_data.pop("recipient", None)
         serialized_halo_payload = super().to_representation(zendesk_ticket_data)
         if "comment" in serialized_halo_payload:
             comment = serialized_halo_payload.pop("comment")
@@ -301,6 +303,12 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
                     serialized_halo_payload["attachments"] = [
                         {"id": attachment_token} for attachment_token in attachment_tokens
                     ]
+        if recipient:
+            if "customfields" not in serialized_halo_payload:
+                serialized_halo_payload["customfields"] = []
+            serialized_halo_payload["customfields"].append(
+                {"name": "CFEmailToAddress", "value": recipient}
+            )
         return serialized_halo_payload
 
 
