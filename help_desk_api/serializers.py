@@ -70,6 +70,12 @@ class HaloToZendeskCommentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     note = serializers.CharField()
     outcome = serializers.CharField()
+    attachments = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=True, default=[]
+    )
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class HaloToZendeskCustomFieldsSerializer(serializers.Serializer):
