@@ -69,8 +69,11 @@ class ParsedEmail:
 
 
 class APIClient:
-    def __init__(self, zendesk_email, zendesk_token) -> None:
+    def __init__(
+        self, zendesk_email, zendesk_token, api_url="http://localhost:8000/api/v2/"  # /PS-IGNORE
+    ) -> None:
         super().__init__()
+        self.api_url = api_url
         self.auth = (f"{zendesk_email}/token", zendesk_token)
         creds = f"{zendesk_email}/token:{zendesk_token}"
         encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
@@ -82,7 +85,7 @@ class APIClient:
         return zendesk_response
 
     def upload_attachments(self, attachments):
-        upload_url = "http://localhost:8000/api/v2/uploads.json"  # /PS-IGNORE
+        upload_url = f"{self.api_url}uploads.json"  # /PS-IGNORE
         upload_tokens = []
         for attachment in attachments:
             params = {"filename": attachment["filename"]}
@@ -107,7 +110,7 @@ class APIClient:
         return upload_tokens
 
     def create_ticket(self, message: ParsedEmail, uploads=None):
-        ticket_creation_url = "http://localhost:8000/api/v2/tickets.json"  # /PS-IGNORE
+        ticket_creation_url = f"{self.api_url}tickets.json"  # /PS-IGNORE
         content_type = "application/json"
         ticket_data = {
             "ticket": {
