@@ -82,14 +82,16 @@ class TestAPIClient:
                 "subject": parsed_email.subject,
                 "comment": {
                     "body": parsed_email.payload,
-                    "uploads": mocked_upload_tokens,
+                    "attachments": mocked_upload_tokens,
                 },
+                "recipient": "test@example.example",  # /PS-IGNORE
             }
         }
         mock_requests.post.assert_called_once_with(
             "http://localhost:8000/api/v2/tickets.json",  # /PS-IGNORE
             headers={
                 "Content-Type": "application/json",
+                "Accept": "application/json",
             },
             auth=client.auth,
             data=json.dumps(expected_ticket_data),
@@ -115,6 +117,7 @@ class TestAPIClient:
             headers={
                 "Content-Type": attachment["content_type"],
                 "Content-Disposition": "attachment;filename=padana-2.jpg",
+                "Accept": "application/json",
             },
             auth=expected_auth,
             data=attachment["payload"],
