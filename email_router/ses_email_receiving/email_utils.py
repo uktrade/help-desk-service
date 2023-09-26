@@ -118,6 +118,7 @@ class APIClient:
                 "comment": {
                     "body": message.payload,
                 },
+                "recipient": message.recipient,
             }
         }
         if uploads:
