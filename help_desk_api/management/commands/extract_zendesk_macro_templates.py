@@ -1,37 +1,30 @@
 import json
-import pathlib
 from datetime import datetime
 
 from django.conf import settings
-from django.core.management import BaseCommand
 
 from help_desk_api.utils import ZenpyMacros
 
+from .zendesk_data_base_command import ZendeskDataBaseCommand
 
-class Command(BaseCommand):
-    help = "Extract email variable names from Zendesk JSON, e.g. triggers and macros"  # /PS-IGNORE
 
-    def __init__(self, stdout=None, stderr=None, **kwargs):
-        super().__init__(stdout, stderr, **kwargs)
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "-i", "--input", type=pathlib.Path, required=True, help="Input file path"
-        )
-        parser.add_argument(
-            "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
-        )
+class Command(ZendeskDataBaseCommand):
+    help = "Extract macro templates from Zendesk JSON"  # /PS-IGNORE
+    api_response_content_field = "macros"
+    api_start_url_path = "/api/v2/macros.json"
 
     def handle(self, *args, **options):
-        with open(options["input"], "r") as input_file:
-            macros = json.load(input_file)
+        macro_data = self.load_zendesk_data(
+            token=options["zendesktoken"],
+            credentials=options["credentials"],
+            file_path=options["inputfile"],
+        )
 
-        macros = ZenpyMacros(macros)
-
-        content = {
-            "plaintext_comments": macros.plaintext_comments,
-            "html_comments": macros.html_comments,
+        macros = ZenpyMacros(macro_data)
+        output = {
             "subjects": macros.subjects,
+            "html": macros.with_html_comments,
+            "text": macros.with_plaintext_comments,
         }
 
         if options["output"]:
@@ -41,6 +34,6 @@ class Command(BaseCommand):
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
-                json.dump(content, output_file, indent=4)
+                json.dump(output, output_file, indent=4)
         else:
-            json.dump(content, self.stdout, indent=4)
+            json.dump(output, self.stdout, indent=4)

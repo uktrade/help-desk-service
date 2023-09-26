@@ -1,4 +1,6 @@
 import base64
+import re
+from collections import defaultdict
 
 from rest_framework import authentication, exceptions
 
@@ -38,36 +40,28 @@ class ZenpyMacros:
         return sorted(list(set(actions)))
 
     @property
-    def plaintext_comments(self):
-        comments = [
-            action["value"]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], str) and action["field"] == "comment_value"
-        ]
-        comments += [
-            action["value"][1]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], list) and action["field"] == "comment_value"
-        ]
-        return sorted(list(set(comments)))
+    def with_plaintext_comments(self):
+        output = defaultdict(list)
+        for macro in self.macros:
+            for action in macro["actions"]:
+                if action["field"] == "comment_value":
+                    if isinstance(action["value"], str):
+                        output[macro["raw_title"]].append(action["value"])
+                    elif isinstance(action["value"], list):
+                        output[macro["raw_title"]].append(action["value"][1])
+        return output
 
     @property
-    def html_comments(self):
-        comments = [
-            action["value"]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], str) and action["field"] == "comment_value_html"
-        ]
-        comments += [
-            action["value"][1]
-            for macro in self.macros
-            for action in macro["actions"]
-            if isinstance(action["value"], list) and action["field"] == "comment_value_html"
-        ]
-        return sorted(list(set(comments)))
+    def with_html_comments(self):
+        output = defaultdict(list)
+        for macro in self.macros:
+            for action in macro["actions"]:
+                if action["field"] == "comment_value_html":
+                    if isinstance(action["value"], str):
+                        output[macro["raw_title"]].append(action["value"])
+                    elif isinstance(action["value"], list):
+                        output[macro["raw_title"]].append(action["value"][1])
+        return output
 
     @property
     def subjects(self):
@@ -81,6 +75,8 @@ class ZenpyMacros:
 
 
 class ZenpyTriggers:
+    notification_action_fields = ("notification_user", "notification_group")
+
     def __init__(self, triggers) -> None:
         super().__init__()
         self._triggers = triggers["triggers"]
@@ -89,7 +85,7 @@ class ZenpyTriggers:
         if "actions" not in item:
             return False
         for action in item["actions"]:
-            if action["field"] == "notification_user":
+            if action["field"] in self.notification_action_fields:
                 return True
         return False
 
@@ -101,7 +97,9 @@ class ZenpyTriggers:
 
     def email_action_only(self, trigger):
         email_actions = [
-            action for action in trigger["actions"] if action["field"] == "notification_user"
+            action
+            for action in trigger["actions"]
+            if action["field"] in self.notification_action_fields
         ]
         reduced_trigger = {"title": trigger["title"], "email_actions": email_actions}
         return reduced_trigger
@@ -140,3 +138,29 @@ class ZenpyTriggers:
                     }
                 )
         return emails
+
+
+class PlaceholderMapper:
+    _mappings = {
+        "#{{ticket.id}}": "[$FAULTID]($LINKTOREQUESTUSER)",
+        "{{ticket.id}}": "$FAULTID",  # /PS-IGNORE
+        "{{ticket.requester.email}}": "$USEREMAILADDRESS",
+        "{{ticket.requester.first_name}}": "$FIRSTNAME",  # /PS-IGNORE
+        "{{ticket.title}}": "$SYMPTOM",  # /PS-IGNORE
+        "{{ticket.description}}": "$SYMPTOM2",
+        "{{ticket.group.name}}": "$SECTION",
+        "{{ticket.link}}": "$LINKTOREQUESTUSER",
+        "{{ticket.status}}": "$STATUS",
+        "{{ticket.requester.name}}": "$USERNAME",
+        "{{ticket.assignee.name}}": "$ASSIGNEDTO",  # /PS-IGNORE
+    }
+    _mapping_re = None
+
+    @property
+    def mapping_re(self):
+        if self._mapping_re is None:
+            self._mapping_re = re.compile("|".join(self._mappings.keys()))
+        return self._mapping_re
+
+    def map(self, text):
+        return self.mapping_re.sub(lambda match: self._mappings[match.group()], text)
