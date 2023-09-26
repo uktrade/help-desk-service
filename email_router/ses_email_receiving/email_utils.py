@@ -127,6 +127,7 @@ class APIClient:
             ticket_creation_url,
             headers={
                 "Content-Type": content_type,
+                "Accept": "application/json",
             },
             auth=self.auth,
             data=json.dumps(ticket_data),
