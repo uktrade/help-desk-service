@@ -28,7 +28,7 @@ class ParsedEmail:
 
     @property
     def body(self) -> EmailMessage:
-        return self.message.get_body()
+        return self.message.get_body(preferencelist=("html", "plain"))
 
     @property
     def payload(self):
