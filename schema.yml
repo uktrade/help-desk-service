@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: Help Desk Service
+  version: 1.0.0
+  description: Acts as a proxy server for Zendesk API requests
+paths:
+  /api/v2/tickets.json:
+    get:
+      operationId: api_v2_tickets.json_retrieve
+      description: GET ticket/tickets from Halo
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          description: ''
+    post:
+      operationId: api_v2_tickets.json_create
+      description: CREATE/UPDATE ticket in Halo
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          description: ''
+  /api/v2/tickets/{id}.json:
+    get:
+      operationId: api_v2_tickets_.json_retrieve
+      description: GET ticket/tickets from Halo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          description: ''
+    post:
+      operationId: api_v2_tickets_.json_create
+      description: CREATE/UPDATE ticket in Halo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskTicketsContainer'
+          description: ''
+  /api/v2/tickets/{id}/comments.json:
+    get:
+      operationId: api_v2_tickets_comments.json_retrieve
+      description: GET comments from Halo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskComment'
+          description: ''
+  /api/v2/uploads.json:
+    post:
+      operationId: api_v2_uploads.json_create
+      description: View for uploading attachments
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketContainer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketContainer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskTicketContainer'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskTicketContainer'
+          description: ''
+  /api/v2/users/{id}.json:
+    get:
+      operationId: api_v2_users_.json_retrieve
+      description: Get a user from Halo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskUser'
+          description: ''
+    post:
+      operationId: api_v2_users_.json_create
+      description: Create a User in Halo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskUser'
+          description: ''
+  /api/v2/users/create_or_update.json:
+    get:
+      operationId: api_v2_users_create_or_update.json_retrieve
+      description: Get a user from Halo
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskUser'
+          description: ''
+    post:
+      operationId: api_v2_users_create_or_update.json_create
+      description: Create a User in Halo
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HaloToZendeskUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskUser'
+          description: ''
+  /api/v2/users/me.json:
+    get:
+      operationId: api_v2_users_me.json_retrieve
+      description: GET Me (self) from Halo
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HaloToZendeskUser'
+          description: ''
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    HaloToZendeskAttachment:
+      type: object
+      description: Zendesk Attachments Serializer
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        isimage:
+          type: boolean
+      required:
+      - filename
+      - id
+      - isimage
+    HaloToZendeskComment:
+      type: object
+      description: Zendesk Comments Serializer
+      properties:
+        id:
+          type: integer
+        note:
+          type: string
+        outcome:
+          type: string
+      required:
+      - id
+      - note
+      - outcome
+    HaloToZendeskCustomFields:
+      type: object
+      description: Zendesk CustomFields Serializer
+      properties:
+        id:
+          type: integer
+        value:
+          type: string
+      required:
+      - id
+      - value
+    HaloToZendeskTicket:
+      type: object
+      description: Zendesk Tickets Serializer
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+          maxLength: 200
+        details:
+          type: string
+          maxLength: 200
+        user:
+          $ref: '#/components/schemas/HaloToZendeskUser'
+        group_id:
+          type: string
+        external_id:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/HaloToZendeskComment'
+        tags:
+          type: array
+          items: {}
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/HaloToZendeskCustomFields'
+        recipient_email:
+          type: string
+          format: email
+        responder:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        due_at:
+          type: string
+          format: date-time
+        priority:
+          default: low
+          oneOf:
+          - $ref: '#/components/schemas/PriorityEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        assignee_id:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/HaloToZendeskAttachment'
+      required:
+      - actions
+      - assignee_id
+      - attachments
+      - created_at
+      - custom_fields
+      - details
+      - due_at
+      - external_id
+      - group_id
+      - id
+      - recipient_email
+      - responder
+      - subject
+      - tags
+      - updated_at
+      - user
+    HaloToZendeskTicketContainer:
+      type: object
+      description: Zendesk Single Ticket Serializer
+      properties:
+        ticket:
+          type: array
+          items:
+            $ref: '#/components/schemas/HaloToZendeskTicket'
+      required:
+      - ticket
+    HaloToZendeskTicketsContainer:
+      type: object
+      description: Zendesk Multiple Tickets Serializer
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/HaloToZendeskTicket'
+      required:
+      - tickets
+    HaloToZendeskUser:
+      type: object
+      description: |-
+        Halo User Serializer (despite the name)
+
+        The only fields that seem to be used within DBT systems are:
+        name: str - Full name of the user
+        email: str - Email address of the user
+        id: int - Zendesk ID of the user
+
+        This will have to map the Halo ID
+        to the equivalent Zendesk ID.
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+      - email
+      - id
+      - name
+    PriorityEnum:
+      enum:
+      - low
+      - medium
+      - high
+      - critical
+      type: string
+      description: |-
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+        * `critical` - Critical
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

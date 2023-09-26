@@ -5,19 +5,24 @@ import logging
 import sys
 
 import requests
+import sentry_sdk
 from django.contrib.auth.hashers import check_password
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
+from sentry_sdk import set_level
 
 # Needed for inspect
 from help_desk_api import views  # noqa F401
 from help_desk_api.models import HelpDeskCreds
+from help_desk_api.serializers import ZendeskFieldsNotSupportedException
 from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
 logger = logging.getLogger(__name__)
+
+set_level("warning")
 
 
 def get_view_class(path):
@@ -101,14 +106,21 @@ class ZendeskAPIProxyMiddleware:
 
     def __call__(self, request):
         try:
+            request_log = request.body.decode('utf-8')
+        except Exception:
+            request_log = request.body
+
+        logger.warning(f"Help Desk Service request received, body: {request_log}")
+
+        try:
             # Get out of proxy logic if there's an issue with the token
             token, email = get_zenpy_request_vars(request)
-        except APIException:
+        except APIException as exp:
+            sentry_sdk.capture_exception(exp)
             return self.get_response(request)
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
-        logger.debug(f"{token}, {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
@@ -123,8 +135,13 @@ class ZendeskAPIProxyMiddleware:
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
-            django_response = self.make_halo_request(help_desk_creds, request, supported_endpoint)
-
+            try:
+                django_response = self.make_halo_request(
+                    help_desk_creds, request, supported_endpoint
+                )
+            except ZendeskFieldsNotSupportedException as exp:
+                sentry_sdk.capture_exception(exp)
+                django_response = HttpResponseBadRequest(f"Incorrect payload: {exp}", status=400)
         return zendesk_response or django_response
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
@@ -137,7 +154,7 @@ class ZendeskAPIProxyMiddleware:
     def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
         # Don't need to call the below in Halo because error will be raised anyway
         if not supported_endpoint:
-            print("TODO raise Sentry error...")
+            logger.warning(f"{request.path} is not supported by this service")
         proxy_response = proxy_zendesk(
             request,
             help_desk_creds.zendesk_subdomain,

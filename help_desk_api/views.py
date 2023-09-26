@@ -1,3 +1,4 @@
+import sentry_sdk
 from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
@@ -32,6 +33,8 @@ class UserView(HaloBaseView):
     View for interaction with user
     """
 
+    serializer_class = HaloToZendeskUserSerializer
+
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
@@ -44,7 +47,8 @@ class UserView(HaloBaseView):
             halo_user = self.halo_manager.get_user(user_id=self.kwargs.get("id"))
             serializer = HaloToZendeskUserSerializer(halo_user)
             return Response(serializer.data)
-        except HaloClientNotFoundException:
+        except HaloClientNotFoundException as error:
+            sentry_sdk.capture_exception(error)
             return Response(
                 "please check userid, a user with given id could not be found",
                 status=status.HTTP_404_NOT_FOUND,
@@ -63,7 +67,8 @@ class UserView(HaloBaseView):
             else:
                 # There is no "id" in payload, so we create a User
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except ZendeskException:
+        except ZendeskException as error:
+            sentry_sdk.capture_exception(error)
             return Response(
                 "please check payload - user payload must have site id",
                 status=status.HTTP_400_BAD_REQUEST,
@@ -74,6 +79,8 @@ class MeView(HaloBaseView):
     """
     View for interaction with self
     """
+
+    serializer_class = HaloToZendeskUserSerializer
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -93,16 +100,24 @@ class MeView(HaloBaseView):
         # zendesk_manager = Zenpy(**credentials)
         # me_user = zendesk_manager.users.me()
         # print(me_user)
-
-        zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
-        serializer = HaloToZendeskUserSerializer(zendesk_response["users"][0])  # Hardcoded
-        return Response(serializer.data)
+        try:
+            zendesk_response = self.halo_manager.get_me(user_id=10745112443421)  # Hardcoded
+            serializer = HaloToZendeskUserSerializer(zendesk_response["users"][0])  # Hardcoded
+            return Response(serializer.data)
+        except ZendeskException as exp:
+            sentry_sdk.capture_exception(exp)
+            return Response(
+                "please check user_id",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class CommentView(HaloBaseView):
     """
     View for interaction with comment
     """
+
+    serializer_class = HaloToZendeskCommentSerializer
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -122,6 +137,9 @@ class TicketView(HaloBaseView, CustomPagination):
     """
     View for interacting with tickets
     """
+
+    serializer_class = HaloToZendeskTicketContainerSerializer
+    serializer_class = HaloToZendeskTicketsContainerSerializer
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -185,6 +203,8 @@ class UploadsView(HaloBaseView):
     """
     View for uploading attachments
     """
+
+    serializer_class = HaloToZendeskTicketContainerSerializer
 
     def post(self, request, *args, **kwargs):
         pass

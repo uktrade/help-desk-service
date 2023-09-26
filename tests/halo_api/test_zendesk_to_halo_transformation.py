@@ -6,7 +6,7 @@ class TestZendeskToHaloTransformation:
         expected_tags = {tag for tag in new_zendesk_ticket["ticket"]["tags"]}
 
         halo_equivalent = ZendeskToHaloCreateTicketSerializer(new_zendesk_ticket)
-        print(halo_equivalent.data)
+        # print(halo_equivalent.data)
         assert "tags" in halo_equivalent.data
         assert len(halo_equivalent.data["tags"]) == len(new_zendesk_ticket["ticket"]["tags"])
         for tag in halo_equivalent.data["tags"]:
