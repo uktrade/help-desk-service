@@ -133,7 +133,7 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
+        
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {"emailaddress": data.pop("email", None), "other5": data.pop("id", None)}
         halo_payload.update(**data)
@@ -279,6 +279,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     user_name = serializers.CharField()
     user_email = serializers.EmailField()
     site_id = serializers.IntegerField()
+    userdef5 = serializers.IntegerField()
 
     def validate(self, data):
         return data
@@ -292,10 +293,11 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         halo_payload = {
             "summary": ticket.pop("subject", None),
             "details": ticket.pop("description", None),
+            "userdef5": ticket.pop("id", None),
             "tags": ticket.pop("tags", []),
         }
         # find unsupported Zendesk fields
-        ticket.pop("id", None)
+        #ticket.pop("id", None)
         ticket.pop("requester_id", None)
         ticket.pop("group_id", None)
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
@@ -315,6 +317,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             "user_email": zendesk_ticket_data.get("user_email", None),
             "team": zendesk_ticket_data.get("team", None),
             "site_id": zendesk_ticket_data.get("site_id", None),
+            "userdef5": zendesk_ticket_data.get("userdef5", None),
         }
         print("In serializer payload=",halo_payload)
 
