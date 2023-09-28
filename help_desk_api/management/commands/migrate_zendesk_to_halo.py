@@ -49,55 +49,30 @@ class Command(BaseCommand):
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
         halo_client = HaloManager(credentials.halo_client_id, credentials.halo_client_secret)
 
+        halo_client = HaloManager(client_id="4e44f8be-f4ca-489e-8701-35d7a1304275", client_secret="5ee1dbd5-76d2-4a33-bc7e-fe82fd852da7-832e689e-09cb-48d0-948f-1ba187470d96")
+
         # Initialise Zendesk for specific url and credentials
         zendesk_init = ZenDeskInit(url, zendesk_email)
 
-        # Get Zendesk groups to be mapped to halo
+        # Get Zendesk Groups to be mapped
         group_data = zendesk_init.get_groups()
-        print("Zendesk groups -----------------------------")
-        #pprint(group_data)
-        print(len(group_data))
-        print("---------group ids---------------------")
-        group_id = {}
-        for i in range(len(group_data)):
-            group_id[group_data[i].get("id")] = group_data[i].get("name")
-        
-        print(group_id)
-
-        group_ids = list(group_id)
-        print(group_ids)
-        print(group_id)
-        #sys.exit()
-
-        # Get Zendesk ticket_fields to be mapped to halo
-        ticket_fields_data = zendesk_init.get_ticket_fields()
-        print("Zendesk ticket_fields -----------------------------")
-        pprint(ticket_fields_data)
-        print(len(ticket_fields_data))
-        print("---------ticket_field ids---------------------")
-        ticket_field_id = {}
-        for i in range(len(ticket_fields_data)):
-            ticket_field_id[ticket_fields_data[i].get("id")] = ticket_fields_data[i].get("name")
-        
-        print(ticket_field_id)
-
-        ticket_field_ids = list(ticket_field_id)
-        print(ticket_field_ids)
-
-        #sys.exit()
-        # No need for that... Just to check HALO
-        halo_users = halo_client.get_users()
-        print("uuuuuuuuuuuuu start")
-        pprint(halo_users)
-        print("uuuuuuuu end")
-        print("halo ttttt  start")
-        halo_tickets = halo_client.get_tickets()
-        pprint(halo_tickets)
-        print("halo ttttt end")
-        sys.exit()
+        # Map/Copy Zendesk Groups to halo Teams
+        group_id_to_team = map_zen_groupid_to_halo_teams(group_data, halo_client)
 
         # Get Zendesk users to be mapped to halo
         users_data = zendesk_init.get_users()
+        # Separate end_users, agents and admins
+        end_user_data = zendesk_init.get_end_users()
+        agent_data = zendesk_init.get_agents()
+        admin_data = zendesk_init.get_admins()
+
+        # Map/Copy zendesk end_users to halo
+        map_zen_users_to_halo(end_user_data, halo_client)
+        # Map/Copy zendesk agents to halo
+        map_zen_agents_to_halo(agent_data, halo_client)
+        # Need to examine roles for admin user
+        map_zen_agents_to_halo(admin_data, halo_client)
+
         # In Zendesk ticket users are referred as requesters and 
         # the requester_id is the user_id
         requester_id = {}
@@ -108,58 +83,69 @@ class Command(BaseCommand):
         
         # Get all requester ids by extracting the keys from dict requester_id
         requester_ids = list(requester_id)
-        print("---------requester ids---------------------")
-        print(requester_ids)
-        #sys.exit()
+
+        # Get Zendesk ticket_fields to be mapped to halo
+        # Returns a dict with id->custom_field_name
+        zendesk_custom_fields = zendesk_init.get_ticket_fields()
+        pprint(zendesk_custom_fields)
 
         # Get Zendesk tickets to be mapped to halo
         ticket_data = zendesk_init.get_tickets()
-        print("TICKET_DATA-------")
-        #pprint(ticket_data)
-        print("END TICKET_DATA--------")
         # For each ticket, append dict with user_email and user_name to be used when creating HALO tickets
         for i in range(len(ticket_data)):
                 if ticket_data[i]['ticket']['requester_id'] in requester_ids:
                     ticket_data[i]['ticket'].update(requester_id[ticket_data[i]['ticket']['requester_id']])
                 else:
-                    print(ticket_data[i]['ticket']['requester_id'], "not found-----------")
+                    ticket_data[i]['ticket'].update({'user_email': None, 
+                                   'user_name': 'Anonymous', 
+                                   'site_id': 18})
                 if ticket_data[i]['ticket']['group_id'] in group_ids:
-                    ticket_data[i]['ticket'].update({'team': group_id[ticket_data[i]['ticket']['group_id']]})        
-        
-        # Temporary for checking - Need to check if tickets already exist/mapped on Halo
-        #for i in range(len(ticket_data)):
-        for i in range(1):
-            print("Creating ticket ", ticket_data[i]['ticket']["id"], "user_name:", 
-                  ticket_data[i]['ticket']["user_name"], "user_email", ticket_data[i]['ticket']["user_email"])
-            print(ticket_data[i])
-            data_sample = {'ticket': {'id': 16675, 'comment': {'body': 'Migration to HALO'}, 'description': 'Name: \nNIKOS BL\n\n', 'subject': 'Name: NB case', 'group_id': 26197425, 'requester_id': 18655244625, 'tags': ['directory'], 'user_email': 'nb@anytechnology.co.uk', 'user_name': 'NIKOS BALTAS', 'site_id': 18, 'team': 'Support Services'}}
-            #halo_client.create_ticket(data_sample)   
-            #halo_client.create_ticket(ticket_data[i])
-        print("DONE ONE TICKET")
-        #sys.exit()
-
-        response = halo_client.get_tickets()
-        print("HALO tickets START===============---------------------")
-        pprint(response)
-        print("HALO tickets END=================================")
-
-        sys.exit()
-
-        #TO DO loops below
-        zen_ticket_ids = []
-        for i in range(len(response["tickets"])):
-            if response["tickets"][i]["id"]:
-                ticket_id = response["tickets"][i]["id"]
-                zen_ticket_ids.append(ticket_id)
-        print(zen_ticket_ids)
-        #sys.exit()
+                    ticket_data[i]['ticket'].update({'team': group_id_to_team[ticket_data[i]['ticket']['group_id']]})       
+        """
+        The Zendesk tickets are copied to halo
+        If a Zendesk ticket id is in field userdef5 in Halo it is skipped
+        """
+        id = 0
+        halo_tickets_from_zen = {}
+        zen_tickets_ids = []
+        response_tickets = halo_client.get_tickets()
+        for i in range(len(response_tickets["tickets"])):
+            if response_tickets["tickets"][i].get("userdef5"):
+                id = response_tickets["tickets"][i]["id"]
+                userdef5 = response_tickets["tickets"][i]["userdef5"]
+                halo_tickets_from_zen[id] = userdef5
+                zen_tickets_ids.append(int(userdef5))
 
         for i in range(len(ticket_data)):
-            if ticket_data[i]["name"] in zen_ticket_ids:
-                print("Ticket already exists in HALO with id: ", ticket_data[i]["name"])
+            if ticket_data[i]["ticket"]["id"] in zen_tickets_ids:
+                print("Ticket already exists with id=", ticket_data[i]["ticket"]["id"])
             else:
-                print("Creating ticket ", ticket_data[i]["id"], "name:", group_data[i]["name"])
-                #halo_client.create_team(ticket_data[i])
+                print("Creating ticket ", ticket_data[i]["ticket"]["id"], "group_id:", ticket_data[i]["ticket"]["group_id"])
+                pprint(ticket_data[i])
+                #halo_client.create_ticket(ticket_data[i])
+
+
+def map_zen_groupid_to_halo_teams(group_data, halo_client):
+    """
+    The Zendesk groups are copied to halo teams
+    If a Zendesk group/team exists in Halo it is skipped
+    """
+    response = halo_client.get_teams()
+    zen_group_names = []
+    for i in range(len(response)):
+        if response[i]["name"]:
+            team_name = response[i]["name"]
+            zen_group_names.append(team_name)
+
+    group_id = {}
+    for i in range(len(group_data)):
+        group_id[group_data[i].get("id")] = group_data[i].get("name")
+        if group_data[i]["name"] in zen_group_names:
+            print("Team already exists with name: ", group_data[i]["name"])
+        else:
+            print("Creating team ", group_data[i]["id"], "name:", group_data[i]["name"])
+            #halo_client.create_team(group_data[i])
+    return group_id
 
 def map_zen_agents_to_halo(agent_data, halo_client):
     """
@@ -178,7 +164,7 @@ def map_zen_agents_to_halo(agent_data, halo_client):
         if agent_data[i]["name"] in zen_agent_names:
             print("Agent already exists with name=", agent_data[i]["name"])
         else:
-            print("Creating Agent ", "name:", agent_data[i]["name"])
+            print("Creating Agent ", agent_data[i]["id"], "name:", agent_data[i]["name"])
             #halo_client.create_agent(agent_data[i])
 
 def map_zen_users_to_halo(end_user_data, halo_client):
@@ -231,7 +217,8 @@ class ZenDeskInit(object):
         return session
     
     def get_users(self):
-        return self._users.get_all_users(self.users_url)
+        self.users = self._users.get_all_users(self.users_url)
+        return self.users
 
     def get_end_users(self):
         return self._users.get_end_users(self.users)
@@ -266,7 +253,6 @@ class ZenDeskApi(object):
         tickets = {}
         tickets["meta"] = {"has_more": True}
 
-        print("tttttttttttt-start")
         while tickets["meta"]["has_more"]:
             # Counter is used to control how many pages to get at each run
             counter += 1
@@ -283,7 +269,7 @@ class ZenDeskApi(object):
                 sys.exit()
 
             tickets = response.json()
-            pprint(tickets)
+            #pprint(tickets)
             zendesk_tickets = [ {"ticket":
                 {"id": ticket["id"], "comment": {"body": "Migration to HALO"},
                  "description": ticket["description"],
@@ -298,9 +284,8 @@ class ZenDeskApi(object):
                 print("Exiting while loop counter=", counter)
                 # exit while loop
                 break
-        print("tttttttttttt-end")
-        #pprint(zendesk_tickets_all)
         return zendesk_tickets_all
+
 
     def get_groups(self, url):
         no_of_pages = 5
@@ -343,7 +328,7 @@ class ZenDeskApi(object):
         """
         Get all Zendesk users including agents and admins
         """
-        no_of_pages = 365
+        no_of_pages = 370
 
         zendesk_users_all = []
         zendesk_users = []
@@ -432,16 +417,16 @@ class ZenDeskApi(object):
     def get_ticket_fields(self, url):
         no_of_pages = 100
 
-        zendesk_ticket_fields_all = []
+        zendesk_ticket_fields_all = {}
         zendesk_ticket_fields = []
         counter = 0
         ticket_fields = {}
+        ticket_field_id = {}
         ticket_fields["meta"] = {"has_more": True}
 
         while ticket_fields["meta"]["has_more"]:
             # Counter is used to control how many pages to get at each run
             counter += 1
-            print("TICKET FIELDS COUNTER=",counter)
             response = self.session.get(url)
             # 429 indicates too many requests
             # Retry-after tells us how long to wait before making another request
@@ -454,18 +439,16 @@ class ZenDeskApi(object):
                 sys.exit()
 
             ticket_fields = response.json()
-            pprint(ticket_fields)
-            zendesk_ticket_fields = [
-                {"id": ticket_field["id"], "title": ticket_field["title"]} for ticket_field in ticket_fields["ticket_fields"]
-            ]
-            zendesk_ticket_fields_all += zendesk_ticket_fields
+            
+            for ticket_field in ticket_fields["ticket_fields"]:
+                if ticket_field.get('custom_field_options'):
+                    ticket_field_id[ticket_field.get("id")] = ticket_field.get('raw_title')
+
+            zendesk_ticket_fields_all.update(ticket_field_id)
 
             url = ticket_fields["links"]["next"]
             if counter > no_of_pages:
                 # exit while loop
                 break
         
-        print("tftftftftf---------")
-        pprint(zendesk_ticket_fields_all)
         return zendesk_ticket_fields_all
-    
