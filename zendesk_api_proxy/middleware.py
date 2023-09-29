@@ -106,7 +106,7 @@ class ZendeskAPIProxyMiddleware:
 
     def __call__(self, request):
         try:
-            request_log = request.body.decode('utf-8')
+            request_log = request.body.decode("utf-8")
         except Exception:
             request_log = request.body
 
