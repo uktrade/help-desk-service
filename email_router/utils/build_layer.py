@@ -39,7 +39,7 @@ class LayerBuilder:
                 ]
             )
             files = [file for file in self.get_files_recursively(Path(tempdir))]
-            zipfile_path = self.base_dir / "layer.zip"
+            zipfile_path = self.base_dir.parent / "layer.zip"
             with ZipFile(zipfile_path, mode="w") as zipfile:
                 for file in files:
                     archive_name = str(file).replace(tempdir, "python")
