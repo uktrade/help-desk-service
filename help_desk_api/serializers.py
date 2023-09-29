@@ -133,10 +133,11 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-        
+
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {"emailaddress": data.pop("email", None), "other5": data.pop("id", None)}
         halo_payload.update(**data)
+        halo_payload.pop("role", None)
         unsupported_fields = set(halo_payload.keys()) - acceptable_user_fields
 
         if unsupported_fields:
@@ -297,7 +298,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             "tags": ticket.pop("tags", []),
         }
         # find unsupported Zendesk fields
-        #ticket.pop("id", None)
+        # ticket.pop("id", None)
         ticket.pop("requester_id", None)
         ticket.pop("group_id", None)
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
@@ -317,12 +318,10 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             "user_email": zendesk_ticket_data.get("user_email", None),
             "team": zendesk_ticket_data.get("team", None),
             "site_id": zendesk_ticket_data.get("site_id", None),
-            "userdef5": zendesk_ticket_data.get("userdef5", None),
+            "userdef5": zendesk_ticket_data.get("id", None),
         }
-        print("In serializer payload=",halo_payload)
 
         unsupported_fields = self.validate_fields(data)
-        print("UNSUPPORTED FIELDS:", unsupported_fields)
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
@@ -330,8 +329,6 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
             )
         else:
             return super().to_representation(halo_payload)
-
-        # return super().to_representation(halo_payload)
 
 
 class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
