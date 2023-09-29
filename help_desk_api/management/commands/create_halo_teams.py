@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# Import the Zenpy Class
 import sys
 import time
 
@@ -14,7 +13,7 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class Command(BaseCommand):
-    help = "Create user on Halo from Zendesk records"  # /PS-IGNORE
+    help = "Create Teams on Halo from Zendesk Groups"  # /PS-IGNORE
 
     def __init__(self, stdout=None, stderr=None, **kwargs):
         super().__init__(stdout, stderr, **kwargs)
@@ -31,13 +30,13 @@ class Command(BaseCommand):
             "-u",
             "--url",
             type=str,
-            help="url of zedesk endpoint for users/tickets etc. ",
+            help="url of zedesk endpoint for groups/tickets etc. ",
             required=True,
         )
 
     def handle(self, *args, **options):
         zendesk_email = options["credentials"]
-        url = "https://uktrade.zendesk.com/" + options["url"]
+        url = "https://uktrade.zendesk.com"
 
         # Get credentials for halo client and create one
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
@@ -46,26 +45,22 @@ class Command(BaseCommand):
         # Initialise Zendesk for specific url and credentials
         zendesk_init = ZenDeskInit(url, zendesk_email)
         # Get Zendesk users to be mapped to halo
-        user_data = zendesk_init.get_users(url)
+        group_data = zendesk_init.get_groups()
 
-        response = halo_client.get_users()
+        response = halo_client.get_teams()
 
-        id = 0
-        halo_users_from_zen = {}
-        zen_user_ids = []
-        for i in range(len(response["users"])):
-            if response["users"][i].get("other5"):
-                id = response["users"][i]["id"]
-                other5 = response["users"][i]["other5"]
-                halo_users_from_zen[id] = other5
-                zen_user_ids.append(int(other5))
+        zen_group_names = []
+        for i in range(len(response)):
+            if response[i]["name"]:
+                team_name = response[i]["name"]
+                zen_group_names.append(team_name)
 
-        for i in range(len(user_data)):
-            if user_data[i]["id"] in zen_user_ids:
-                print("User already exists with id=", user_data[i]["id"])
+        for i in range(len(group_data)):
+            if group_data[i]["name"] in zen_group_names:
+                print("Team already exists with name: ", group_data[i]["name"])
             else:
-                print("Creating user ", user_data[i]["name"])
-                response = halo_client.create_user(user_data[i])
+                print("Creating team ", group_data[i]["id"], "name:", group_data[i]["name"])
+                halo_client.create_team(group_data[i])
 
 
 class ZenDeskInit(object):
@@ -75,29 +70,35 @@ class ZenDeskInit(object):
         username = credentials.zendesk_email + "/token"
         password = credentials.zendesk_token
         session = self._start_session(username, password)
-        self._users = ZenUsersApi(zenUrl, session)
+        self.groups_url = zenUrl + "/api/v2/groups.json?page[size]=100"
+        self._api = ZenDeskApi(self.groups_url, session)
 
     def _start_session(self, username, password):
         session = requests.Session()
         session.auth = (username, password)
         return session
 
-    def get_users(self, url):
-        return self._users.get_users(url)
+    def get_groups(self):
+        return self._api.get_groups(self.groups_url)
 
 
-class ZenUsersApi(object):
+class ZenDeskApi(object):
     def __init__(self, url, session):
         self.session = session
         self.url = url
 
-    def get_users(self, url):
-        no_of_pages = 1
+    def get_groups(self, url):
+        no_of_pages = 5
 
-        zendesk_users_all = []
-        zendesk_users = []
+        zendesk_groups_all = []
+        zendesk_groups = []
         counter = 0
-        while url:
+        groups = {}
+        groups["meta"] = {"has_more": True}
+
+        while groups["meta"]["has_more"]:
+            # Counter is used to control how many pages to get at each run
+            counter += 1
             response = self.session.get(url)
             # 429 indicates too many requests
             # Retry-after tells us how long to wait before making another request
@@ -109,19 +110,15 @@ class ZenUsersApi(object):
                 print("Status:", response.status_code)
                 sys.exit()
 
-            users = response.json()
-            zendesk_users = [
-                {"email": user["email"], "id": user["id"], "name": user["name"], "site_id": 18}
-                for user in users["users"]
+            groups = response.json()
+            zendesk_groups = [
+                {"id": group["id"], "name": group["name"]} for group in groups["groups"]
             ]
-            zendesk_users_all += zendesk_users
+            zendesk_groups_all += zendesk_groups
 
-            # Counter is used to control how many pages to get at each run
-            counter += 1
-            url = users["next_page"]
-
+            url = groups["links"]["next"]
             if counter > no_of_pages:
                 # exit while loop
                 break
 
-        return zendesk_users_all
+        return zendesk_groups_all

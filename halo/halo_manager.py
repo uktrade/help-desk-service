@@ -6,7 +6,9 @@ from halo.data_class import ZendeskException, ZendeskTicketNotFoundException
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 
 from help_desk_api.serializers import (
+    ZendeskToHaloCreateAgentSerializer,
     ZendeskToHaloCreateCommentSerializer,
+    ZendeskToHaloCreateTeamSerializer,
     ZendeskToHaloCreateTicketSerializer,
     ZendeskToHaloCreateUserSerializer,
     ZendeskToHaloUpdateCommentSerializer,
@@ -55,6 +57,26 @@ class HaloManager:
         halo_response = self.client.get(path="Users/")
         return halo_response
 
+    def get_agents(self):
+        halo_response = self.client.get(path="Agent/")
+        return halo_response
+
+    def get_agent(self, agent_id: int) -> dict:
+        halo_response = self.client.get(path=f"Agent/{agent_id}")
+        return halo_response
+
+    def get_teams(self):
+        halo_response = self.client.get(path="Team/")
+        return halo_response
+
+    def create_team(self, zendesk_request: dict = None) -> dict:
+        """
+        Receive Zendesk group and create team in Halo, give back Zendesk group.
+        """
+        halo_team = ZendeskToHaloCreateTeamSerializer(zendesk_request)
+        halo_response = self.client.post(path="Team", payload=[halo_team.data])
+        return halo_response
+
     def create_user(self, zendesk_request: dict = None) -> dict:
         """
         Receive Zendesk user and create user in Halo, give back Zendesk user.
@@ -64,6 +86,16 @@ class HaloManager:
         """
         halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
+        return halo_response
+
+    def create_agent(self, zendesk_request: dict = None) -> dict:
+        """
+        Receive Zendesk agent and create agent in Halo, give back Zendesk agent.
+        If you need to create agents without sending out a verification email,
+        include a "skip_verify_email": true property.
+        """
+        halo_agent = ZendeskToHaloCreateAgentSerializer(zendesk_request)
+        halo_response = self.client.post(path="Agent", payload=[halo_agent.data])
         return halo_response
 
     def update_user(self, zendesk_request: dict = None) -> dict:
