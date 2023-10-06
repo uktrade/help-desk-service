@@ -31,3 +31,6 @@ The service provides an API that should be used for ticket management and creati
 
 - `config/` - Django settings and top-level project config
 - `help_desk_api/` - API for help desk ticket management
+- `email_router` - Code for Lambda function to post received emails as tickets
+  - `ses_email_receiving` - Lambda function code
+  - `utils/build_layer.py` - Utility to package a Lambda layer based on `lambda_layer_requirements.txt`
