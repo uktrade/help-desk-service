@@ -93,9 +93,8 @@ class TestTicketViews:
         }
         ticket = halo_manager.create_ticket(request_data)
         assert isinstance(ticket, dict)
-        assert isinstance(ticket["ticket"], list)
-        assert isinstance(ticket["ticket"][0], dict)
-        assert ticket["ticket"][0]["summary"] == "Request for new dataset on Data Workspace"
+        assert isinstance(ticket["ticket"], dict)
+        assert ticket["ticket"]["summary"] == "Request for new dataset on Data Workspace"
 
     @patch("requests.post")
     def test_post_ticket_failure(self, mock_post, access_token):
