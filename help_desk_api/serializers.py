@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+from rest_framework.fields import empty
 
 
 class ZendeskFieldsNotSupportedException(Exception):
@@ -99,7 +100,7 @@ class HaloToZendeskAttachmentSerializer(serializers.Serializer):
 
 class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
     """
-    Zendesk Group payload is converted to Halo Team payload
+    Zendesk Group payload is converted to Halo Team payload  /PS-IGNORE
     """
 
     id = serializers.IntegerField()
@@ -110,7 +111,6 @@ class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_team_fields = set(self.get_fields())
         halo_payload = {"id": data.pop("id", None), "name": data.pop("name", None)}
         halo_payload.update(**data)
@@ -167,7 +167,6 @@ class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         data.pop("id")
         halo_payload = {"is_agent": True, "team": data.pop("default_group_id", None)}
@@ -483,7 +482,14 @@ class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
     Zendesk Single Ticket Serializer
     """
 
-    ticket = HaloToZendeskTicketSerializer(many=True)
+    ticket = HaloToZendeskTicketSerializer(many=False)
+
+    def __init__(self, data=empty, **kwargs):
+        data = {"ticket": data}
+        super().__init__(data=data, **kwargs)
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):

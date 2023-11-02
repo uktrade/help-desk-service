@@ -161,7 +161,7 @@ class HaloManager:
             logging.error("create ticket payload must have ticket and comment")
             raise ZendeskException
 
-        return {"ticket": halo_response}
+        return halo_response
 
     def update_ticket(self, zendesk_request: dict = None) -> dict:
         """Update an existing ticket.
@@ -193,7 +193,7 @@ class HaloManager:
                     self.client.post(path="Actions", payload=[comment_payload.data])
                 ]
 
-        return {"ticket": [updated_ticket]}
+        return updated_ticket
 
     def get_comments(self, ticket_id: int) -> list[dict]:
         comments = []

@@ -1,4 +1,5 @@
 from help_desk_api.serializers import (
+    HaloToZendeskTicketContainerSerializer,
     HaloToZendeskTicketSerializer,
     HaloToZendeskUploadSerializer,
 )
@@ -14,6 +15,16 @@ class TestHaloToZendeskTransformation:
         assert len(zendesk_equivalent.data["tags"]) == len(new_halo_ticket["tags"])
         for tag in zendesk_equivalent.data["tags"]:
             assert tag in expected_tags
+
+    def test_halo_ticket_to_zendesk_ticket(self, new_halo_ticket):
+        # Halo Client wraps the ticket data as a Zendesk response
+        serializer = HaloToZendeskTicketContainerSerializer(new_halo_ticket)
+        serializer.is_valid(raise_exception=False)
+        zendesk_equivalent = serializer.data
+
+        assert isinstance(zendesk_equivalent, dict)
+        assert "ticket" in zendesk_equivalent
+        assert isinstance(zendesk_equivalent["ticket"], dict)
 
 
 class TestHaloToZendeskUploadSerializer:
