@@ -140,9 +140,6 @@ class TicketView(HaloBaseView, CustomPagination):
     View for interacting with tickets
     """
 
-    serializer_class = HaloToZendeskTicketContainerSerializer
-    serializer_class = HaloToZendeskTicketsContainerSerializer
-
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
@@ -209,7 +206,6 @@ class UploadsView(HaloBaseView):
     parser_classes = [
         FileUploadParser,
     ]
-    serializer_class = HaloToZendeskTicketContainerSerializer
 
     def post(self, request, *args, **kwargs):
         try:
