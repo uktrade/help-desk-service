@@ -1,6 +1,7 @@
 applications:
 - name: help-desk-service
   memory: 512M
+  stack: cflinuxfs4
   buildpacks:
     - python_buildpack
   services:
