@@ -39,7 +39,7 @@ class UserView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, *args, **kwargs):
         """
@@ -86,7 +86,7 @@ class MeView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, format=None):
         """
@@ -123,7 +123,7 @@ class CommentView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, id, format=None):
         """
