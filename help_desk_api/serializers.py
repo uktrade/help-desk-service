@@ -433,7 +433,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
 
     id = serializers.IntegerField()
-    subject = serializers.CharField(max_length=200)
+    subject = serializers.CharField()
     description = ZendeskDescriptionFromHaloField()
     user = HaloToZendeskUserSerializer()
     group_id = serializers.CharField()
