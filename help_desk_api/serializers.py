@@ -491,7 +491,7 @@ class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
 
     def __init__(self, data=empty, **kwargs):
         data = {"ticket": data}
-        super().__init__(data=data, **kwargs)
+        super().__init__(data, **kwargs)
 
     def to_representation(self, instance):
         return super().to_representation(instance)
