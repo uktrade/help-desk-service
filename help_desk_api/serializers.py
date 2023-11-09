@@ -427,19 +427,29 @@ class ZendeskDescriptionFromHaloField(serializers.CharField):
         return instance.get("details", "")
 
 
+class ZendeskSubjectFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("summary", "")
+
+
+class ZendeskTagsFromHaloField(serializers.ListField):
+    def get_attribute(self, instance):
+        return [tag["text"] for tag in instance.get("tags", [])]
+
+
 class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
     Zendesk Tickets Serializer
     """
 
     id = serializers.IntegerField()
-    subject = serializers.CharField()
+    subject = ZendeskSubjectFromHaloField()
     description = ZendeskDescriptionFromHaloField()
     user = HaloToZendeskUserSerializer()
     group_id = serializers.CharField()
     external_id = serializers.CharField()
     assignee_id = serializers.CharField()
-    tags = serializers.ListField()
+    tags = ZendeskTagsFromHaloField()
     custom_fields = HaloToZendeskCustomFieldsSerializer(many=True)
     recipient_email = serializers.EmailField()
     responder = serializers.CharField()
