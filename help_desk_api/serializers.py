@@ -422,6 +422,11 @@ class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
             return super().to_representation(halo_payload)
 
 
+class ZendeskDescriptionFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("details", "")
+
+
 class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
     Zendesk Tickets Serializer
@@ -429,7 +434,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
 
     id = serializers.IntegerField()
     subject = serializers.CharField(max_length=200)
-    details = serializers.CharField(max_length=200)
+    description = ZendeskDescriptionFromHaloField()
     user = HaloToZendeskUserSerializer()
     group_id = serializers.CharField()
     external_id = serializers.CharField()
