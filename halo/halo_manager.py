@@ -122,18 +122,10 @@ class HaloManager:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
             halo_response = self.client.get(path=f"Tickets/{ticket_id}")
-            ticket_actions = self.client.get(
-                f"Actions?ticket_id={halo_response['id']}"
-            )  # /PS-IGNORE5
-            comment_list = []
-            for comment in ticket_actions["actions"]:
-                if comment["outcome"] == "comment":
-                    comment_list.append(comment)
-            halo_response["comment"] = comment_list
             attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
             halo_response["attachments"] = attachments["attachments"]
 
-            return {"ticket": [halo_response]}
+            return halo_response  # {"ticket": [halo_response]}
         except HaloRecordNotFoundException:
             message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
