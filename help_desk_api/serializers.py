@@ -10,14 +10,6 @@ class ZendeskFieldsNotSupportedException(Exception):
     pass
 
 
-TICKET_PRIORITIES = (
-    ("low", "Low"),
-    ("medium", "Medium"),
-    ("high", "High"),
-    ("critical", "Critical"),
-)
-
-
 class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     """
     Zendesk Comments Serializer
