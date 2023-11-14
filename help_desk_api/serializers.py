@@ -444,19 +444,19 @@ class ZendeskRecipientFromHaloField(serializers.EmailField):
         return recipient_field.get("value", "")
 
 
-class ZendeskCreatedAtFromHaloField(serializers.DateField):
+class ZendeskCreatedAtFromHaloField(serializers.CharField):
     def get_attribute(self, instance):
-        return instance.get("dateoccurred", datetime.utcnow())
+        return instance.get("dateoccurred", datetime.utcnow().isoformat())
 
 
-class ZendeskDueAtFromHaloField(serializers.DateField):
+class ZendeskDueAtFromHaloField(serializers.CharField):
     def get_attribute(self, instance):
-        return instance.get("fixbydate", datetime.utcnow())
+        return instance.get("fixbydate", datetime.utcnow().isoformat())
 
 
-class ZendeskUpdatedAtFromHaloField(serializers.DateField):
+class ZendeskUpdatedAtFromHaloField(serializers.CharField):
     def get_attribute(self, instance):
-        return instance.get("lastactiondate", datetime.utcnow())
+        return instance.get("lastactiondate", datetime.utcnow().isoformat())
 
 
 class ZendeskCustomFieldFromHaloField(serializers.DictField):
