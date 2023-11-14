@@ -46,11 +46,11 @@ class TestTicketViews:
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         ticket = halo_manager.get_ticket(123)
         assert isinstance(ticket, dict)
-        assert isinstance(ticket["ticket"], list)
-        assert isinstance(ticket["ticket"][0], dict)
-        assert ticket["ticket"][0]["summary"] == "Request for new dataset on Data Workspace"
-        assert isinstance(ticket["ticket"][0]["tags"], list)
-        assert ticket["ticket"][0]["tags"][0]["text"] == "first"
+        # assert isinstance(ticket["ticket"], list)
+        # assert isinstance(ticket["ticket"][0], dict)
+        assert ticket["summary"] == "Request for new dataset on Data Workspace"
+        assert isinstance(ticket["tags"], list)
+        assert ticket["tags"][0]["text"] == "data-workspace"
 
     @patch("requests.get")
     @patch("requests.post")

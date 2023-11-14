@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -437,57 +438,102 @@ class ZendeskTagsFromHaloField(serializers.ListField):
         return [tag["text"] for tag in instance.get("tags", [])]
 
 
+class ZendeskGroupFromHaloField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        return instance.get("team_id", None)
+
+
+class ZendeskRecipientFromHaloField(serializers.EmailField):
+    def get_attribute(self, instance):
+        custom_fields = instance.get("customfields", [])
+        recipient_field = next(
+            filter(lambda field: field["name"] == "CFEmailToAddress", custom_fields), {}
+        )
+        return recipient_field.get("value", "")
+
+
+class ZendeskCreatedAtFromHaloField(serializers.DateField):
+    def get_attribute(self, instance):
+        return instance.get("dateoccurred", datetime.utcnow())
+
+
+class ZendeskDueAtFromHaloField(serializers.DateField):
+    def get_attribute(self, instance):
+        return instance.get("fixbydate", datetime.utcnow())
+
+
+class ZendeskUpdatedAtFromHaloField(serializers.DateField):
+    def get_attribute(self, instance):
+        return instance.get("lastactiondate", datetime.utcnow())
+
+
+class ZendeskCustomFieldFromHaloField(serializers.DictField):
+    def get_attribute(self, instance):
+        return {"id": instance.get("id", 0), "value": instance.get("value", None)}
+
+
+class ZendeskCustomFieldsFromHaloField(serializers.ListField):
+    child = ZendeskCustomFieldFromHaloField()
+
+    def get_attribute(self, instance):
+        return instance.get("customfields", [])
+
+
+class ZendeskStatusFromHaloField(serializers.CharField):
+    halo_status_id_to_zendesk_status = {
+        1: "new",
+        2: "open",
+        4: "pending",
+        28: "hold",
+        8: "solved",
+    }
+
+    def get_attribute(self, instance):
+        status_id = instance.get("status_id", "")
+        return self.halo_status_id_to_zendesk_status.get(status_id, "")
+
+
+class ZendeskPriorityFromHaloField(serializers.CharField):
+    priorities = {
+        "Low": "low",
+        "Medium": "medium",
+        "High": "high",
+        "Critical": "critical",
+    }
+
+    def get_attribute(self, instance):
+        halo_priority_name = instance.get("priority", {}).get("name", "")
+        return self.priorities[halo_priority_name]
+
+
+class ZendeskAssigneeFromHaloField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        return instance.get("agent_id", None)
+
+
 class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
-    Zendesk Tickets Serializer
+    serilaizer to convert Halo Ticket to Zendesk Ticket  /PS-IGNORE
     """
 
     id = serializers.IntegerField()
     subject = ZendeskSubjectFromHaloField()
     description = ZendeskDescriptionFromHaloField()
     user = HaloToZendeskUserSerializer()
-    group_id = serializers.CharField()
-    external_id = serializers.CharField()
-    assignee_id = serializers.CharField()
+    group_id = ZendeskGroupFromHaloField()
+    # external_id = serializers.CharField() # TODO: fix when getting zenslackchat working
     tags = ZendeskTagsFromHaloField()
-    custom_fields = HaloToZendeskCustomFieldsSerializer(many=True)
-    recipient_email = serializers.EmailField()
-    responder = serializers.CharField()
-    created_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
-    due_at = serializers.DateTimeField()
-    # status = serializers.CharField()
-    priority = serializers.ChoiceField(
-        choices=TICKET_PRIORITIES,
-        allow_blank=True,
-        default="low",
-    )
-    assignee_id = serializers.CharField()
+    custom_fields = ZendeskCustomFieldsFromHaloField()
+    recipient = ZendeskRecipientFromHaloField()
+    created_at = ZendeskCreatedAtFromHaloField()
+    updated_at = ZendeskUpdatedAtFromHaloField()
+    due_at = ZendeskDueAtFromHaloField()
+    status = ZendeskStatusFromHaloField()
+    priority = ZendeskPriorityFromHaloField()
+    assignee_id = ZendeskAssigneeFromHaloField()
 
     def validate(self, data):
         return data
-
-    def to_representation(self, data):
-        zendesk_response = {
-            "id": data["id"],
-            "subject": data.get("summary", ""),
-            "details": data.get("details", ""),
-            "user": data.get("user", {}),
-            "group_id": data["id"],
-            "external_id": data["id"],
-            "assignee_id": data["id"],
-            "tags": [tag.get("text", "") for tag in data.get("tags", [])],
-            "custom_fields": data.get("customfields", []),
-            "recipient_email": data.get("user_email", ""),
-            "responder": data.get("reportedby", ""),
-            "created_at": data.get("dateoccurred", ""),
-            "updated_at": data.get("dateoccurred", ""),
-            "due_at": data.get("deadlinedate", ""),
-            # "status": data['id'],
-            # "priority": data["priority"]["name"],
-            "ticket_type": "incident",  # ticket_response['tickettype']['name'],
-        }
-        return super().to_representation(zendesk_response)
 
 
 class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
