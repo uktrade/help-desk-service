@@ -127,6 +127,7 @@ class ZendeskAPIProxyMiddleware:
 
         logger.warning(f"HelpDeskCreds: {help_desk_creds.pk}")
 
+        logger.warning(f"password: {token} known_token: {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
