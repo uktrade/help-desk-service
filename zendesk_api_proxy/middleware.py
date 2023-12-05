@@ -126,6 +126,7 @@ class ZendeskAPIProxyMiddleware:
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
         logger.warning(f"HelpDeskCreds: {help_desk_creds.pk}")
+        logger.warning(f"zendesk_email: {help_desk_creds.zendesk_email}")
 
         logger.warning(f"password: {token} known_token: {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
