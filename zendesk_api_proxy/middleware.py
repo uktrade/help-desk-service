@@ -106,7 +106,7 @@ class ZendeskAPIProxyMiddleware:
 
     def __call__(self, request):
         try:
-            request_log = request.body.decode('utf-8')
+            request_log = request.body.decode("utf-8")
         except Exception:
             request_log = request.body
 
@@ -162,6 +162,12 @@ class ZendeskAPIProxyMiddleware:
             token,
             request.GET.urlencode(),
         )
+        logger.warning(
+            f"""
+        proxy_zendesk response: {proxy_response.status_code}
+         with body: {proxy_response.content}
+        """
+        )
         zendesk_response = HttpResponse(
             json.dumps(proxy_response.json(), cls=DjangoJSONEncoder),
             headers={
@@ -169,5 +175,5 @@ class ZendeskAPIProxyMiddleware:
             },
             status=proxy_response.status_code,
         )
-        # status, location, copy dict
+
         return zendesk_response
