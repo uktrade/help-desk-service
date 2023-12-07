@@ -5,6 +5,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.fields import empty
 
+from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
+
 
 class ZendeskFieldsNotSupportedException(Exception):
     pass
@@ -272,12 +274,49 @@ class HaloDetailsFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         if "comment" in instance:
             return instance["comment"].get("body", None)
+        if "description" in instance:
+            return instance["description"]
         return None
 
 
 class HaloTagsFromZendeskField(serializers.ListField):
     def get_attribute(self, instance):
         return [{"text": tag} for tag in instance.get("tags", [])]
+
+
+# class Halo
+
+
+class HaloCustomFieldFromZendeskField(serializers.DictField):
+    def halo_name_from_zendesk_id(self, id):
+        id = str(id)
+        if id not in halo_mappings_by_zendesk_id:
+            raise ZendeskFieldsNotSupportedException(
+                f"Zendesk field id {id} not found in Halo mappings"
+            )
+        return halo_mappings_by_zendesk_id[id].halo_title
+
+    def to_representation(self, value):
+        return {"name": self.halo_name_from_zendesk_id(value["id"]), "value": value["value"]}
+
+
+class HaloCustomFieldsSerializer(serializers.ListSerializer):
+    child = HaloCustomFieldFromZendeskField()
+
+    def to_representation(self, data):
+        return super().to_representation(data)
+
+
+class HaloUserNameFromZendeskRequesterField(serializers.CharField):
+    def get_attribute(self, instance):
+        requester = instance.get("requester", {"name": None, "email": None})
+        return requester.get("name", None)
+
+
+class HaloUserEmailFromZendeskRequesterField(serializers.EmailField):
+    def get_attribute(self, instance):
+        requester = instance.get("requester", {"name": None, "email": None})
+        return requester.get("email", None)
 
 
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
@@ -299,6 +338,9 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     details = HaloDetailsFromZendeskField()
     tags = HaloTagsFromZendeskField()
     comment = ZendeskCommentToHaloField()
+    customfields = HaloCustomFieldsSerializer(source="custom_fields")
+    user_name = HaloUserNameFromZendeskRequesterField()
+    user_email = HaloUserEmailFromZendeskRequesterField()
 
     def validate(self, data):
         return data
@@ -316,6 +358,8 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
         ticket.pop("priority", None)  # Not used by HALO currently
         ticket.pop("recipient", None)  # TODO: add proper support
+        ticket.pop("custom_fields", None)  # TODO: add proper support
+        ticket.pop("requester", None)  # TODO: add proper support
         halo_payload.update(**ticket)
 
         unsupported_fields = set(halo_payload.keys()) - acceptable_ticket_fields
