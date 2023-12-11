@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with open(options["input"], "r") as input_file:
-            reader = DictReader(input_file, restkey="ERROR-FIXME")
+            reader = DictReader(input_file, restkey="ERROR-FIX-THIS")
             fields = list(reader)
 
         mappings = [ZendeskToHaloMapping(**field) for field in fields]
