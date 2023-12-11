@@ -89,7 +89,7 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,
         zendesk_token=zendesk_token,
-        zendesk_subdomain="abc123",
+        zendesk_subdomain="staging-uktrade",
         help_desk=[
             HelpDeskCreds.HelpDeskChoices.ZENDESK,
         ],
@@ -99,8 +99,8 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
     return credentials
 
 
-@pytest.fixture(scope="session")
-def new_zendesk_ticket():
+@pytest.fixture(scope="function")
+def new_zendesk_ticket_with_description():
     """
     This is an example of the ticket submission for a
     new dataset request
@@ -111,6 +111,42 @@ def new_zendesk_ticket():
         "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
         "tags": ["request-for-data"],
         "recipient": "someone@example.gov.uk",  # /PS-IGNORE
+        "custom_fields": [
+            {"id": 44394765, "value": False},
+            {
+                "id": 360026629658,
+                "value": None,
+            },
+            {"id": 31281329, "value": "data_workspace"},
+        ],
+    }
+
+
+@pytest.fixture(scope="function")
+def new_zendesk_ticket_with_comment():
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
+        "comment": {
+            "body": "Long load of text here",
+        },
+        "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+        "tags": [
+            "request-for-data",
+            "another-tag",
+        ],
+        "recipient": "someone@example.gov.uk",  # /PS-IGNORE
+        "custom_fields": [
+            {"id": 44394765, "value": False},
+            {
+                "id": 360026629658,
+                "value": None,
+            },
+            {"id": 31281329, "value": "data_workspace"},
+        ],
     }
 
 
