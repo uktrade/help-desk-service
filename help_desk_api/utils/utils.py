@@ -613,7 +613,7 @@ def default_action_description(*args, **kwargs):
         "value": action["value"],
         "raw_action": action["field"],
         "help": """
-        <span class='todo'>FIXME</span>
+        <span class='todo'>FIX NEEDED</span>
         """,
     }
 
