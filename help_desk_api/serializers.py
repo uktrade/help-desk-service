@@ -336,11 +336,11 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
 
     summary = HaloSummaryFromZendeskField()
     details = HaloDetailsFromZendeskField()
-    tags = HaloTagsFromZendeskField()
-    comment = ZendeskCommentToHaloField()
-    customfields = HaloCustomFieldsSerializer(source="custom_fields")
-    user_name = HaloUserNameFromZendeskRequesterField()
-    user_email = HaloUserEmailFromZendeskRequesterField()
+    tags = HaloTagsFromZendeskField(required=False)
+    # comment = ZendeskCommentToHaloField()
+    customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
+    user_name = HaloUserNameFromZendeskRequesterField(required=False)
+    user_email = HaloUserEmailFromZendeskRequesterField(required=False)
 
     def validate(self, data):
         return data
