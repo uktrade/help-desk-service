@@ -15,33 +15,37 @@ from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendes
 
 
 class TestZendeskToHaloSerialization:
-    @mock.patch.dict("help_desk_api.serializers.halo_mappings_by_zendesk_id", {}, clear=True)
     def test_unknown_zendesk_custom_field(self):
-        serializer_field = HaloCustomFieldFromZendeskField()
-        with pytest.raises(ZendeskFieldsNotSupportedException):
-            serializer_field.to_representation({"id": 1, "value": "foo"})
+        with mock.patch.dict(
+            "help_desk_api.serializers.halo_mappings_by_zendesk_id", {}, clear=True
+        ):
+            serializer_field = HaloCustomFieldFromZendeskField()
+            with pytest.raises(ZendeskFieldsNotSupportedException):
+                serializer_field.to_representation({"id": 1, "value": "foo"})
 
-    @mock.patch.dict(
-        "help_desk_api.serializers.halo_mappings_by_zendesk_id",
-        {123: ZendeskToHaloMapping(halo_title="tttttttt")},
-        clear=True,
-    )
     def test_zendesk_custom_field_to_halo_custom_field(self, **kwargs):
-        serializer_field = HaloCustomFieldFromZendeskField()
-        zendesk_field = {"id": 123, "value": "foo"}
-        halo_equivalent = serializer_field.to_representation(zendesk_field)
+        with mock.patch.dict(
+            "help_desk_api.serializers.halo_mappings_by_zendesk_id",
+            {"123": ZendeskToHaloMapping(halo_title="tttttttt")},
+            clear=True,
+        ):
+            serializer_field = HaloCustomFieldFromZendeskField()
+            zendesk_field = {"id": 123, "value": "foo"}
+            expected_value = zendesk_field["value"]
+            expected_title = halo_mappings_by_zendesk_id["123"].halo_title
+            halo_equivalent = serializer_field.to_representation(zendesk_field)
 
         assert "value" in halo_equivalent
-        assert halo_equivalent["value"] == zendesk_field["value"]
+        assert halo_equivalent["value"] == expected_value
         assert "name" in halo_equivalent
-        assert halo_equivalent["name"] == halo_mappings_by_zendesk_id[123].halo_title
+        assert halo_equivalent["name"] == expected_title
 
     def test_zendesk_custom_fields_to_halo_custom_fields(self, new_zendesk_ticket_with_description):
         def id_to_name(id):
             return f"name_{id}"
 
         fixture_custom_field_ids_to_names = {
-            field["id"]: ZendeskToHaloMapping(halo_title=id_to_name(field["id"]))
+            str(field["id"]): ZendeskToHaloMapping(halo_title=id_to_name(field["id"]))
             for field in new_zendesk_ticket_with_description["custom_fields"]
         }
         with mock.patch.dict(
