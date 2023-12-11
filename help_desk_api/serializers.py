@@ -334,6 +334,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     }
     """
 
+    site_id = serializers.IntegerField(default=18)
     summary = HaloSummaryFromZendeskField()
     details = HaloDetailsFromZendeskField()
     tags = HaloTagsFromZendeskField(required=False)

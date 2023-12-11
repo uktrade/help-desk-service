@@ -9,6 +9,7 @@ from help_desk_api.serializers import (
     HaloSummaryFromZendeskField,
     HaloTagsFromZendeskField,
     ZendeskFieldsNotSupportedException,
+    ZendeskToHaloCreateTicketSerializer,
 )
 from help_desk_api.utils.field_mappings import ZendeskToHaloMapping
 from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
@@ -22,6 +23,13 @@ class TestZendeskToHaloSerialization:
             serializer_field = HaloCustomFieldFromZendeskField()
             with pytest.raises(ZendeskFieldsNotSupportedException):
                 serializer_field.to_representation({"id": 1, "value": "foo"})
+
+    def test_site_id_in_serialisation(self, zendesk_ticket_subject_and_comment_only):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(zendesk_ticket_subject_and_comment_only)
+
+        assert "site_id" in halo_equivalent
 
     def test_zendesk_custom_field_to_halo_custom_field(self, **kwargs):
         with mock.patch.dict(

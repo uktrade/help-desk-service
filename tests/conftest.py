@@ -100,6 +100,16 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
 
 
 @pytest.fixture(scope="function")
+def zendesk_ticket_subject_and_comment_only():
+    return {
+        "comment": {
+            "body": "Long load of text here",
+        },
+        "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+    }
+
+
+@pytest.fixture(scope="function")
 def new_zendesk_ticket_with_description():
     """
     This is an example of the ticket submission for a
