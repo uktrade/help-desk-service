@@ -93,6 +93,6 @@ class HaloAPIClient:
                 e = HaloClientBadRequestException()
             else:
                 e = HaloClientNotFoundException()
-            sentry_sdk.set_context(value=response.json())
+            sentry_sdk.set_context("Halo response body", value=response.json())
             raise e
         return response.json()
