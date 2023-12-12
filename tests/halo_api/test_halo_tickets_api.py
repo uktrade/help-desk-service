@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 import pytest
 from halo.data_class import ZendeskException
-from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
+from halo.halo_api_client import (
+    HaloAPIClient,
+    HaloClientBadRequestException,
+    HaloClientNotFoundException,
+)
 from halo.halo_manager import HaloManager
 
 
@@ -113,9 +117,9 @@ class TestTicketViews:
 
         # TODO: add more tests when payload is messed up
         request_data = {"ticket": {"comment": {}}}
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_ticket(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_update_ticket_success(self, mock_post, access_token, new_halo_ticket):
@@ -162,9 +166,9 @@ class TestTicketViews:
 
         # TODO: add more tests when payload is messed up
         request_data = {"ticket_id": 1, "ticket": {"comment": {}}}
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.update_ticket(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_create_ticket_payload_failure(self, mock_post, access_token):

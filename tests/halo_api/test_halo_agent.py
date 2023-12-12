@@ -2,7 +2,10 @@ from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest
-from halo.halo_api_client import HaloClientNotFoundException
+from halo.halo_api_client import (
+    HaloClientBadRequestException,
+    HaloClientNotFoundException,
+)
 from halo.halo_manager import HaloManager
 from tests.fixture_data.halo.user import user as halo_user
 
@@ -35,7 +38,7 @@ class TestAgentViews:
     @patch("requests.post")
     def test_get_user_success(self, mock_post, mock_get, access_token):
         """
-        GET Agent Success
+        GET Agent Success  /PS-IGNORE
         """
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = access_token
@@ -58,7 +61,7 @@ class TestAgentViews:
     @patch("requests.post")
     def test_get_agent_failure(self, mock_post, mock_get, access_token):
         """
-        GET Agent Failure
+        GET Agent Failure  /PS-IGNORE
         """
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = access_token
@@ -72,7 +75,7 @@ class TestAgentViews:
     @patch("requests.post")
     def test_post_agent_success(self, mock_post, access_token):
         """
-        POST Agent Success
+        POST Agent Success  /PS-IGNORE
         """
         mock_ticket_post = {"id": 123, "name": "dummy name", "email": "test@test.com"}  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
@@ -88,7 +91,7 @@ class TestAgentViews:
         request_data = {
             "site_id": 1,
             "name": "name",
-            "email": "test@email.com",
+            "email": "test@email.com",  # /PS-IGNORE
             "id": 123,
         }  # /PS-IGNORE
         agent = halo_manager.create_user(request_data)
@@ -98,7 +101,7 @@ class TestAgentViews:
     @patch("requests.post")
     def test_post_user_failure(self, mock_post, access_token):
         """
-        POST Agent Failure
+        POST Agent Failure  /PS-IGNORE
         """
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
@@ -114,22 +117,22 @@ class TestAgentViews:
         request_data = {
             "site_id": 1,
             "name": "name",
-            "email": "test@test.com",
+            "email": "test@test.com",  # /PS-IGNORE
             "id": 1,
         }  # /PS-IGNORE
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_user(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_update_agent_success(self, mock_post, access_token):
         """
-        Update Agent Success
+        Update Agent Success  /PS-IGNORE
         """
         mock_agent_post = {
             "id": 1,
             "name": "test",
-            "email": "test@test.com",
+            "email": "test@test.com",  # /PS-IGNORE
             "default_group_id": 1,
         }  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
@@ -145,7 +148,7 @@ class TestAgentViews:
         request_data = {
             "id": 1,
             "name": "x",
-            "email": "test@test.com",
+            "email": "test@test.com",  # /PS-IGNORE
             "default_group_id": 1,
         }  # /PS-IGNORE
         agent = halo_manager.create_agent(request_data)
