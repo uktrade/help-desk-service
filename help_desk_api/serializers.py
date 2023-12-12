@@ -340,8 +340,8 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     tags = HaloTagsFromZendeskField(required=False)
     # comment = ZendeskCommentToHaloField()
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
-    user_name = HaloUserNameFromZendeskRequesterField(required=False)
-    user_email = HaloUserEmailFromZendeskRequesterField(required=False)
+    users_name = HaloUserNameFromZendeskRequesterField(required=False)
+    reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
 
     def validate(self, data):
         return data
