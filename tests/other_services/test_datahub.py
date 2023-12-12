@@ -26,8 +26,8 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
 
         halo_equivalent = serializer.data
 
-        assert "user_name" in halo_equivalent
-        assert halo_equivalent["user_name"] == expected_user_name
+        assert "users_name" in halo_equivalent
+        assert halo_equivalent["users_name"] == expected_user_name
 
     def test_requester_email_is_user_email(self, datahub_frontend_support_ticket):
         expected_user_email = datahub_frontend_support_ticket["ticket"]["requester"]["email"]
@@ -35,8 +35,8 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
 
         halo_equivalent = serializer.data
 
-        assert "user_email" in halo_equivalent
-        assert halo_equivalent["user_email"] == expected_user_email
+        assert "reportedby" in halo_equivalent
+        assert halo_equivalent["reportedby"] == expected_user_email
 
     def test_tags_are_tags(self, datahub_frontend_support_ticket):
         expected_tags = [
