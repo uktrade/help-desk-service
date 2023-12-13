@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block item %}
+    <tr class="heading field">
+        <th>Field title</th>
+        <th>Field type</th>
+    </tr>
+    <tr>
+        <td class="field-title">{{ item.title }}</td>
+        <td>{{ item.type }}</td>
+    </tr>
+    {% if item.custom_field_options %}
+        <tr class="heading field options">
+            <th colspan="2">Custom field options</th>
+        </tr>
+        <tr class="heading field options">
+            <th>Option name</th>
+            <th>Option value</th>
+        </tr>
+        {% for option in item.custom_field_options %}
+            <tr>
+                <td>{{ option.name }}</td>
+                <td><code>{{ option.value }}</code></td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+    {% if item.system_field_options %}
+        <tr class="heading field options">
+            <th colspan="2">System field options</th>
+        </tr>
+        <tr class="heading field options">
+            <th>Option name</th>
+            <th>Option value</th>
+        </tr>
+        {% for option in item.system_field_options %}
+            <tr>
+                <td>{{ option.name }}</td>
+                <td><code>{{ option.value }}</code></td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+    <tr class="spacer"><td colspan="3">&nbsp;</td></tr>
+{% endblock item %}

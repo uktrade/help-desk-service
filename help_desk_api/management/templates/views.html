@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block notes %}
+    <h2>From Zendesk's docs:</h2>
+    <p>
+        A view consists of one or more conditions that define a collection
+        of tickets to display.
+        If the conditions are met, the ticket is included in the view.
+        For example, a view can display all open tickets that were
+        last updated more than 24 hours ago.
+    </p>
+
+{% endblock notes %}
+
+{% block item %}
+    <tr>
+        <th colspan="5" class="title">
+            <h2>{{ item.title }}</h2>
+        </th>
+    </tr>
+    <tr>
+        <th colspan="5" class="description">
+            <p>{{ item.description }}</p>
+        </th>
+    </tr>
+    <tr>
+        <th>
+            Visible to group(s)
+        </th>
+        <td colspan="4">
+            {% for entity in item.restriction %}
+                <code>{{ entity }}</code>
+                {% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </td>
+    </tr>
+    {% if item.conditions %}
+        <tr>
+            <th colspan="5" class="heading conditions">
+                Conditions
+            </th>
+        </tr>
+    {% endif %}
+    {% if item.conditions.all %}
+        {% include "conditions.html" with conditions=item.conditions.all title="All of" %}
+    {% endif %}
+    {% if item.conditions.any %}
+        {% include "conditions.html" with conditions=item.conditions.any title="Any of" %}
+    {% endif %}
+    <tr>
+        <th colspan="5" class="heading actions">
+            Content
+        </th>
+    </tr>
+    <tr class="action">
+        <th rowspan="3">Columns</th>
+        <td colspan="4">
+            {% for column in item.execution.columns %}
+                <code>{{ column }}</code>
+                {% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </td>
+    </tr>
+    <tr class="action">
+        <th>Grouping:</th>
+        <td colspan="3">
+            <code>{{ item.execution.grouping }}</code>
+        </td>
+    </tr>
+    <tr class="action">
+        <th>Sorting:</th>
+        <td colspan="3">
+            <code>{{ item.execution.sorting }}</code>
+        </td>
+    </tr>
+    <tr class="spacer"><td colspan="3">&nbsp;</td></tr>
+{% endblock item %}
