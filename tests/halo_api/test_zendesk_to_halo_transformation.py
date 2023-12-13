@@ -104,6 +104,14 @@ class TestZendeskToHaloSerialization:
             assert "text" in tag
             assert tag["text"] in expected_tags
 
+    def test_dont_do_rules(self, zendesk_ticket_subject_and_comment_only):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(zendesk_ticket_subject_and_comment_only)
+
+        assert "dont_do_rules" in halo_equivalent
+        assert halo_equivalent["dont_do_rules"] is False
+
 
 class TestZendeskToHaloTypesMappedFromCSV:
     def test_int_field_is_int(self):

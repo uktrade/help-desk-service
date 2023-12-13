@@ -342,6 +342,9 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
+    # The dont_do_rules field is a Halo API thing
+    # Set it to False to ensure rules are applied
+    dont_do_rules = serializers.BooleanField(default=False)
 
     def validate(self, data):
         return data
