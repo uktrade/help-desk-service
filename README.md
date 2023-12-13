@@ -26,6 +26,7 @@ The service provides an API that should be used for ticket management and creati
 
 - [Environment Variables](/docs/environment-variables.md)
 - [Connecting the project to Zendesk](/docs/zendesk.md)
+- [Defining the mapping from Zendesk custom fields to Halo](/docs/zendesk-to-halo-mapping.md)
 
 ## Project structure
 
