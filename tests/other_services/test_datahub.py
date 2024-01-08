@@ -1,4 +1,5 @@
 from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
+from help_desk_api.utils.zendesk_to_halo_service_mappings import service_names_to_ids
 
 
 class TestDatahubFrontendZendeskToHaloSerialisations:
@@ -55,7 +56,7 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
             filter(lambda custom_field: custom_field["id"] == "31281329", zendesk_custom_fields),
             None,
         )
-        expected_service = zendesk_field["value"]
+        expected_service_id_in_halo = service_names_to_ids[zendesk_field["value"]]
         serializer = ZendeskToHaloCreateTicketSerializer(datahub_frontend_support_ticket["ticket"])
 
         halo_equivalent = serializer.data
@@ -69,7 +70,7 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
             None,
         )
         assert halo_equivalent is not None
-        assert halo_equivalent["value"] == expected_service
+        assert halo_equivalent["value"] == expected_service_id_in_halo
 
     def test_custom_field_browser(self, datahub_frontend_support_ticket):
         zendesk_custom_fields = datahub_frontend_support_ticket["ticket"]["custom_fields"]
