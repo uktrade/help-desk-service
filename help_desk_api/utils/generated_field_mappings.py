@@ -506,7 +506,7 @@ halo_mappings_by_zendesk_id = {
         halo_id=206,
         halo_title="CFService",
         is_zendesk_custom_field=True,
-        special_treatment=False,
+        special_treatment=True,
         zendesk_id=31281329,
         zendesk_title="Service",
     ),

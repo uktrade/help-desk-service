@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
+from help_desk_api.utils.zendesk_to_halo_service_mappings import service_names_to_ids
 
 
 class ZendeskFieldsNotSupportedException(Exception):
@@ -284,20 +285,32 @@ class HaloTagsFromZendeskField(serializers.ListField):
         return [{"text": tag} for tag in instance.get("tags", [])]
 
 
-# class Halo
+class HaloCFServiceFieldFromZendeskServiceField(serializers.DictField):
+    def to_representation(self, value, **kwargs):
+        mapping = kwargs.get("mapping")
+        return {"name": mapping.halo_title, "value": service_names_to_ids[value["value"]]}
 
 
 class HaloCustomFieldFromZendeskField(serializers.DictField):
-    def halo_name_from_zendesk_id(self, id):
-        id = str(id)
-        if id not in halo_mappings_by_zendesk_id:
+    special_treatment_fields = {
+        "CFService": HaloCFServiceFieldFromZendeskServiceField(),  # /PS-IGNORE
+    }
+
+    def halo_mapping_by_zendesk_id(self, field_id):
+        field_id = str(field_id)
+        mapping = halo_mappings_by_zendesk_id.get(field_id, None)
+        if mapping is None:
             raise ZendeskFieldsNotSupportedException(
-                f"Zendesk field id {id} not found in Halo mappings"
+                f"Zendesk field id {field_id} not found in Halo mappings"
             )
-        return halo_mappings_by_zendesk_id[id].halo_title
+        return mapping
 
     def to_representation(self, value):
-        return {"name": self.halo_name_from_zendesk_id(value["id"]), "value": value["value"]}
+        mapping = self.halo_mapping_by_zendesk_id(value["id"])
+        if mapping.special_treatment:
+            field = self.special_treatment_fields[mapping.halo_title]
+            return field.to_representation(value, mapping=mapping)
+        return {"name": mapping.halo_title, "value": value["value"]}
 
 
 class HaloCustomFieldsSerializer(serializers.ListSerializer):
