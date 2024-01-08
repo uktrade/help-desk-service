@@ -149,3 +149,11 @@ env
 # Docker DB data
 .db/*
 /static/
+
+
+/temp_data/
+/.aws-sam/temp-template.yaml
+/.run/[Remote] test_incoming_email.run.xml
+/layer.zip
+/email_router/.aws-sam/build.toml
+/email_router/.aws-sam/sync.toml

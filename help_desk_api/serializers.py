@@ -1,19 +1,16 @@
 from copy import deepcopy
+from datetime import datetime
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+from rest_framework.fields import empty
+
+from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
+from help_desk_api.utils.zendesk_to_halo_service_mappings import service_names_to_ids
 
 
 class ZendeskFieldsNotSupportedException(Exception):
     pass
-
-
-TICKET_PRIORITIES = (
-    ("low", "Low"),
-    ("medium", "Medium"),
-    ("high", "High"),
-    ("critical", "Critical"),
-)
 
 
 class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
@@ -70,6 +67,12 @@ class HaloToZendeskCommentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     note = serializers.CharField()
     outcome = serializers.CharField()
+    attachments = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=True, default=[]
+    )
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class HaloToZendeskCustomFieldsSerializer(serializers.Serializer):
@@ -93,7 +96,7 @@ class HaloToZendeskAttachmentSerializer(serializers.Serializer):
 
 class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
     """
-    Zendesk Group payload is converted to Halo Team payload
+    Zendesk Group payload is converted to Halo Team payload  /PS-IGNORE
     """
 
     id = serializers.IntegerField()
@@ -104,7 +107,6 @@ class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_team_fields = set(self.get_fields())
         halo_payload = {"id": data.pop("id", None), "name": data.pop("name", None)}
         halo_payload.update(**data)
@@ -133,7 +135,6 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {"emailaddress": data.pop("email", None), "other5": data.pop("id", None)}
         halo_payload.update(**data)
@@ -162,7 +163,6 @@ class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         data.pop("id")
         halo_payload = {"is_agent": True, "team": data.pop("default_group_id", None)}
@@ -192,7 +192,6 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-
         acceptable_user_fields = set(self.get_fields())
         halo_payload = {
             "emailaddress": data.pop("email", None),
@@ -257,6 +256,82 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
         return super().to_representation(zendesk_data)
 
 
+class ZendeskCommentToHaloField(serializers.Field):
+    serializers = [ZendeskToHaloCreateCommentSerializer]
+
+    def get_attribute(self, instance):
+        return instance.get("comment", None)
+
+    def to_representation(self, value):
+        return value
+
+
+class HaloSummaryFromZendeskField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("subject", None)
+
+
+class HaloDetailsFromZendeskField(serializers.CharField):
+    def get_attribute(self, instance):
+        if "comment" in instance:
+            return instance["comment"].get("body", None)
+        if "description" in instance:
+            return instance["description"]
+        return None
+
+
+class HaloTagsFromZendeskField(serializers.ListField):
+    def get_attribute(self, instance):
+        return [{"text": tag} for tag in instance.get("tags", [])]
+
+
+class HaloCFServiceFieldFromZendeskServiceField(serializers.DictField):
+    def to_representation(self, value, **kwargs):
+        mapping = kwargs.get("mapping")
+        return {"name": mapping.halo_title, "value": service_names_to_ids[value["value"]]}
+
+
+class HaloCustomFieldFromZendeskField(serializers.DictField):
+    special_treatment_fields = {
+        "CFService": HaloCFServiceFieldFromZendeskServiceField(),  # /PS-IGNORE
+    }
+
+    def halo_mapping_by_zendesk_id(self, field_id):
+        field_id = str(field_id)
+        mapping = halo_mappings_by_zendesk_id.get(field_id, None)
+        if mapping is None:
+            raise ZendeskFieldsNotSupportedException(
+                f"Zendesk field id {field_id} not found in Halo mappings"
+            )
+        return mapping
+
+    def to_representation(self, value):
+        mapping = self.halo_mapping_by_zendesk_id(value["id"])
+        if mapping.special_treatment:
+            field = self.special_treatment_fields[mapping.halo_title]
+            return field.to_representation(value, mapping=mapping)
+        return {"name": mapping.halo_title, "value": value["value"]}
+
+
+class HaloCustomFieldsSerializer(serializers.ListSerializer):
+    child = HaloCustomFieldFromZendeskField()
+
+    def to_representation(self, data):
+        return super().to_representation(data)
+
+
+class HaloUserNameFromZendeskRequesterField(serializers.CharField):
+    def get_attribute(self, instance):
+        requester = instance.get("requester", {"name": None, "email": None})
+        return requester.get("name", None)
+
+
+class HaloUserEmailFromZendeskRequesterField(serializers.EmailField):
+    def get_attribute(self, instance):
+        requester = instance.get("requester", {"name": None, "email": None})
+        return requester.get("email", None)
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -272,19 +347,25 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     }
     """
 
-    summary = serializers.CharField()
-    details = serializers.CharField()
-    tags = serializers.ListField()
+    site_id = serializers.IntegerField(default=18)
+    summary = HaloSummaryFromZendeskField()
+    details = HaloDetailsFromZendeskField()
+    tags = HaloTagsFromZendeskField(required=False)
+    # comment = ZendeskCommentToHaloField()
+    customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
+    users_name = HaloUserNameFromZendeskRequesterField(required=False)
+    reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
+    # The dont_do_rules field is a Halo API thing
+    # Set it to False to ensure rules are applied
+    dont_do_rules = serializers.BooleanField(default=False)
 
     def validate(self, data):
         return data
 
     def validate_fields(self, data):
-
         acceptable_ticket_fields = set(self.get_fields())
 
-        data_copy = deepcopy(data)
-        ticket = data_copy.pop("ticket")
+        ticket = deepcopy(data)
         halo_payload = {
             "summary": ticket.pop("subject", None),
             "details": ticket.pop("description", None),
@@ -293,29 +374,42 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         # find unsupported Zendesk fields
         ticket.pop("comment", None)  # Used in comment serializer when updating ticket
         ticket.pop("priority", None)  # Not used by HALO currently
+        ticket.pop("recipient", None)  # TODO: add proper support
+        ticket.pop("custom_fields", None)  # TODO: add proper support
+        ticket.pop("requester", None)  # TODO: add proper support
         halo_payload.update(**ticket)
 
         unsupported_fields = set(halo_payload.keys()) - acceptable_ticket_fields
         return unsupported_fields
 
-    def to_representation(self, data):
-        zendesk_ticket_data = data.get("ticket", {})
-        halo_payload = {
-            "summary": zendesk_ticket_data.get("subject", None),
-            "details": zendesk_ticket_data.get("description", None),
-            "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
-        }
-
-        unsupported_fields = self.validate_fields(data)
-
+    def to_representation(self, zendesk_ticket_data):
+        unsupported_fields = self.validate_fields(zendesk_ticket_data)
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
                 f"The field(s) {unsupported_fields} are not supported in Halo"
             )
-        else:
-            return super().to_representation(halo_payload)
-
-        # return super().to_representation(halo_payload)
+        # initial_halo_payload = {
+        #     "summary": zendesk_ticket_data.get("subject", None),
+        #     "details": zendesk_ticket_data.get("description", None),
+        #     "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
+        # }
+        recipient = zendesk_ticket_data.pop("recipient", None)
+        serialized_halo_payload = super().to_representation(zendesk_ticket_data)
+        if "comment" in serialized_halo_payload:
+            comment = serialized_halo_payload.pop("comment")
+            if comment:
+                attachment_tokens = comment.get("attachments", [])
+                if attachment_tokens:
+                    serialized_halo_payload["attachments"] = [
+                        {"id": attachment_token} for attachment_token in attachment_tokens
+                    ]
+        if recipient:
+            if "customfields" not in serialized_halo_payload:
+                serialized_halo_payload["customfields"] = []
+            serialized_halo_payload["customfields"].append(
+                {"name": "CFEmailToAddress", "value": recipient}
+            )
+        return serialized_halo_payload
 
 
 class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
@@ -343,7 +437,6 @@ class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
         return data
 
     def validate_fields(self, data):
-
         # fields defined in this serializer
         acceptable_ticket_fields = set(self.get_fields())
 
@@ -383,61 +476,117 @@ class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
             return super().to_representation(halo_payload)
 
 
+class ZendeskDescriptionFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("details", "")
+
+
+class ZendeskSubjectFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("summary", "")
+
+
+class ZendeskTagsFromHaloField(serializers.ListField):
+    def get_attribute(self, instance):
+        return [tag["text"] for tag in instance.get("tags", [])]
+
+
+class ZendeskGroupFromHaloField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        return instance.get("team_id", None)
+
+
+class ZendeskRecipientFromHaloField(serializers.EmailField):
+    def get_attribute(self, instance):
+        custom_fields = instance.get("customfields", [])
+        recipient_field = next(
+            filter(lambda field: field["name"] == "CFEmailToAddress", custom_fields), {}
+        )
+        return recipient_field.get("value", "")
+
+
+class ZendeskCreatedAtFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("dateoccurred", datetime.utcnow().isoformat())
+
+
+class ZendeskDueAtFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("fixbydate", datetime.utcnow().isoformat())
+
+
+class ZendeskUpdatedAtFromHaloField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.get("lastactiondate", datetime.utcnow().isoformat())
+
+
+class ZendeskCustomFieldFromHaloField(serializers.DictField):
+    def get_attribute(self, instance):
+        return {"id": instance.get("id", 0), "value": instance.get("value", None)}
+
+
+class ZendeskCustomFieldsFromHaloField(serializers.ListField):
+    child = ZendeskCustomFieldFromHaloField()
+
+    def get_attribute(self, instance):
+        return instance.get("customfields", [])
+
+
+class ZendeskStatusFromHaloField(serializers.CharField):
+    halo_status_id_to_zendesk_status = {
+        1: "new",
+        2: "open",
+        4: "pending",
+        28: "hold",
+        8: "solved",
+    }
+
+    def get_attribute(self, instance):
+        status_id = instance.get("status_id", "")
+        return self.halo_status_id_to_zendesk_status.get(status_id, "")
+
+
+class ZendeskPriorityFromHaloField(serializers.CharField):
+    priorities = {
+        "Low": "low",
+        "Medium": "medium",
+        "High": "high",
+        "Critical": "critical",
+    }
+
+    def get_attribute(self, instance):
+        halo_priority_name = instance.get("priority", {}).get("name", "")
+        return self.priorities[halo_priority_name]
+
+
+class ZendeskAssigneeFromHaloField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        return instance.get("agent_id", None)
+
+
 class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
-    Zendesk Tickets Serializer
+    serilaizer to convert Halo Ticket to Zendesk Ticket  /PS-IGNORE
     """
 
     id = serializers.IntegerField()
-    subject = serializers.CharField(max_length=200)
-    details = serializers.CharField(max_length=200)
+    subject = ZendeskSubjectFromHaloField()
+    description = ZendeskDescriptionFromHaloField()
     user = HaloToZendeskUserSerializer()
-    group_id = serializers.CharField()
-    external_id = serializers.CharField()
-    assignee_id = serializers.CharField()
-    actions = HaloToZendeskCommentSerializer(many=True)
-    tags = serializers.ListField()
-    custom_fields = HaloToZendeskCustomFieldsSerializer(many=True)
-    recipient_email = serializers.EmailField()
-    responder = serializers.CharField()
-    created_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
-    due_at = serializers.DateTimeField()
-    # status = serializers.CharField()
-    priority = serializers.ChoiceField(
-        choices=TICKET_PRIORITIES,
-        allow_blank=True,
-        default="low",
-    )
-    assignee_id = serializers.CharField()
-    attachments = HaloToZendeskAttachmentSerializer(many=True)
+    group_id = ZendeskGroupFromHaloField()
+    # external_id = serializers.CharField() # TODO: fix when getting zenslackchat working
+    tags = ZendeskTagsFromHaloField()
+    custom_fields = ZendeskCustomFieldsFromHaloField()
+    recipient = ZendeskRecipientFromHaloField()
+    created_at = ZendeskCreatedAtFromHaloField()
+    updated_at = ZendeskUpdatedAtFromHaloField()
+    due_at = ZendeskDueAtFromHaloField()
+    status = ZendeskStatusFromHaloField()
+    priority = ZendeskPriorityFromHaloField()
+    assignee_id = ZendeskAssigneeFromHaloField()
 
     def validate(self, data):
         return data
-
-    def to_representation(self, data):
-        zendesk_response = {
-            "id": data["id"],
-            "subject": data.get("summary", ""),
-            "details": data.get("details", ""),
-            "user": data.get("user", {}),
-            "group_id": data["id"],
-            "external_id": data["id"],
-            "assignee_id": data["id"],
-            "actions": data.get("actions", []),
-            "tags": [tag.get("text", "") for tag in data.get("tags", [])],
-            "custom_fields": data.get("customfields", []),
-            "recipient_email": data.get("user_email", ""),
-            "responder": data.get("reportedby", ""),
-            "created_at": data.get("dateoccurred", ""),
-            "updated_at": data.get("dateoccurred", ""),
-            "due_at": data.get("deadlinedate", ""),
-            # "status": data['id'],
-            # "priority": data["priority"]["name"],
-            "ticket_type": "incident",  # ticket_response['tickettype']['name'],
-            "attachments": data.get("attachments", []),
-        }
-        return super().to_representation(zendesk_response)
 
 
 class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
@@ -445,7 +594,14 @@ class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
     Zendesk Single Ticket Serializer
     """
 
-    ticket = HaloToZendeskTicketSerializer(many=True)
+    ticket = HaloToZendeskTicketSerializer(many=False)
+
+    def __init__(self, data=empty, **kwargs):
+        data = {"ticket": data}
+        super().__init__(data, **kwargs)
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):
@@ -454,3 +610,14 @@ class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):
     """
 
     tickets = HaloToZendeskTicketSerializer(many=True)
+
+
+class HaloToZendeskUploadSerializer(serializers.Serializer):
+    token = serializers.SerializerMethodField()
+
+    def get_token(self, instance):
+        return instance["id"]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        return {"upload": representation}

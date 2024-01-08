@@ -2,7 +2,10 @@ from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest
-from halo.halo_api_client import HaloClientNotFoundException
+from halo.halo_api_client import (
+    HaloClientBadRequestException,
+    HaloClientNotFoundException,
+)
 from halo.halo_manager import HaloManager
 from tests.fixture_data.halo.user import user as halo_user
 
@@ -116,7 +119,7 @@ class TestUserViews:
         request_data = {
             "site_id": 1,
             "name": "name",
-            "email": "test@email.com",
+            "email": "test@email.com",  # /PS-IGNORE
             "id": 123,
         }  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
@@ -142,12 +145,12 @@ class TestUserViews:
         request_data = {
             "site_id": 1,
             "name": "name",
-            "email": "test@test.com",
+            "email": "test@test.com",  # /PS-IGNORE
             "id": 1,
         }  # /PS-IGNORE
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_user(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_update_user_success(self, mock_post, access_token):
@@ -188,9 +191,9 @@ class TestUserViews:
         mock_post.side_effects = fake_responses
 
         request_data = {"id": 1, "name": "test", "email": "test@x.com", "site_id": 1}  # /PS-IGNORE
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_user(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
 
 class TestMeView:
@@ -221,7 +224,7 @@ class TestMeView:
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         user = halo_manager.get_me(1)
-        # print(user)
+
         assert isinstance(user, dict)
         assert user["users"][0]["id"] == 1
         assert "emailaddress" in user["users"][0]  # this checks the transformation bit

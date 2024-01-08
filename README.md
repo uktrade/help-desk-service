@@ -26,8 +26,12 @@ The service provides an API that should be used for ticket management and creati
 
 - [Environment Variables](/docs/environment-variables.md)
 - [Connecting the project to Zendesk](/docs/zendesk.md)
+- [Defining the mapping from Zendesk custom fields to Halo](/docs/zendesk-to-halo-mapping.md)
 
 ## Project structure
 
 - `config/` - Django settings and top-level project config
 - `help_desk_api/` - API for help desk ticket management
+- `email_router` - Code for Lambda function to post received emails as tickets
+  - `ses_email_receiving` - Lambda function code
+  - `utils/build_layer.py` - Utility to package a Lambda layer based on `lambda_layer_requirements.txt`

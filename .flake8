@@ -1,0 +1,2 @@
+[flake8]
+exclude = email_router/.aws-sam

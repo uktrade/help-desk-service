@@ -1,3 +1,4 @@
+import base64
 import logging
 
 from django.conf import settings
@@ -121,18 +122,10 @@ class HaloManager:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
             halo_response = self.client.get(path=f"Tickets/{ticket_id}")
-            ticket_actions = self.client.get(
-                f"Actions?ticket_id={halo_response['id']}"
-            )  # /PS-IGNORE5
-            comment_list = []
-            for comment in ticket_actions["actions"]:
-                if comment["outcome"] == "comment":
-                    comment_list.append(comment)
-            halo_response["comment"] = comment_list
             attachments = self.client.get(f"Attachment?ticket_id={halo_response['id']}")
             halo_response["attachments"] = attachments["attachments"]
 
-            return {"ticket": [halo_response]}
+            return halo_response  # {"ticket": [halo_response]}
         except HaloRecordNotFoundException:
             message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
 
@@ -144,29 +137,23 @@ class HaloManager:
         # 3. Manager calls Halo API and returns Halo flavoured return value
         if zendesk_request is None:
             zendesk_request = {}
-        if "ticket" in zendesk_request and "comment" in zendesk_request["ticket"]:
-            halo_payload = ZendeskToHaloCreateTicketSerializer(zendesk_request)
+        ticket_data = zendesk_request.get("ticket", {})
+        if "comment" not in ticket_data:
+            # Most services get this wrong, so patch it up
+            if "description" in ticket_data:
+                ticket_data["comment"] = {"body": ticket_data.pop("description")}
+        # TODO: what if a ticket has both comment and description? Shouldn't happen, but…
+        #   See https://developer.zendesk.com/api-reference/
+        #   ticketing/tickets/tickets/#description-and-first-comment
+        if "comment" in ticket_data:
+            halo_payload = ZendeskToHaloCreateTicketSerializer(ticket_data)
             halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
-
-            zendesk_request["ticket_id"] = halo_response["id"]
-            comment_payload = ZendeskToHaloCreateCommentSerializer(zendesk_request)
-            actions_response = self.client.post(path="Actions", payload=[comment_payload.data])
-
-            halo_response["comment"] = [actions_response]
-            # if attachements exist upload them
-            if "attachments" in zendesk_request["ticket"]:
-                attachment_payload = zendesk_request["ticket"]["attachments"]
-                attachment_payload["ticket_id"] = halo_response["id"]
-                halo_response["attachments"] = [
-                    self.client.post(
-                        f"Attachment?ticket_id={halo_response['id']}", payload=[attachment_payload]
-                    )
-                ]
         else:
+            # Getting here means the ticket had neither description nor comment
             logging.error("create ticket payload must have ticket and comment")
             raise ZendeskException
 
-        return {"ticket": [halo_response]}
+        return halo_response
 
     def update_ticket(self, zendesk_request: dict = None) -> dict:
         """Update an existing ticket.
@@ -198,7 +185,7 @@ class HaloManager:
                     self.client.post(path="Actions", payload=[comment_payload.data])
                 ]
 
-        return {"ticket": [updated_ticket]}
+        return updated_ticket
 
     def get_comments(self, ticket_id: int) -> list[dict]:
         comments = []
@@ -231,4 +218,15 @@ class HaloManager:
             all_tickets.extend(halo_response["tickets"])
         halo_response["tickets"] = all_tickets
 
+        return halo_response
+
+    def upload_file(self, filename: str, data: bytes, content_type: str = "text/plain"):
+        file_content_base64 = base64.b64encode(data).decode("ascii")  # /PS-IGNORE
+        payload = f"data:{content_type};base64,{file_content_base64}"
+        params = {
+            "filename": filename,
+            "isimage": content_type.startswith("image"),
+            "data_base64": payload,  # /PS-IGNORE
+        }
+        halo_response = self.client.post(path="Attachment", payload=[params])
         return halo_response

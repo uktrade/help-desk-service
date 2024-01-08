@@ -1,0 +1,30 @@
+{% if actions|length %}
+    <tr class="actions-header">
+        <th colspan="2">Action</th>
+        <th>Action name (raw value)</th>
+        <th>Value</th>
+        <th>Help (based on Zendesk docs)</th>
+    </tr>
+    {% with action=actions|first %}
+        <tr class="{{ action.type }} action">
+            <td colspan="2">{{ action.label|safe }}</td>
+            <td><code>{{ action.raw_action }}</code></td>
+            <td><code>{{ action.value|safe }}</code></td>
+            <td>{{ action.help|safe|default:"&nbsp;" }}</td>
+        </tr>
+    {% endwith %}
+    {% if actions|length > 1 %}
+        {% for action in actions|slice:"1:" %}
+            <tr class="{{ action.type }} action">
+                <td colspan="2">{{ action.label|safe }}</td>
+                <td><code>{{ action.raw_action }}</code></td>
+                <td><code>{{ action.value|safe }}</code></td>
+                <td>{{ action.help|safe|default:"&nbsp;" }}</td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+{% else %}
+    <tr>
+        <td colspan="5">No actions defined.</td>
+    </tr>
+{% endif %}

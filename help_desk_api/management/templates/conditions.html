@@ -1,0 +1,32 @@
+{% if conditions|length %}
+    <tr class="conditions-header">
+        <td>&nbsp;</td>
+        <th>Field</th>
+        <th>Operator (raw value)</th>
+        <th>Value</th>
+        <th>Help (based on Zendesk docs)</th>
+    </tr>
+    {% with condition=conditions|first %}
+        <tr class="{{ condition.type }} condition">
+            <th rowspan="{{ conditions|length }}">{{ title }}</th>
+            <td>{{ condition.label|safe }}</td>
+            <td><code>{{ condition.operator }}</code></td>
+            <td><code>{{ condition.value }}</code></td>
+            <td>{{ condition.help|default:"&nbsp;" }}</td>
+        </tr>
+    {% endwith %}
+    {% if conditions|length > 1 %}
+        {% for condition in conditions|slice:"1:" %}
+            <tr class="{{ condition.type }} condition">
+                <td>{{ condition.label|safe }}</td>
+                <td><code>{{ condition.operator }}</code></td>
+                <td><code>{{ condition.value }}</code></td>
+                <td>{{ condition.help|default:"&nbsp;" }}</td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+{% else %}
+    <tr>
+        <td colspan="3">None</td>
+    </tr>
+{% endif %}
