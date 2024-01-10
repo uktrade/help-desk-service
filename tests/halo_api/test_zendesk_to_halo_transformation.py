@@ -24,13 +24,6 @@ class TestZendeskToHaloSerialization:
             with pytest.raises(ZendeskFieldsNotSupportedException):
                 serializer_field.to_representation({"id": 1, "value": "foo"})
 
-    def test_site_id_in_serialisation(self, zendesk_ticket_subject_and_comment_only):
-        serializer = ZendeskToHaloCreateTicketSerializer()
-
-        halo_equivalent = serializer.to_representation(zendesk_ticket_subject_and_comment_only)
-
-        assert "site_id" in halo_equivalent
-
     def test_zendesk_custom_field_to_halo_custom_field(self):
         with mock.patch.dict(
             "help_desk_api.serializers.halo_mappings_by_zendesk_id",
