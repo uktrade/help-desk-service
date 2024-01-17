@@ -640,7 +640,3 @@ action_mappings = {
     "ticket_form_id": ticket_form_id_action,
     "satisfaction_score": satisfaction_score_action,
 }
-
-
-def fix_csv_boolean(value):
-    return value in ["TRUE", "True", "1", 1, True]
