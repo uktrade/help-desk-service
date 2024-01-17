@@ -205,3 +205,15 @@ CLAM_AV_USERNAME = env("CLAM_AV_USERNAME", default="")
 CLAM_AV_PASSWORD = env("CLAM_AV_PASSWORD", default="")
 CLAM_AV_URL = env("CLAM_AV_URL", default="")
 CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
+
+# Enable HSTS
+# To disable in a local development environment,
+# set the SET_HSTS_HEADERS environment variable to a value that Python will evaulate as False, e.g.
+# export SET_HSTS_HEADERS=''
+
+# Set security related headers
+SET_HSTS_HEADERS = env.bool("SET_HSTS_HEADERS", default=True)
+if SET_HSTS_HEADERS:
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_SSL_REDIRECT = True
