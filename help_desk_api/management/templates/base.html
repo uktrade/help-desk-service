@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Zendesk {{ type }} - {{ instance }}</title>
+        <style>
+            body {
+                font-family: Verdana, sans-serif;
+            }
+            table {
+                border: 1px solid silver;
+                border-collapse: collapse;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+
+            .title, .description, .heading {
+                text-align: left;
+                font-weight: normal;
+            }
+
+            .todo {
+                background-color: fuchsia;
+            }
+
+            .title {
+                background-color: #f8efc0;
+                border-top: 1px solid #ccc;
+            }
+
+            .title h2 {
+                margin: 0;
+                font-size: 1.125rem;
+                font-weight: bold;
+            }
+
+            .description, .field-options {
+                background-color: #f8efc0;
+            }
+
+            .description p {
+                margin: 0;
+            }
+
+            .heading.conditions,
+            .heading.field {
+                border: 1px solid silver;
+                background-color: #d2eca9;
+            }
+
+            .heading.actions {
+                border: 1px solid silver;
+                background-color: #f6b0ba;
+            }
+
+            .spacer {
+                border:0;
+                border-top: 1px solid #ccc;
+                background-color: #ccc;
+            }
+
+            .condition > th,
+            .action > th {
+                white-space: nowrap;
+                border-right: 1px solid #333;
+                border-top: 1px solid #333;
+                background-color: #ddd;
+            }
+
+            .condition > th, .condition > td, .action > th, .action > td {
+                border-bottom: 1px solid #ccc;
+            }
+
+            .condition td, .action td {
+                vertical-align: top;
+            }
+
+            .condition td:last-of-type, .action td:last-of-type {
+                border-left: 1px solid #333;
+                background-color: #f8f8f8;
+            }
+
+            code {
+                font-size: larger;
+            }
+
+            .action-value code {
+                word-wrap: anywhere;
+            }
+
+            .conditions-header th, .actions-header th {
+                background-color: #ddd;
+                text-align: left;
+                border-left: 1px solid #333;
+                border-bottom: 1px solid #333;
+                font-size: smaller;
+            }
+
+            .highlight {
+                background-color: #ffcc00;
+            }
+
+            .notes li {
+                margin-bottom: 1em;
+            }
+
+            .field-title {
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Zendesk {{ type }} - {{ instance }}</h1>
+        {% block notes %}{% endblock notes %}
+        <table>
+            <tbody>
+                {% for item in items %}
+                    {% block item %}{% endblock item %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>

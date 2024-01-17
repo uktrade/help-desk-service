@@ -58,6 +58,8 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
     if query_string:
         url = f"{url}?{query_string}"
 
+    logger.warning(f"proxy_zendesk: requesting {url}")
+
     creds = f"{email}/token:{token}"
     encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
     zendesk_response = None
@@ -74,6 +76,8 @@ def proxy_zendesk(request, subdomain, email, token, query_string):
         )
     # data=request.body.decode("utf8"),
     elif request.method == "POST":
+        logger.warning(f"POST: {request.body}")
+        logger.warning(f"Auth: {encoded_creds.decode('ascii')}")
         zendesk_response = requests.post(
             url,
             data=request.body,
@@ -106,7 +110,7 @@ class ZendeskAPIProxyMiddleware:
 
     def __call__(self, request):
         try:
-            request_log = request.body.decode('utf-8')
+            request_log = request.body.decode("utf-8")
         except Exception:
             request_log = request.body
 
@@ -121,15 +125,24 @@ class ZendeskAPIProxyMiddleware:
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
+        logger.warning(f"HelpDeskCreds: {help_desk_creds.pk}")
+        logger.warning(f"zendesk_email: {help_desk_creds.zendesk_email}")
+
+        logger.warning(f"password: {token} known_token: {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
+
+        logger.warning("check_password passed")
 
         zendesk_response = None
         django_response = None
 
         supported_endpoint = method_supported(request.path, request.method.upper())
 
+        logger.warning(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
+
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
+            logger.warning("Making Zendesk request")
             zendesk_response = self.make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
             )
@@ -162,6 +175,12 @@ class ZendeskAPIProxyMiddleware:
             token,
             request.GET.urlencode(),
         )
+        logger.warning(
+            f"""
+        proxy_zendesk response: {proxy_response.status_code}
+         with body: {proxy_response.content}
+        """
+        )
         zendesk_response = HttpResponse(
             json.dumps(proxy_response.json(), cls=DjangoJSONEncoder),
             headers={
@@ -169,5 +188,5 @@ class ZendeskAPIProxyMiddleware:
             },
             status=proxy_response.status_code,
         )
-        # status, location, copy dict
+
         return zendesk_response

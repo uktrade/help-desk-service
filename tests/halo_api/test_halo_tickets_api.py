@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 import pytest
 from halo.data_class import ZendeskException
-from halo.halo_api_client import HaloAPIClient, HaloClientNotFoundException
+from halo.halo_api_client import (
+    HaloAPIClient,
+    HaloClientBadRequestException,
+    HaloClientNotFoundException,
+)
 from halo.halo_manager import HaloManager
 
 
@@ -46,11 +50,11 @@ class TestTicketViews:
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
         ticket = halo_manager.get_ticket(123)
         assert isinstance(ticket, dict)
-        assert isinstance(ticket["ticket"], list)
-        assert isinstance(ticket["ticket"][0], dict)
-        assert ticket["ticket"][0]["summary"] == "Request for new dataset on Data Workspace"
-        assert isinstance(ticket["ticket"][0]["tags"], list)
-        assert ticket["ticket"][0]["tags"][0]["text"] == "first"
+        # assert isinstance(ticket["ticket"], list)
+        # assert isinstance(ticket["ticket"][0], dict)
+        assert ticket["summary"] == "Request for new dataset on Data Workspace"
+        assert isinstance(ticket["tags"], list)
+        assert ticket["tags"][0]["text"] == "data-workspace"
 
     @patch("requests.get")
     @patch("requests.post")
@@ -93,9 +97,7 @@ class TestTicketViews:
         }
         ticket = halo_manager.create_ticket(request_data)
         assert isinstance(ticket, dict)
-        assert isinstance(ticket["ticket"], list)
-        assert isinstance(ticket["ticket"][0], dict)
-        assert ticket["ticket"][0]["summary"] == "Request for new dataset on Data Workspace"
+        assert ticket["summary"] == "Request for new dataset on Data Workspace"
 
     @patch("requests.post")
     def test_post_ticket_failure(self, mock_post, access_token):
@@ -115,9 +117,9 @@ class TestTicketViews:
 
         # TODO: add more tests when payload is messed up
         request_data = {"ticket": {"comment": {}}}
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_ticket(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_update_ticket_success(self, mock_post, access_token, new_halo_ticket):
@@ -144,9 +146,7 @@ class TestTicketViews:
         }
         ticket = halo_manager.update_ticket(request_data)
         assert isinstance(ticket, dict)
-        assert isinstance(ticket["ticket"], list)
-        assert isinstance(ticket["ticket"][0], dict)
-        assert ticket["ticket"][0]["summary"] == "Request for new dataset on Data Workspace"
+        assert ticket["summary"] == "Request for new dataset on Data Workspace"
 
     @patch("requests.post")
     def test_update_ticket_failure(self, mock_post, access_token):
@@ -166,9 +166,9 @@ class TestTicketViews:
 
         # TODO: add more tests when payload is messed up
         request_data = {"ticket_id": 1, "ticket": {"comment": {}}}
-        with pytest.raises(HaloClientNotFoundException) as excinfo:
+        with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.update_ticket(request_data)
-        assert excinfo.typename == "HaloClientNotFoundException"
+        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_create_ticket_payload_failure(self, mock_post, access_token):

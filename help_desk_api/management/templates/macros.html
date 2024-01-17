@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block notes %}
+    <h2>Notes</h2>
+    <ul class="notes">
+        <li>
+            Macros are made available via a menu in the UI for a ticket.
+        </li>
+        <li>
+            Many of them (maybe all?) will add a standard response as a ticket comment.
+            In Halo, it might be appropriate to use Canned Text for these chunks of text.
+        </li>
+        <li>
+            Generally speaking, they perform additional actions
+            (adding or removing tags, changing ticket status, and so on)
+            so it's likely that Actions will be the nearest equivalent in Halo.
+        </li>
+        <li>
+            Some of them seem to add the same comment as both HTML and plain text.
+            It's possible this manifests as the plain text and HTML alternatives
+            in the resulting email sent to the end user.
+        </li>
+    </ul>
+
+{% endblock notes %}
+
+{% block item %}
+    <tr>
+        <th colspan="5" class="title">
+            <h2>{{ item.title }}</h2>
+        </th>
+    </tr>
+    <tr>
+        <th colspan="5" class="description">
+            <p>{{ item.description }}</p>
+        </th>
+    </tr>
+    <tr>
+        <th colspan="5" class="heading actions">
+            Actions
+        </th>
+    </tr>
+    {% include "macro_actions.html" with actions=item.actions %}
+    <tr class="spacer"><td colspan="3">&nbsp;</td></tr>
+{% endblock item %}

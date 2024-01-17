@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block item %}
+    <tr>
+        <th colspan="5" class="title">
+            <h2>{{ item.title }}</h2>
+        </th>
+    </tr>
+    <tr>
+        <th colspan="5" class="description">
+            <p>{{ item.description }}</p>
+        </th>
+    </tr>
+    {% if item.conditions %}
+        <tr>
+            <th colspan="5" class="heading conditions">
+                Conditions
+            </th>
+        </tr>
+    {% endif %}
+    {% if item.conditions.all %}
+        {% include "conditions.html" with conditions=item.conditions.all title="All of" %}
+    {% endif %}
+    {% if item.conditions.any %}
+        {% include "conditions.html" with conditions=item.conditions.any title="Any of" %}
+    {% endif %}
+    <tr>
+        <th colspan="5" class="heading actions">
+            Actions
+        </th>
+    </tr>
+    {% include "actions.html" with actions=item.actions %}
+    <tr class="spacer"><td colspan="3">&nbsp;</td></tr>
+{% endblock item %}

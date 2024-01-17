@@ -1,7 +1,9 @@
 import json
 import logging
+from http import HTTPStatus
 
 import requests
+import sentry_sdk
 from django.conf import settings
 from django.core.cache import cache
 
@@ -11,6 +13,10 @@ class HaloRecordNotFoundException(Exception):
 
 
 class HaloClientNotFoundException(Exception):
+    pass
+
+
+class HaloClientBadRequestException(Exception):
     pass
 
 
@@ -69,8 +75,8 @@ class HaloAPIClient:
         return response.json()
 
     def post(self, path, payload):
-        logger.error(f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
-        logger.error(json.dumps(payload))
+        logger.warning(f"POST to URL https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
+        logger.warning(json.dumps(payload))
         response = requests.post(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             data=json.dumps(payload),
@@ -80,8 +86,13 @@ class HaloAPIClient:
             },
         )
         logger.error(response)
-        if response.status_code != 201:
-            logger.error(f"{response.status_code} response from get endpoint")
+        if response.status_code != HTTPStatus.CREATED:
+            logger.error(f"{response.status_code} response from POST endpoint")
             logger.error(response.json())
-            raise HaloClientNotFoundException()
+            if response.status_code == HTTPStatus.BAD_REQUEST:
+                e = HaloClientBadRequestException()
+            else:
+                e = HaloClientNotFoundException()
+            sentry_sdk.set_context("Halo response body", value=response.json())
+            raise e
         return response.json()

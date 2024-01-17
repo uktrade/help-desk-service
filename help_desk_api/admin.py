@@ -9,6 +9,11 @@ from .forms import HelpDeskCredsChangeForm, HelpDeskCredsCreationForm
 class HelpDeskCredsAdmin(admin.ModelAdmin):
     form = HelpDeskCredsChangeForm
     add_form = HelpDeskCredsCreationForm
+    list_display = [
+        "zendesk_email",
+        "zendesk_subdomain",
+        "help_desk",
+    ]
 
     def get_form(self, request, obj=None, **kwargs):
         """

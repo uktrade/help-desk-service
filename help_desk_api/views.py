@@ -3,6 +3,7 @@ from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
 from rest_framework import authentication, permissions, status
+from rest_framework.parsers import FileUploadParser
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,7 @@ from help_desk_api.serializers import (
     HaloToZendeskCommentSerializer,
     HaloToZendeskTicketContainerSerializer,
     HaloToZendeskTicketsContainerSerializer,
+    HaloToZendeskUploadSerializer,
     HaloToZendeskUserSerializer,
 )
 
@@ -37,7 +39,7 @@ class UserView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, *args, **kwargs):
         """
@@ -84,7 +86,7 @@ class MeView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, format=None):
         """
@@ -121,7 +123,7 @@ class CommentView(HaloBaseView):
 
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, id, format=None):
         """
@@ -138,12 +140,9 @@ class TicketView(HaloBaseView, CustomPagination):
     View for interacting with tickets
     """
 
-    serializer_class = HaloToZendeskTicketContainerSerializer
-    serializer_class = HaloToZendeskTicketsContainerSerializer
-
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.AllowAny]
-    renderer_classes = [BrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request, *args, **kwargs):
         """
@@ -204,7 +203,24 @@ class UploadsView(HaloBaseView):
     View for uploading attachments
     """
 
-    serializer_class = HaloToZendeskTicketContainerSerializer
+    parser_classes = [
+        FileUploadParser,
+    ]
 
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            filename = request.query_params.get("filename", None)
+            data = request.body
+            halo_response = self.halo_manager.upload_file(
+                filename=filename,
+                data=data,
+                content_type=request.headers.get("Content-Type", "text/plain"),
+            )
+            serializer = HaloToZendeskUploadSerializer(halo_response)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ZendeskException as error:
+            sentry_sdk.capture_exception(error)
+            return Response(
+                "File upload failed",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
