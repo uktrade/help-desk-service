@@ -1,7 +1,37 @@
 import inspect
 from dataclasses import dataclass
 
-from help_desk_api.utils.utils import fix_csv_boolean
+
+class StringInt:
+    def __init__(self, *, default=0):
+        self._default = default
+
+    def __set_name__(self, owner, name):
+        self._name = "_" + name
+
+    def __get__(self, obj, type):
+        if obj is None:
+            return self._default
+        return getattr(obj, self._name, self._default)
+
+    def __set__(self, obj, value):
+        setattr(obj, self._name, int(value))
+
+
+class StringBool:
+    def __init__(self, *, default='FALSE'):
+        self._default = default
+
+    def __set_name__(self, owner, name):
+        self._name = "_" + name
+
+    def __get__(self, obj, type):
+        if obj is None:
+            return self._default
+        return getattr(obj, self._name, self._default)
+
+    def __set__(self, obj, value):
+        setattr(obj, self._name, value in ["TRUE", "True", "1", 1, True])
 
 
 @dataclass
@@ -11,30 +41,14 @@ class HaloField:
     is_zendesk_custom_field: bool
 
 
+@dataclass
 class ZendeskToHaloMapping:
-    zendesk_id: int = 0
+    zendesk_id: StringInt = StringInt()
     zendesk_title: str = ""
-    is_zendesk_custom_field: bool = False
+    is_zendesk_custom_field: StringBool = StringBool()
     halo_id: int = 0
     halo_title: str = ""
-    special_treatment: bool = False
-
-    def __init__(self, **kwargs):
-        super().__init__()
-        for name, value in kwargs.items():
-            attr = getattr(self, name, None)
-            if attr is not None:
-                try:
-                    attr_type = type(attr)
-                    if attr_type is bool:
-                        value = fix_csv_boolean(value)
-                    else:
-                        value = attr_type(value)
-                except TypeError:
-                    value = None
-                except ValueError:
-                    value = None
-            setattr(self, name, value)
+    special_treatment: StringBool = StringBool()
 
     def __repr__(self):
         constructor_kwargs = []
