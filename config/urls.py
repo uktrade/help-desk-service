@@ -1,4 +1,4 @@
-# from django.conf import settings
+import healthcheck.urls
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (
@@ -11,10 +11,8 @@ from help_desk_api import urls as help_desk_api_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", include(healthcheck.urls.urlpatterns)),
     path("api/", include(help_desk_api_urls, namespace="api")),
-]
-
-urlpatterns += [
     path("openapi/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "openapi/swagger-ui/",

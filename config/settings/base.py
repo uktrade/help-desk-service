@@ -55,6 +55,7 @@ SERVICE_APPS = [
     "halo",
     "help_desk_api",
     "user",
+    "healthcheck",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + SERVICE_APPS
