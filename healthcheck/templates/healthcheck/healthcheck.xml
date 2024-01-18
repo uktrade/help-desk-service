@@ -1,0 +1,4 @@
+<pingdom_http_custom_check>
+<status>{{ status_code }}</status>
+<response_time>{{ response_time|floatformat:3 }}</response_time>
+</pingdom_http_custom_check>
