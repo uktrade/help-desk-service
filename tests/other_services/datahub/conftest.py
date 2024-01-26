@@ -1,5 +1,7 @@
 import pytest
 
+from help_desk_api.models import HelpDeskCreds
+
 
 @pytest.fixture(scope="session")
 def datahub_frontend_support_ticket():
@@ -15,3 +17,18 @@ def datahub_frontend_support_ticket():
             "tags": ["feedback"],
         }
     }
+
+
+@pytest.fixture()
+def datahub_zendesk_creds_only(db) -> HelpDeskCreds:
+    credentials = HelpDeskCreds.objects.create(
+        zendesk_email="tools@digital.trade.gov.uk",  # zendesk_email, /PS-IGNORE
+        zendesk_token="4WlqPWjearhgOCdHBAFirbIBefRjOtH0RdZeRwkl",  # zendesk_token,
+        zendesk_subdomain="staging-uktrade",
+        help_desk=[
+            HelpDeskCreds.HelpDeskChoices.ZENDESK,
+        ],
+    )
+    credentials.set_token()
+    credentials.save()
+    return credentials
