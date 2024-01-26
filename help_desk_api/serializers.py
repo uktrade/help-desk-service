@@ -114,7 +114,7 @@ class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} aren't supported in Halo"  # noqa: E713
             )
         else:
             return super().to_representation(halo_payload)
@@ -142,7 +142,7 @@ class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} are not supported in Halo"  # noqa: E713
             )
         else:
             return super().to_representation(halo_payload)
@@ -171,7 +171,7 @@ class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} are not supported in Halo"  # noqa: E713
             )
         else:
             return super().to_representation(halo_payload)
@@ -202,7 +202,7 @@ class ZendeskToHaloUpdateUserSerializer(serializers.Serializer):
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} are not supported in Halo"  # noqa: E713
             )
         else:
             return super().to_representation(halo_payload)
@@ -268,21 +268,23 @@ class ZendeskCommentToHaloField(serializers.Field):
 
 class HaloSummaryFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
-        return instance.get("subject", None)
+        return instance.pop("subject", None)
 
 
 class HaloDetailsFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         if "comment" in instance:
-            return instance["comment"].get("body", None)
+            comment = instance.pop("comment", {})
+            body = comment.pop("body", "")
+            return body
         if "description" in instance:
-            return instance["description"]
+            return instance.pop("description", "")
         return None
 
 
 class HaloTagsFromZendeskField(serializers.ListField):
     def get_attribute(self, instance):
-        return [{"text": tag} for tag in instance.get("tags", [])]
+        return [{"text": tag} for tag in instance.pop("tags", [])]
 
 
 class HaloCFServiceFieldFromZendeskServiceField(serializers.DictField):
@@ -301,7 +303,7 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
         mapping = halo_mappings_by_zendesk_id.get(field_id, None)
         if mapping is None:
             raise ZendeskFieldsNotSupportedException(
-                f"Zendesk field id {field_id} not found in Halo mappings"
+                f"Zendesk field id {field_id} not found in Halo mappings"  # noqa: E713
             )
         return mapping
 
@@ -317,7 +319,9 @@ class HaloCustomFieldsSerializer(serializers.ListSerializer):
     child = HaloCustomFieldFromZendeskField()
 
     def to_representation(self, data):
-        return super().to_representation(data)
+        representation = super().to_representation(data)
+        data.pop(self.source, [])
+        return representation
 
 
 class HaloUserNameFromZendeskRequesterField(serializers.CharField):
@@ -330,6 +334,13 @@ class HaloUserEmailFromZendeskRequesterField(serializers.EmailField):
     def get_attribute(self, instance):
         requester = instance.get("requester", {"name": None, "email": None})
         return requester.get("email", None)
+
+
+class HaloUserIdFieldFromZendeskRequesterIdField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        # TODO: check with Halo if submitter_id is of any value
+        instance.pop("submitter_id", None)
+        return instance.pop("requester_id", None)
 
 
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
@@ -354,6 +365,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
+    user_id = HaloUserIdFieldFromZendeskRequesterIdField(required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
@@ -376,6 +388,8 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket.pop("recipient", None)  # TODO: add proper support
         ticket.pop("custom_fields", None)  # TODO: add proper support
         ticket.pop("requester", None)  # TODO: add proper support
+        ticket.pop("requester_id", None)  # TODO: add proper support
+        ticket.pop("submitter_id", None)  # TODO: add proper support
         halo_payload.update(**ticket)
 
         unsupported_fields = set(halo_payload.keys()) - acceptable_ticket_fields
@@ -385,7 +399,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         unsupported_fields = self.validate_fields(zendesk_ticket_data)
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} aren't supported in Halo"
             )
         # initial_halo_payload = {
         #     "summary": zendesk_ticket_data.get("subject", None),
@@ -469,7 +483,7 @@ class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):
 
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"
+                f"The field(s) {unsupported_fields} aren't supported in Halo"
             )
         else:
             return super().to_representation(halo_payload)
