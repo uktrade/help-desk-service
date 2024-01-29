@@ -2,7 +2,7 @@ import base64
 import logging
 
 from django.conf import settings
-from halo.data_class import ZendeskException, ZendeskTicketNotFoundException
+from halo.data_class import ZendeskTicketNotFoundException
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 
 from help_desk_api.serializers import (
@@ -141,21 +141,8 @@ class HaloManager:
         if zendesk_request is None:
             zendesk_request = {}
         ticket_data = zendesk_request.get("ticket", {})
-        if "comment" not in ticket_data:
-            # Most services get this wrong, so patch it up
-            if "description" in ticket_data:
-                ticket_data["comment"] = {"body": ticket_data.pop("description")}
-        # TODO: what if a ticket has both comment and description? Shouldn't happen, but…
-        #   See https://developer.zendesk.com/api-reference/
-        #   ticketing/tickets/tickets/#description-and-first-comment
-        if "comment" in ticket_data:
-            halo_payload = ZendeskToHaloCreateTicketSerializer(ticket_data)
-            halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
-        else:
-            # Getting here means the ticket had neither description nor comment
-            logging.error("create ticket payload must have ticket and comment")
-            raise ZendeskException
-
+        halo_payload = ZendeskToHaloCreateTicketSerializer(ticket_data)
+        halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
         return halo_response
 
     def update_ticket(self, zendesk_request: dict = None) -> dict:
