@@ -19,7 +19,7 @@ class StringInt:
 
 
 class StringBool:
-    def __init__(self, *, default='FALSE'):
+    def __init__(self, *, default="FALSE"):
         self._default = default
 
     def __set_name__(self, owner, name):
