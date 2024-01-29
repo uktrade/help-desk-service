@@ -3,11 +3,11 @@ import pytest
 from help_desk_api.models import HelpDeskCreds
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def datahub_frontend_support_ticket():
     return {
         "ticket": {
-            "requester": {"name": "Data Hub user", "email": "foo@bar.baz"},  # /PS-IGNORE
+            "requester": {"name": "Data Hub user", "email": "somebody@example.com"},  # /PS-IGNORE
             "subject": "Test 2023-12-06 11:40",
             "comment": {"body": "Blah"},
             "custom_fields": [
@@ -23,7 +23,7 @@ def datahub_frontend_support_ticket():
 def datahub_zendesk_creds_only(db) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email="tools@digital.trade.gov.uk",  # zendesk_email, /PS-IGNORE
-        zendesk_token="4WlqPWjearhgOCdHBAFirbIBefRjOtH0RdZeRwkl",  # zendesk_token,
+        zendesk_token="a-zendesk-token",  # zendesk_token
         zendesk_subdomain="staging-uktrade",
         help_desk=[
             HelpDeskCreds.HelpDeskChoices.ZENDESK,
