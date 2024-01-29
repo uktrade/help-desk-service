@@ -30,7 +30,7 @@ class TestUnsupportedFields:
         # payload for updating user with unsupported field
         user_data = {
             "name": "name",  # /PS-IGNORE
-            "email": "test@test.com",
+            "email": "test@example.com",  # /PS-IGNORE
             "id": 1,
             "my_address": "125 Zen Street",
         }
@@ -56,11 +56,13 @@ class TestUnsupportedFields:
 
         # payload for creating user with unsupported field
         user_data = {
-            "name": "name",  # /PS-IGNORE
-            "email": "test@test.com",
-            "id": 1,
-            "site_id": 1,
-            "any_address": "125 Zen Street",
+            "user": {
+                "name": "name",  # /PS-IGNORE
+                "email": "test@example.com",  # /PS-IGNORE
+                "id": 1,
+                "site_id": 1,
+                "any_address": "125 Zen Street",
+            }
         }
         with pytest.raises(ZendeskFieldsNotSupportedException) as excinfo:
             halo_manager.create_user(user_data)

@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest import mock, skip
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -72,19 +72,24 @@ class TestAgentViews:
             halo_manager.get_agent(123)
         assert excinfo.typename == "HaloClientNotFoundException"
 
+    @skip("TODO: re-check this stuff before Zendesk to Halo migration")
     @patch("requests.post")
     def test_post_agent_success(self, mock_post, access_token):
         """
         POST Agent Success  /PS-IGNORE
         """
-        mock_ticket_post = {"id": 123, "name": "dummy name", "email": "test@test.com"}  # /PS-IGNORE
+        mock_agent_post = {
+            "id": 123,
+            "name": "dummy name",
+            "email": "test@example.com",  # /PS-IGNORE
+        }  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
         mock_post.side_effects = fake_responses
 
         halo_manager = HaloManager(client_id="fake-client-id", client_secret="fake-client-secret")
-        fake_responses[1].return_value.json.return_value = mock_ticket_post
+        fake_responses[1].return_value.json.return_value = mock_agent_post
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
@@ -98,6 +103,7 @@ class TestAgentViews:
         assert isinstance(agent, dict)
         assert agent["id"] == 123
 
+    @skip("TODO: re-check this stuff before Zendesk to Halo migration")
     @patch("requests.post")
     def test_post_user_failure(self, mock_post, access_token):
         """

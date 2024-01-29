@@ -69,28 +69,34 @@ class TestZendeskToHaloSerialization:
             assert halo_custom_field["value"] == field["value"]
 
     def test_zendesk_subject_is_halo_summary(self, new_zendesk_ticket_with_description):
+        expected_summary = new_zendesk_ticket_with_description["subject"]
         serializer_field = HaloSummaryFromZendeskField()
+
         halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_description)
 
-        assert halo_equivalent == new_zendesk_ticket_with_description["subject"]
+        assert halo_equivalent == expected_summary
 
     def test_zendesk_description_is_halo_details(self, new_zendesk_ticket_with_description):
+        expected_details = new_zendesk_ticket_with_description["description"]
         serializer_field = HaloDetailsFromZendeskField()
+
         halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_description)
 
-        assert halo_equivalent == new_zendesk_ticket_with_description["description"]
+        assert halo_equivalent == expected_details
 
     def test_zendesk_comment_is_halo_details(self, new_zendesk_ticket_with_comment):
+        expected_details = new_zendesk_ticket_with_comment["comment"]["body"]
         serializer_field = HaloDetailsFromZendeskField()
+
         halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_comment)
 
-        assert halo_equivalent == new_zendesk_ticket_with_comment["comment"]["body"]
+        assert halo_equivalent == expected_details
 
     def test_tags(self, new_zendesk_ticket_with_description):
-        serializer_field = HaloTagsFromZendeskField()
-        halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_description)
-
         expected_tags = [tag for tag in new_zendesk_ticket_with_description["tags"]]
+        serializer_field = HaloTagsFromZendeskField()
+
+        halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_description)
 
         assert len(halo_equivalent) == len(expected_tags)
         for tag in halo_equivalent:
