@@ -308,11 +308,17 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
         return mapping
 
     def to_representation(self, value):
-        mapping = self.halo_mapping_by_zendesk_id(value["id"])
+        # D-F-API sends some fields with the ID as the key, so work around that
+        if "id" in value:
+            field_id = value["id"]
+            field_value = value["value"]
+        else:
+            field_id, field_value = next(iter(value.items()))
+        mapping = self.halo_mapping_by_zendesk_id(field_id)
         if mapping.special_treatment:
             field = self.special_treatment_fields[mapping.halo_title]
             return field.to_representation(value, mapping=mapping)
-        return {"name": mapping.halo_title, "value": value["value"]}
+        return {"name": mapping.halo_title, "value": field_value}
 
 
 class HaloCustomFieldsSerializer(serializers.ListSerializer):
@@ -320,7 +326,7 @@ class HaloCustomFieldsSerializer(serializers.ListSerializer):
 
     def to_representation(self, data):
         representation = super().to_representation(data)
-        data.pop(self.source, [])
+        # data.pop(self.source, [])
         return representation
 
 
