@@ -118,7 +118,6 @@ class TestUserViews:
 
         request_data = {
             "user": {
-                "site_id": 1,
                 "name": "name",
                 "email": "test@email.com",  # /PS-IGNORE
                 "id": 123,
@@ -146,7 +145,6 @@ class TestUserViews:
 
         request_data = {
             "user": {
-                "site_id": 1,
                 "name": "name",
                 "email": "test@email.com",  # /PS-IGNORE
                 "id": 123,
@@ -177,7 +175,7 @@ class TestUserViews:
         mock_post.side_effects = fake_responses
 
         request_data = {
-            "user": {"id": 1, "name": "x", "email": "test@example.com", "site_id": 1}  # /PS-IGNORE
+            "user": {"id": 1, "name": "x", "email": "test@example.com"}  # /PS-IGNORE
         }  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
@@ -205,7 +203,6 @@ class TestUserViews:
                 "id": 1,
                 "name": "test",
                 "email": "test@example.com",  # /PS-IGNORE
-                "site_id": 1,
             }  # /PS-IGNORE
         }  # /PS-IGNORE
         with pytest.raises(HaloClientBadRequestException) as excinfo:
