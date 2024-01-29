@@ -161,7 +161,11 @@ class TestUserViews:
         """
         Update User Success
         """
-        mock_ticket_post = {"id": 1, "name": "test", "emailaddress": "test@test.com"}  # /PS-IGNORE
+        mock_ticket_post = {
+            "id": 1,
+            "name": "test",
+            "emailaddress": "test@example.com",  # /PS-IGNORE
+        }
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
