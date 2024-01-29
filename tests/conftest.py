@@ -442,3 +442,8 @@ def halo_upload_response_body():
         "isimage": False,
         "data": "/9j/4AAQSk",
     }
+
+
+@pytest.fixture()
+def zendesk_user_get_or_create_response():
+    return {"user": {"email": "someone@example.com", "name": "Some One"}}  # /PS-IGNORE

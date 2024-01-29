@@ -120,32 +120,47 @@ class ZendeskToHaloCreateTeamSerializer(serializers.Serializer):
             return super().to_representation(halo_payload)
 
 
+class HaloUserNameFromZendeskField(serializers.CharField):
+    def get_attribute(self, instance):
+        return instance.pop("name", None)
+
+
+class HaloUserEmailAddressFromZendeskField(serializers.EmailField):
+    def get_attribute(self, instance):
+        return instance.pop("email", None)
+
+
+class HaloZendeskUserIdFromZendeskField(serializers.CharField):
+    def get_attribute(self, instance):
+        value = instance.pop("id", None)
+        if value is not None:
+            value = str(value)
+        return value
+
+
 class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
     """
     Zendesk Payload is converted to Halo Payload
     """
 
-    site_id = serializers.IntegerField(default=1)
-    name = serializers.CharField()
-    emailaddress = serializers.EmailField()
-    other5 = serializers.IntegerField()
+    name = HaloUserNameFromZendeskField()
+    emailaddress = HaloUserEmailAddressFromZendeskField()
+    other5 = HaloZendeskUserIdFromZendeskField(required=False)
 
     def validate(self, data):
         # validate
         return data
 
     def to_representation(self, data):
-        acceptable_user_fields = set(self.get_fields())
-        halo_payload = {"emailaddress": data.pop("email", None), "other5": data.pop("id", None)}
-        halo_payload.update(**data)
-        unsupported_fields = set(halo_payload.keys()) - acceptable_user_fields
+        data_copy = deepcopy(data)
+        representation = super().to_representation(data_copy)
 
-        if unsupported_fields:
+        unused_field_names = data_copy.keys()
+        if unused_field_names:
             raise ZendeskFieldsNotSupportedException(
-                f"The field(s) {unsupported_fields} are not supported in Halo"  # noqa: E713
+                f"The field(s) {unused_field_names} are not supported in Halo"  # noqa: E713
             )
-        else:
-            return super().to_representation(halo_payload)
+        return representation
 
 
 class ZendeskToHaloCreateAgentSerializer(serializers.Serializer):

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import mock
 
 import pytest
@@ -10,6 +11,7 @@ from help_desk_api.serializers import (
     HaloTagsFromZendeskField,
     ZendeskFieldsNotSupportedException,
     ZendeskToHaloCreateTicketSerializer,
+    ZendeskToHaloCreateUserSerializer,
 )
 from help_desk_api.utils.field_mappings import ZendeskToHaloMapping
 from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
@@ -179,3 +181,14 @@ class TestZendeskToHaloServiceCustomFieldsSerialization:
         assert halo_equivalent["value"] == expected_value
         assert "name" in halo_equivalent
         assert halo_equivalent["name"] == expected_title
+
+
+class TestZendeskToHaloUserSerialization:
+    def test_serializer_leaves_original_data_intact(self, zendesk_user_get_or_create_response):
+        serializer = ZendeskToHaloCreateUserSerializer()
+        user_data = zendesk_user_get_or_create_response["user"]
+        initial_data_copy = deepcopy(user_data)
+
+        serializer.to_representation(initial_data_copy)
+
+        assert initial_data_copy == user_data
