@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -36,9 +37,10 @@ class TestDFAPIHaloManagerCreateUser:
         ess_user_request_json,
     ):
         mock_halo_authenticate.return_value = "mock-token"
-        expected_request_data = serializers.ZendeskToHaloCreateUserSerializer(
-            ess_user_request_json["user"]
-        ).data
+        serializer = serializers.ZendeskToHaloCreateUserSerializer()
+        expected_request_data = serializer.to_representation(
+            deepcopy(ess_user_request_json["user"])
+        )
         expected_path = "Users"
         expected_request_kwargs = {"path": expected_path, "payload": [expected_request_data]}
 
