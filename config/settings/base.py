@@ -182,11 +182,16 @@ AUTH_USER_MODEL = "user.User"
 
 HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
 
+USER_DATA_CACHE = "userdata"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "django_cache_table",
-    }
+    },
+    USER_DATA_CACHE: {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": f"middleware_{USER_DATA_CACHE}_cache_table",
+    },
 }
 
 REQUIRE_ZENDESK = env("REQUIRE_ZENDESK", default=False)
