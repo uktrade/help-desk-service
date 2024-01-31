@@ -6,9 +6,12 @@ import sys
 
 import requests
 import sentry_sdk
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
+from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
+from django.urls import ResolverMatch, resolve
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from sentry_sdk import set_level
@@ -108,13 +111,13 @@ class ZendeskAPIProxyMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request):  # noqa: C901
         try:
-            request_log = request.body.decode("utf-8")
+            request_body = request.body.decode("utf-8")
         except Exception:
-            request_log = request.body
+            request_body = request.body
 
-        logger.warning(f"Help Desk Service request received, body: {request_log}")
+        logger.warning(f"Help Desk Service request received, body: {request_body}")
 
         try:
             # Get out of proxy logic if there's an issue with the token
@@ -155,7 +158,53 @@ class ZendeskAPIProxyMiddleware:
             except ZendeskFieldsNotSupportedException as exp:
                 sentry_sdk.capture_exception(exp)
                 django_response = HttpResponseBadRequest(f"Incorrect payload: {exp}", status=400)
+        # If this is /api/v2/users/create_or_update,
+        # we need to save the Zendesk request data under the user ID
+        # as there's no other way to map the latter to the former
+        # on a subsequent create_ticket request
+        resolver: ResolverMatch = resolve(request.path)
+        if resolver.url_name == "create_user":
+            self.cache_user_request_data(
+                request, help_desk_creds, zendesk_response, django_response
+            )
         return zendesk_response or django_response
+
+    def cache_user_request_data(self, request, help_desk_creds, zendesk_response, halo_response):
+        """
+        Cache request data for create_or_update user.
+        This is necessary as D-F-API gets the user in one request,
+        then creates the ticket for that user in a separate request
+        which only contains the user ID.
+        The z-to-h serializer thus needs a way to associate a Zendesk user ID
+        with a Halo user.
+        As Halo allows us to just specify the email and name in the ticket creation request,
+        being able to map the created Zendesk ID to that data will do.
+        In the case of Halo-only running, the Halo user ID will serve the same purpose,
+        i.e. the serializer won't know or care that it's using a Halo ID;
+        it just wants the data associated with the ID that got sent back to the requester
+        and which the requester then sent back in the create_ticket request.
+        """
+        cache_key = None
+        if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
+            # Use the Zendesk user ID as the cache key
+            # because that is what we'll get in the create_ticket request
+            zendesk_user = zendesk_response.get("user", {})
+            cache_key = zendesk_user.get("id", None)
+            if cache_key is None:
+                # This should never happen, so just bail for now
+                return
+        elif HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
+            # Use the Halo user ID as the cache key
+            # as if there's no Zendesk request, that's what will end up coming back
+            # in the subsequent create_ticket request
+            cache_key = halo_response.get("id", None)
+            if cache_key is None:
+                # This should never happen if we got here, so just bail for now
+                return
+        request_data = json.loads(request.body.decode("utf-8"))
+        cache = caches[settings.USER_DATA_CACHE]
+        if cache is not None:
+            cache.set(cache_key, request_data)
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
         django_response = None
