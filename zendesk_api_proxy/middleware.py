@@ -190,20 +190,23 @@ class ZendeskAPIProxyMiddleware:
             # because that is what we'll get in the create_ticket request
             zendesk_user = zendesk_response.get("user", {})
             cache_key = zendesk_user.get("id", None)
+            logger.warning(f"Zendesk key: {cache_key}")
             if cache_key is None:
                 # This should never happen, so just bail for now
                 return
-        elif HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
+        elif HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
             cache_key = halo_response.get("id", None)
+            logger.warning(f"Halo key: {cache_key}")
             if cache_key is None:
                 # This should never happen if we got here, so just bail for now
                 return
         request_data = json.loads(request.body.decode("utf-8"))
         cache = caches[settings.USER_DATA_CACHE]
         if cache is not None:
+            logger.warning(f"Cacheing user with key: {cache_key} data: {request_data}")
             cache.set(cache_key, request_data)
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
