@@ -50,9 +50,9 @@ def ess_ticket_request_json():
             "Other Sector::\n"
             "Positivity For Growth: Very positive:\n"  # /PS-IGNORE
             "Sectors: Advanced engineering, Aerospace, Railways, Space",  # /PS-IGNORE
-            "requester_id": 13785027233565,
+            "requester_id": 1234,
             "subject": "Wednesday! Testing again :-)",
-            "submitter_id": 13785027233565,
+            "submitter_id": 1234,
         }
     }
 

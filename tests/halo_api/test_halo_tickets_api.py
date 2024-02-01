@@ -8,6 +8,8 @@ from halo.halo_api_client import (
 )
 from halo.halo_manager import HaloManager
 
+from help_desk_api.serializers import ZendeskTicketNoValidUserException
+
 
 class TestTicketViews:
     """
@@ -92,6 +94,10 @@ class TestTicketViews:
                 "comment": {"body": "The smoke is very colorful."},
                 "priority": "urgent",
                 "subject": "My printer is on fire!",
+                "requester": {
+                    "name": "Some Body",
+                    "email": "somebody@example.com",  # /PS-IGNORE
+                },
             }
         }
         ticket = halo_manager.create_ticket(request_data)
@@ -116,9 +122,8 @@ class TestTicketViews:
 
         # TODO: add more tests when payload is messed up
         request_data = {"ticket": {"comment": {}}}
-        with pytest.raises(HaloClientBadRequestException) as excinfo:
+        with pytest.raises(ZendeskTicketNoValidUserException):
             halo_manager.create_ticket(request_data)
-        assert excinfo.typename == "HaloClientBadRequestException"
 
     @patch("requests.post")
     def test_update_ticket_success(self, mock_post, access_token, new_halo_ticket):

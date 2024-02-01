@@ -91,6 +91,10 @@ class TestUnsupportedFields:
                 "priority": "urgent",
                 "subject": "My printer is again on fire!",
                 "assignee_id": 123,
+                "requester": {
+                    "name": "Some Body",
+                    "email": "somebody@example.com",  # /PS-IGNORE
+                },
             }
         }
         with pytest.raises(ZendeskFieldsNotSupportedException) as excinfo:

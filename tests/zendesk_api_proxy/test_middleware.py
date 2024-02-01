@@ -229,7 +229,6 @@ class TestUserRequestCache:
             HTTP_AUTHORIZATION=zendesk_authorization_header,
         )
 
-        # mock_caches: MagicMock
         with mock.patch("zendesk_api_proxy.middleware.caches") as mock_caches:
             mock_cache = MagicMock()
             mock_caches.__getitem__.return_value = mock_cache

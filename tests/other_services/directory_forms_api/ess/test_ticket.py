@@ -9,14 +9,6 @@ from help_desk_api.utils.field_mappings import ZendeskToHaloMapping
 
 
 class TestDFAPITicketSerialisation:
-    def test_ticket_serialisation_has_user_id(self, ess_ticket_request_json):
-        data = {"requester_id": 1234}
-        serializer = serializers.ZendeskToHaloCreateTicketSerializer(data)
-
-        halo_equivalent = serializer.data
-
-        assert "user_id" in halo_equivalent
-
     def test_custom_field_with_id_and_value(self):
         field_id = "123"
         data = {"id": field_id, "value": "something"}
@@ -99,13 +91,22 @@ class TestDFAPIHaloManagerCreateTicket:
     ):
         mock_halo_authenticate.return_value = "mock-token"
         serializer = serializers.ZendeskToHaloCreateTicketSerializer()
-        expected_request_data = serializer.to_representation(
-            deepcopy(ess_ticket_request_json["ticket"])
-        )
-        expected_path = "Tickets"
-        expected_request_kwargs = {"path": expected_path, "payload": [dict(expected_request_data)]}
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            mock_cache.get.return_value = {
+                "user": {"name": "Some Body", "email": "somebody@example.com"}  # /PS-IGNORE
+            }
+            expected_request_data = serializer.to_representation(
+                deepcopy(ess_ticket_request_json["ticket"])
+            )
+            expected_path = "Tickets"
+            expected_request_kwargs = {
+                "path": expected_path,
+                "payload": [dict(expected_request_data)],
+            }
 
-        halo_manager = HaloManager(client_id=client_id, client_secret=client_secret)
-        halo_manager.create_ticket(ess_ticket_request_json)
+            halo_manager = HaloManager(client_id=client_id, client_secret=client_secret)
+            halo_manager.create_ticket(ess_ticket_request_json)
 
         mock_halo_api_client_post.assert_called_once_with(**expected_request_kwargs)
