@@ -164,8 +164,10 @@ class ZendeskAPIProxyMiddleware:
         # on a subsequent create_ticket request
         resolver: ResolverMatch = resolve(request.path)
         if resolver.url_name == "create_user":
+            zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
+            halo_response_json = json.loads(django_response.content.decode("utf-8"))
             self.cache_user_request_data(
-                request, help_desk_creds, zendesk_response, django_response
+                request, help_desk_creds, zendesk_response_json, halo_response_json
             )
         return zendesk_response or django_response
 
