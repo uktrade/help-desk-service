@@ -191,6 +191,7 @@ CACHES = {
     USER_DATA_CACHE: {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": f"middleware_{USER_DATA_CACHE}_cache_table",
+        "TIMEOUT": 86400,  # seconds; == 24 hours
     },
 }
 
