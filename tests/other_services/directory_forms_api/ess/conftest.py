@@ -57,6 +57,19 @@ def ess_ticket_request_json():
     }
 
 
+@pytest.fixture(scope="function")
+def minimal_ess_ticket_request_json():
+    return {
+        "ticket": {
+            "custom_fields": [],
+            "description": "Aaa Question: This is checking d-f-api.\n",  # /PS-IGNORE
+            "requester_id": 13785027233565,
+            "subject": "Wednesday! Testing again :-)",
+            "submitter_id": 13785027233565,
+        }
+    }
+
+
 ess_request_zendesk_post_json = {
     "ticket": {
         "custom_fields": [

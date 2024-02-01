@@ -1,6 +1,8 @@
 from copy import deepcopy
 from datetime import datetime
 
+from django.conf import settings
+from django.core.cache import caches
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.fields import empty
@@ -10,6 +12,10 @@ from help_desk_api.utils.zendesk_to_halo_service_mappings import service_names_t
 
 
 class ZendeskFieldsNotSupportedException(Exception):
+    pass
+
+
+class ZendeskTicketNoValidUserException(Exception):
     pass
 
 
@@ -138,11 +144,19 @@ class HaloZendeskUserIdFromZendeskField(serializers.CharField):
         return value
 
 
+class HaloSiteIdField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        value = super().get_attribute(instance)
+        instance.pop("site_id", None)
+        return value
+
+
 class ZendeskToHaloCreateUserSerializer(serializers.Serializer):
     """
     Zendesk Payload is converted to Halo Payload
     """
 
+    site_id = HaloSiteIdField(default=18)  # Needed by Halo. TODO: make default configurable
     name = HaloUserNameFromZendeskField()
     emailaddress = HaloUserEmailAddressFromZendeskField()
     other5 = HaloZendeskUserIdFromZendeskField(required=False)
@@ -357,13 +371,6 @@ class HaloUserEmailFromZendeskRequesterField(serializers.EmailField):
         return requester.get("email", None)
 
 
-class HaloUserIdFieldFromZendeskRequesterIdField(serializers.IntegerField):
-    def get_attribute(self, instance):
-        # TODO: check with Halo if submitter_id is of any value
-        instance.pop("submitter_id", None)
-        return instance.pop("requester_id", None)
-
-
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -386,7 +393,6 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
-    user_id = HaloUserIdFieldFromZendeskRequesterIdField(required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
@@ -417,6 +423,8 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         return unsupported_fields
 
     def to_representation(self, zendesk_ticket_data):
+        data_copy = deepcopy(zendesk_ticket_data)
+        self.fix_user_fields(data_copy)
         unsupported_fields = self.validate_fields(zendesk_ticket_data)
         if unsupported_fields:
             raise ZendeskFieldsNotSupportedException(
@@ -428,7 +436,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         #     "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         # }
         recipient = zendesk_ticket_data.pop("recipient", None)
-        serialized_halo_payload = super().to_representation(zendesk_ticket_data)
+        serialized_halo_payload = super().to_representation(data_copy)
         if "comment" in serialized_halo_payload:
             comment = serialized_halo_payload.pop("comment")
             if comment:
@@ -444,6 +452,38 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
                 {"name": "CFEmailToAddress", "value": recipient}
             )
         return serialized_halo_payload
+
+    def fix_user_fields(self, ticket_data):
+        """
+        If this comes from D-F-API, the Zendesk user ID in requester_id
+        needs to be replaced with the corresponding requester data
+        which should have been stashed in the cache by the preceding
+        user/create_or_update request
+        """
+        if "requester" in ticket_data and isinstance(ticket_data["requester"], dict):
+            if "name" in ticket_data["requester"] and "email" in ticket_data["requester"]:
+                # assume that's already got what we need
+                return ticket_data
+        if requester_id := ticket_data.get("requester_id", False):
+            # This needs to be converted to a requester using info about this user from the cache
+            cache = caches[settings.USER_DATA_CACHE]
+            if cached_user_data := cache.get(requester_id):
+                cached_user = cached_user_data.get("user", {})
+                cached_user_name = cached_user.get("name", "")
+                cached_user_email = cached_user.get("email", "")
+                # Best have a sanity check that the user data is really there
+                if not (any([cached_user_name, cached_user_email])):
+                    raise ZendeskTicketNoValidUserException(
+                        f"Cache for user {requester_id} had neither name nor email"
+                    )
+                ticket_data["requester"] = {
+                    "name": cached_user_name,
+                    "email": cached_user_email,
+                }
+                ticket_data.pop("requester_id")
+                return ticket_data
+        # At this point, we have no way to identify the user for whom this ticket is being created
+        raise ZendeskTicketNoValidUserException("No requester or requester_id found in ticket data")
 
 
 class ZendeskToHaloUpdateTicketSerializer(serializers.Serializer):

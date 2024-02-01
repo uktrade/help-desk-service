@@ -1,7 +1,9 @@
 from copy import deepcopy
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
+from django.conf import settings
 
 from help_desk_api.serializers import (
     HaloCustomFieldFromZendeskField,
@@ -10,6 +12,7 @@ from help_desk_api.serializers import (
     HaloSummaryFromZendeskField,
     HaloTagsFromZendeskField,
     ZendeskFieldsNotSupportedException,
+    ZendeskTicketNoValidUserException,
     ZendeskToHaloCreateTicketSerializer,
     ZendeskToHaloCreateUserSerializer,
 )
@@ -105,10 +108,10 @@ class TestZendeskToHaloSerialization:
             assert "text" in tag
             assert tag["text"] in expected_tags
 
-    def test_dont_do_rules(self, zendesk_ticket_subject_and_comment_only):
+    def test_dont_do_rules(self, new_zendesk_ticket_with_comment):
         serializer = ZendeskToHaloCreateTicketSerializer()
 
-        halo_equivalent = serializer.to_representation(zendesk_ticket_subject_and_comment_only)
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
 
         assert "dont_do_rules" in halo_equivalent
         assert halo_equivalent["dont_do_rules"] is False
@@ -184,11 +187,157 @@ class TestZendeskToHaloServiceCustomFieldsSerialization:
 
 
 class TestZendeskToHaloUserSerialization:
-    def test_serializer_leaves_original_data_intact(self, zendesk_user_get_or_create_response):
+    def test_serializer_leaves_original_data_intact(
+        self, zendesk_user_create_or_update_request_body
+    ):
         serializer = ZendeskToHaloCreateUserSerializer()
-        user_data = zendesk_user_get_or_create_response["user"]
+        user_data = zendesk_user_create_or_update_request_body["user"]
         initial_data_copy = deepcopy(user_data)
 
         serializer.to_representation(initial_data_copy)
 
         assert initial_data_copy == user_data
+
+
+class TestZendeskToHaloSerialiserFixUserFields:
+    def test_fix_user_fields_leaves_suitable_requester_data_unchanged(
+        self, ticket_request_with_suitable_requester
+    ):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        augmented_zendesk_data = serializer.fix_user_fields(ticket_request_with_suitable_requester)
+
+        assert "requester" in augmented_zendesk_data
+        requester_data = augmented_zendesk_data.get("requester", {})
+        assert (
+            requester_data.get("name", "")
+            == ticket_request_with_suitable_requester["requester"]["name"]
+        )
+        assert (
+            requester_data.get("email", "")
+            == ticket_request_with_suitable_requester["requester"]["email"]
+        )
+
+    def test_fix_user_fields_adds_requester_data_to_unsuitable_request(
+        self, ticket_request_with_requester_id
+    ):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            cached_data = {
+                "user": {
+                    "name": "Some Body",
+                    "email": "somebody@example.com",  # /PS-IGNORE
+                }
+            }
+            mock_cache.get.return_value = cached_data
+            mock_caches.__getitem__.return_value = mock_cache
+
+            augmented_zendesk_data = serializer.fix_user_fields(ticket_request_with_requester_id)
+
+        assert "requester" in augmented_zendesk_data
+        requester_data = augmented_zendesk_data.get("requester", {})
+        assert requester_data.get("name", "") == cached_data["user"]["name"]
+        assert requester_data.get("email", "") == cached_data["user"]["email"]
+
+    def test_fix_user_fields_raises_for_invalid_cached_user_data(
+        self, ticket_request_with_requester_id
+    ):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+        expected_requester_id = ticket_request_with_requester_id["requester_id"]
+
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            cached_data = {
+                "user": {
+                    "name": None,
+                    "email": None,
+                }
+            }
+            mock_cache.get.return_value = cached_data
+            mock_caches.__getitem__.return_value = mock_cache
+
+            with pytest.raises(ZendeskTicketNoValidUserException) as e:
+                serializer.fix_user_fields(ticket_request_with_requester_id)
+            assert str(expected_requester_id) in e.value.args[0]
+
+    def test_fix_user_fields_uses_correct_cache(self, ticket_request_with_requester_id):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+
+            serializer.fix_user_fields(ticket_request_with_requester_id)
+
+            mock_caches.__getitem__.assert_called_once_with(settings.USER_DATA_CACHE)
+
+    def test_fix_user_fields_raises_if_no_user_can_be_identified(
+        self, ticket_request_lacking_any_requester
+    ):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        with pytest.raises(ZendeskTicketNoValidUserException):
+            serializer.fix_user_fields(ticket_request_lacking_any_requester)
+
+
+class TestZendeskToHaloSerialiserWithUserCache:
+    def test_serializer_uses_suitable_requester_data(self, ticket_request_with_suitable_requester):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(ticket_request_with_suitable_requester)
+
+        assert (
+            halo_equivalent.get("users_name", "")
+            == ticket_request_with_suitable_requester["requester"]["name"]
+        )
+        assert (
+            halo_equivalent.get("reportedby", "")
+            == ticket_request_with_suitable_requester["requester"]["email"]
+        )
+
+    def test_serializer_fixes_unsuitable_requester_data(self, ticket_request_with_requester_id):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            cached_data = {
+                "user": {
+                    "name": "Some Body",
+                    "email": "somebody@example.com",  # /PS-IGNORE
+                }
+            }
+            mock_cache.get.return_value = cached_data
+            mock_caches.__getitem__.return_value = mock_cache
+
+            halo_equivalent = serializer.to_representation(ticket_request_with_requester_id)
+
+        assert halo_equivalent.get("users_name", "") == cached_data["user"]["name"]
+        assert halo_equivalent.get("reportedby", "") == cached_data["user"]["email"]
+
+    def test_serializer_raises_for_invalid_cached_user_data(self, ticket_request_with_requester_id):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+        expected_requester_id = ticket_request_with_requester_id["requester_id"]
+
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            cached_data = {
+                "user": {
+                    "name": None,
+                    "email": None,
+                }
+            }
+            mock_cache.get.return_value = cached_data
+            mock_caches.__getitem__.return_value = mock_cache
+
+            with pytest.raises(ZendeskTicketNoValidUserException) as e:
+                serializer.to_representation(ticket_request_with_requester_id)
+            assert str(expected_requester_id) in e.value.args[0]
+
+    def test_serializer_raises_if_no_user_can_be_identified(
+        self, ticket_request_lacking_any_requester
+    ):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        with pytest.raises(ZendeskTicketNoValidUserException):
+            serializer.to_representation(ticket_request_lacking_any_requester)

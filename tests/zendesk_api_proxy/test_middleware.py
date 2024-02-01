@@ -1,5 +1,7 @@
 from unittest import mock
+from unittest.mock import MagicMock
 
+from django.conf import settings
 from django.test import RequestFactory
 from django.urls import reverse
 from zendesk_api_proxy.middleware import ZendeskAPIProxyMiddleware
@@ -203,3 +205,38 @@ class TestHaloOnly:
         middleware(request)
 
         get_response.assert_not_called()
+
+
+@mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+class TestUserRequestCache:
+    def test_zendesk_data_cached(
+        self,
+        make_zendesk_request: mock.MagicMock,
+        zendesk_authorization_header: str,
+        rf: RequestFactory,
+        zendesk_required_settings,
+        zendesk_creds_only: HelpDeskCreds,
+        zendesk_user_create_or_update_request_body,
+        zendesk_user_create_or_update_response_body,
+    ):
+        make_zendesk_request.return_value = zendesk_user_create_or_update_response_body
+        get_response = mock.MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(get_response)
+        request = rf.post(
+            reverse("api:create_user"),
+            data=zendesk_user_create_or_update_request_body,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=zendesk_authorization_header,
+        )
+
+        # mock_caches: MagicMock
+        with mock.patch("zendesk_api_proxy.middleware.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            expected_cache_key = zendesk_user_create_or_update_response_body["user"]["id"]
+            expected_cache_value = zendesk_user_create_or_update_request_body
+
+            middleware(request)
+
+            mock_caches.__getitem__.assert_called_once_with(settings.USER_DATA_CACHE)
+            mock_cache.set.assert_called_once_with(expected_cache_key, expected_cache_value)

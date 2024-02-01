@@ -102,10 +102,13 @@ def zendesk_creds_only(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
 @pytest.fixture(scope="function")
 def zendesk_ticket_subject_and_comment_only():
     return {
-        "comment": {
-            "body": "Long load of text here",
-        },
-        "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+        "ticket": {
+            "comment": {
+                "body": "Long load of text here",
+            },
+            "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+            "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
+        }
     }
 
 
@@ -121,12 +124,8 @@ def new_zendesk_ticket_with_description():
         "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
         "tags": ["request-for-data"],
         "recipient": "someone@example.gov.uk",  # /PS-IGNORE
+        "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
         "custom_fields": [
-            {"id": 44394765, "value": False},
-            {
-                "id": 360026629658,
-                "value": None,
-            },
             {"id": 31281329, "value": "data_workspace"},
         ],
     }
@@ -149,12 +148,8 @@ def new_zendesk_ticket_with_comment():
             "another-tag",
         ],
         "recipient": "someone@example.gov.uk",  # /PS-IGNORE
+        "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
         "custom_fields": [
-            {"id": 44394765, "value": False},
-            {
-                "id": 360026629658,
-                "value": None,
-            },
             {"id": 31281329, "value": "data_workspace"},
         ],
     }
@@ -174,6 +169,7 @@ def new_zendesk_ticket_with_comment_attachments():
                 "attachments": [7, 14, 21],
             },
             "subject": "Test for attachments",  # /PS-IGNORE
+            "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
         }
     }
 
@@ -445,5 +441,5 @@ def halo_upload_response_body():
 
 
 @pytest.fixture()
-def zendesk_user_get_or_create_response():
+def zendesk_user_create_or_update_request_body():
     return {"user": {"email": "someone@example.com", "name": "Some One"}}  # /PS-IGNORE
