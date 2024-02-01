@@ -118,6 +118,7 @@ class TestUserViews:
 
         request_data = {
             "user": {
+                "site_id": 1,
                 "name": "name",
                 "email": "test@email.com",  # /PS-IGNORE
                 "id": 123,
