@@ -184,6 +184,8 @@ class ZendeskAPIProxyMiddleware:
         it just wants the data associated with the ID that got sent back to the requester
         and which the requester then sent back in the create_ticket request.
         """
+        logger.warning(f"help_desk_creds: {help_desk_creds}")
+        logger.warning(f"cache_user_request_data: {zendesk_response}")
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
