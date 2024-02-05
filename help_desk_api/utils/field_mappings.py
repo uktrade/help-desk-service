@@ -49,6 +49,7 @@ class ZendeskToHaloMapping:
     halo_id: int = 0
     halo_title: str = ""
     special_treatment: StringBool = StringBool()
+    value_mappings: list[dict] | None = None
 
     def __repr__(self):
         constructor_kwargs = []
