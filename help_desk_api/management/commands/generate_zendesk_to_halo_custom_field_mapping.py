@@ -81,12 +81,12 @@ class Command(BaseCommand):
                         halo_field_value["name"]: halo_field_value
                         for halo_field_value in halo_field_values
                     }
-                    value_mappings = []
+                    value_mappings = {}
                     for option in field_options:
                         zendesk_title = option["raw_name"]
                         try:
                             halo_value = halo_field_values_by_title[zendesk_title]
-                            value_mappings.append({option["value"]: halo_value["id"]})
+                            value_mappings[option["value"]] = halo_value["id"]
                         except KeyError:
                             self.stderr.write(
                                 f"""
@@ -101,6 +101,10 @@ class Command(BaseCommand):
                         field_id
                     ].value_mappings = f"TODO: {halo_field['sqllookup']}"
 
+        # output = {
+        #     zendesk_id: repr(mapping)
+        #     for zendesk_id, mapping in halo_mappings_by_zendesk_id.items()
+        # }
         output = halo_mappings_by_zendesk_id
 
         if options["output"]:
