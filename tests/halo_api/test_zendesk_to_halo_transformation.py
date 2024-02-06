@@ -158,26 +158,22 @@ class TestZendeskToHaloTypesMappedFromCSV:
 class TestZendeskToHaloServiceCustomFieldsSerialization:
     zendesk_service_to_halo_cfservice = {
         "31281329": ZendeskToHaloMapping(
-            halo_title="CFService", special_treatment=True  # /PS-IGNORE
+            halo_title="CFService", value_mappings={"foo": 9876}  # /PS-IGNORE
         )
     }
-    zendesk_service_name_to_halo_id = {"foo": 9876}
 
     @mock.patch.dict(
         "help_desk_api.serializers.halo_mappings_by_zendesk_id",
         zendesk_service_to_halo_cfservice,
         clear=True,
     )
-    @mock.patch.dict(
-        "help_desk_api.serializers.service_names_to_ids",
-        zendesk_service_name_to_halo_id,
-        clear=True,
-    )
     def test_uktrade_service_name_serialized_as_id(self):
         serializer_field = HaloCustomFieldFromZendeskField()
         zendesk_field = {"id": 31281329, "value": "foo"}
-        expected_value = self.zendesk_service_name_to_halo_id[zendesk_field["value"]]
-        expected_title = self.zendesk_service_to_halo_cfservice["31281329"].halo_title
+        field_mapping = self.zendesk_service_to_halo_cfservice[str(zendesk_field["id"])]
+        value_mappings = field_mapping.value_mappings
+        expected_value = value_mappings[zendesk_field["value"]]
+        expected_title = field_mapping.halo_title
         halo_equivalent = serializer_field.to_representation(zendesk_field)
 
         assert "value" in halo_equivalent
