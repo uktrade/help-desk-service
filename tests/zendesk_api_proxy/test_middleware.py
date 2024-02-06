@@ -1,7 +1,11 @@
+import json
+from http import HTTPStatus
 from unittest import mock
 from unittest.mock import MagicMock
 
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
 from django.test import RequestFactory
 from django.urls import reverse
 from zendesk_api_proxy.middleware import ZendeskAPIProxyMiddleware
@@ -219,7 +223,14 @@ class TestUserRequestCache:
         zendesk_user_create_or_update_request_body,
         zendesk_user_create_or_update_response_body,
     ):
-        make_zendesk_request.return_value = zendesk_user_create_or_update_response_body
+        user_create_or_update_response = HttpResponse(
+            json.dumps(zendesk_user_create_or_update_response_body, cls=DjangoJSONEncoder),
+            headers={
+                "Content-Type": "application/json",
+            },
+            status=HTTPStatus.OK,
+        )
+        make_zendesk_request.return_value = user_create_or_update_response
         get_response = mock.MagicMock()
         middleware = ZendeskAPIProxyMiddleware(get_response)
         request = rf.post(
