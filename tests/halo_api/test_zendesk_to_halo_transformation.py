@@ -186,6 +186,38 @@ class TestZendeskToHaloServiceCustomFieldsSerialization:
         assert halo_equivalent["name"] == expected_title
 
 
+class TestZendeskToHaloCustomFieldsSerialisation:
+    def test_ess_custom_field_serialisation(self, ess_zendesk_ticket_request_body):
+        serializer = HaloCustomFieldsSerializer()
+        custom_fields = ess_zendesk_ticket_request_body["ticket"]["custom_fields"]
+
+        zendesk_custom_fields_by_ids = {
+            custom_field["id"]: custom_field["value"]
+            for custom_field in custom_fields
+            if "id" in custom_field
+        }
+        for custom_field in custom_fields:
+            if "id" not in custom_field:
+                zendesk_custom_fields_by_ids.update(custom_field)
+
+        expected_value_mappings = []
+        for id, zendesk_value in zendesk_custom_fields_by_ids.items():
+            halo_field_name = halo_mappings_by_zendesk_id[id].halo_title
+            halo_value_mappings = halo_mappings_by_zendesk_id[id].value_mappings
+            if halo_value_mappings is None:
+                expected_value_mappings.append({"name": halo_field_name, "value": zendesk_value})
+                continue
+            if isinstance(zendesk_value, list):
+                halo_value = [halo_value_mappings[value] for value in zendesk_value]
+            else:
+                halo_value = halo_value_mappings[zendesk_value]
+            expected_value_mappings.append({"name": halo_field_name, "value": halo_value})
+
+        halo_equivalent = serializer.to_representation(custom_fields)
+
+        assert halo_equivalent == expected_value_mappings
+
+
 class TestZendeskToHaloUserSerialization:
     def test_serializer_leaves_original_data_intact(
         self, zendesk_user_create_or_update_request_body
