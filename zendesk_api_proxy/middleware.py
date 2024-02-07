@@ -208,7 +208,8 @@ class ZendeskAPIProxyMiddleware:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
-            cache_key = halo_response.get("id", None)
+            halo_user = halo_response.get("user")
+            cache_key = halo_user.get("id", None)
             logger.warning(f"Halo key: {cache_key}")
             if cache_key is None:
                 # This should never happen if we got here, so just bail for now
