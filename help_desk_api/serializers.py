@@ -334,7 +334,9 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
             field_id, field_value = next(iter(value.items()))
         mapping = self.halo_mapping_by_zendesk_id(field_id)
         if mapping.value_mappings:
-            if isinstance(field_value, list):
+            if mapping.is_multiselect:
+                if not isinstance(field_value, list):
+                    field_value = [field_value]
                 field_value = [mapping.value_mappings[value] for value in field_value]
             else:
                 field_value = mapping.value_mappings[field_value]
