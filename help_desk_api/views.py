@@ -68,7 +68,7 @@ class UserView(HaloBaseView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 # There is no "id" in payload, so we create a User
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
         except ZendeskException as error:
             sentry_sdk.capture_exception(error)
             return Response(
