@@ -68,12 +68,16 @@ class Command(BaseCommand):
         for field_id, mapping in halo_mappings_by_zendesk_id.items():
             if mapping.halo_id is None:
                 continue
+
             zendesk_field = zendesk_fields_by_id[int(field_id)]
+
             if ("custom_field_options" in zendesk_field) and (
                 field_options := zendesk_field["custom_field_options"]
             ):
-                # print(f"ZF: {zendesk_field['title']}")
                 halo_field = halo_fields_by_id[int(mapping.halo_id)]
+
+                halo_mappings_by_zendesk_id[field_id].is_multiselect = halo_field["type"] == 3
+                # print(f"ZF: {zendesk_field['title']}")
                 # print(f"HF: {halo_field['name']} ID: {halo_field['id']}")
                 halo_field_values = halo_field.get("values", None)
                 if halo_field_values is not None:

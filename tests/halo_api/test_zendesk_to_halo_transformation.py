@@ -181,6 +181,28 @@ class TestZendeskToHaloServiceCustomFieldsSerialization:
         assert "name" in halo_equivalent
         assert halo_equivalent["name"] == expected_title
 
+    @mock.patch.dict(
+        "help_desk_api.serializers.halo_mappings_by_zendesk_id",
+        {
+            "31281329": ZendeskToHaloMapping(
+                halo_title="CFService",  # /PS-IGNORE
+                value_mappings={"foo": 9876},
+                is_multiselect=True,
+            )
+        },
+        clear=True,
+    )
+    def test_single_value_for_multiselect_is_list(self):
+        serializer_field = HaloCustomFieldFromZendeskField()
+        zendesk_field = {"id": 31281329, "value": "foo"}
+        field_mapping = self.zendesk_service_to_halo_cfservice[str(zendesk_field["id"])]
+        value_mappings = field_mapping.value_mappings
+        expected_value = [value_mappings[zendesk_field["value"]]]
+        halo_equivalent = serializer_field.to_representation(zendesk_field)
+
+        assert "value" in halo_equivalent
+        assert halo_equivalent["value"] == expected_value
+
 
 class TestZendeskToHaloCustomFieldsSerialisation:
     def test_ess_custom_field_serialisation(self, ess_zendesk_ticket_request_body):
@@ -199,11 +221,14 @@ class TestZendeskToHaloCustomFieldsSerialisation:
         expected_value_mappings = []
         for id, zendesk_value in zendesk_custom_fields_by_ids.items():
             halo_field_name = halo_mappings_by_zendesk_id[id].halo_title
-            halo_value_mappings = halo_mappings_by_zendesk_id[id].value_mappings
+            halo_mapping = halo_mappings_by_zendesk_id[id]
+            halo_value_mappings = halo_mapping.value_mappings
             if halo_value_mappings is None:
                 expected_value_mappings.append({"name": halo_field_name, "value": zendesk_value})
                 continue
-            if isinstance(zendesk_value, list):
+            if halo_mapping.is_multiselect:
+                if not isinstance(zendesk_value, list):
+                    zendesk_value = [zendesk_value]
                 halo_value = [halo_value_mappings[value] for value in zendesk_value]
             else:
                 halo_value = halo_value_mappings[zendesk_value]
