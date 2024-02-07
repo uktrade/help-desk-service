@@ -16,7 +16,7 @@ def ess_ticket_request_json():
                 {"360023876777": "Bananas Inc."},  # /PS-IGNORE
                 {"360026747617": "SW1A 1AA"},  # /PS-IGNORE
                 {"11977538111773": "very_positive__ess_positivity"},
-                {"1900000265733": "partnership__ess_organistation"},
+                # {"1900000265733": "partnership__ess_organistation"},
                 {"1900000266173": "50000000__ess_turnover_1"},
                 {"360023852217": "0_10__ess_num_of_employees_1"},
                 {
