@@ -540,9 +540,10 @@ halo_mappings_by_zendesk_id = {
         is_multiselect=True,
         is_zendesk_custom_field=True,
         special_treatment=False,
-        value_mappings="""TODO: select CTTagsTestid as [ID],
-        CFTagsTestValue as [Display]
-        from CTTagsTest where CFMultiSelectField='Business Type'""",
+        value_mappings=None,
+        # """TODO: select CTTagsTestid as [ID],
+        # CFTagsTestValue as [Display]
+        # from CTTagsTest where CFMultiSelectField='Business Type'""",
         zendesk_id=1900000265733,
         zendesk_title="ESS Business type",
     ),
