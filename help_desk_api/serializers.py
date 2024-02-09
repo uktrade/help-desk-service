@@ -422,6 +422,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket.pop("requester", None)  # TODO: add proper support
         ticket.pop("requester_id", None)  # TODO: add proper support
         ticket.pop("submitter_id", None)  # TODO: add proper support
+        ticket.pop("id", None)
         halo_payload.update(**ticket)
 
         unsupported_fields = set(halo_payload.keys()) - acceptable_ticket_fields
