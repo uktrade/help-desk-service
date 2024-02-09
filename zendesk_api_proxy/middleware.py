@@ -114,10 +114,11 @@ class ZendeskAPIProxyMiddleware:
     def __call__(self, request):  # noqa: C901
         try:
             request_body = request.body.decode("utf-8")
-        except Exception:
+        except Exception as exp:
+            sentry_sdk.capture_exception(exp)
             request_body = request.body
 
-        logger.warning(f"Help Desk Service request received, body: {request_body}")
+        logger.info(f"Help Desk Service request received, body: {request_body}")
 
         try:
             # Get out of proxy logic if there's an issue with the token
@@ -128,29 +129,29 @@ class ZendeskAPIProxyMiddleware:
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
-        logger.warning(f"HelpDeskCreds: {help_desk_creds.pk}")
-        logger.warning(f"zendesk_email: {help_desk_creds.zendesk_email}")
+        logger.info(f"HelpDeskCreds: {help_desk_creds.pk}")
+        logger.info(f"zendesk_email: {help_desk_creds.zendesk_email}")
 
-        logger.warning(f"password: {token} known_token: {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
-        logger.warning("check_password passed")
+        logger.info("check_password passed")
 
         zendesk_response = None
         django_response = None
 
         supported_endpoint = method_supported(request.path, request.method.upper())
 
-        logger.warning(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
+        logger.info(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
 
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
-            logger.warning("Making Zendesk request")
+            logger.info("Making Zendesk request")
             zendesk_response = self.make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
+            logger.info("Making Halo request")  # /PS-IGNORE
             try:
                 django_response = self.make_halo_request(
                     help_desk_creds, request, supported_endpoint
@@ -192,17 +193,18 @@ class ZendeskAPIProxyMiddleware:
         it just wants the data associated with the ID that got sent back to the requester
         and which the requester then sent back in the create_ticket request.
         """
-        logger.warning(f"help_desk_creds: {help_desk_creds}")
-        logger.warning(f"cache_user_request_data: {zendesk_response}")
+        logger.info(f"help_desk_creds: {help_desk_creds}")
+        logger.info(f"cache_user_request_data: {zendesk_response}")
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
             # because that is what we'll get in the create_ticket request
             zendesk_user = zendesk_response.get("user", {})
             cache_key = zendesk_user.get("id", None)
-            logger.warning(f"Zendesk key: {cache_key}")
+            logger.info(f"Zendesk user cache key: {cache_key}")  # /PS-IGNORE
             if cache_key is None:
                 # This should never happen, so just bail for now
+                sentry_sdk.capture_message("Failed to get user from cache (Zendesk branch)")
                 return
         elif HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             # Use the Halo user ID as the cache key
@@ -210,14 +212,15 @@ class ZendeskAPIProxyMiddleware:
             # in the subsequent create_ticket request
             halo_user = halo_response.get("user")
             cache_key = halo_user.get("id", None)
-            logger.warning(f"Halo key: {cache_key}")
+            logger.info(f"Halo user cache key: {cache_key}")
             if cache_key is None:
                 # This should never happen if we got here, so just bail for now
+                sentry_sdk.capture_message("Failed to get user from cache (Halo branch)")
                 return
         request_data = json.loads(request.body.decode("utf-8"))
         cache = caches[settings.USER_DATA_CACHE]
         if cache is not None:
-            logger.warning(f"Cacheing user with key: {cache_key} data: {request_data}")
+            logger.info(f"Cacheing user with key: {cache_key} data: {request_data}")
             cache.set(cache_key, request_data)
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
@@ -225,6 +228,12 @@ class ZendeskAPIProxyMiddleware:
         if supported_endpoint:
             setattr(request, "help_desk_creds", help_desk_creds)
             django_response = self.get_response(request)
+            logger.info(
+                f"""
+            halo response status: {django_response.status_code}
+             with body: {django_response.content}
+            """
+            )
         return django_response
 
     def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
@@ -238,9 +247,9 @@ class ZendeskAPIProxyMiddleware:
             token,
             request.GET.urlencode(),
         )
-        logger.warning(
+        logger.info(
             f"""
-        proxy_zendesk response: {proxy_response.status_code}
+        proxy_zendesk response status: {proxy_response.status_code}
          with body: {proxy_response.content}
         """
         )
