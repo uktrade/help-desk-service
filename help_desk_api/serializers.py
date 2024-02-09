@@ -316,6 +316,8 @@ class HaloTagsFromZendeskField(serializers.ListField):
 
 
 class HaloCustomFieldFromZendeskField(serializers.DictField):
+    specially_excluded_field_values = {"1900000265733": "-", "11013312910749": "-"}
+
     def halo_mapping_by_zendesk_id(self, field_id):
         field_id = str(field_id)
         mapping = halo_mappings_by_zendesk_id.get(field_id, None)
@@ -332,6 +334,11 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
             field_value = value["value"]
         else:
             field_id, field_value = next(iter(value.items()))
+        if (
+            field_id in self.specially_excluded_field_values
+            and field_value == self.specially_excluded_field_values[field_id]
+        ):
+            return None
         mapping = self.halo_mapping_by_zendesk_id(field_id)
         if mapping.value_mappings:
             if mapping.is_multiselect:
@@ -348,6 +355,10 @@ class HaloCustomFieldsSerializer(serializers.ListSerializer):
 
     def to_representation(self, data):
         representation = super().to_representation(data)
+        # Tickets from the ESS "emergency" forms have dummy values for certain fields
+        # which are stripped out by the child serialiser and come back as None
+        # so we need to get them gone
+        representation = [datum for datum in representation if datum is not None]
         # data.pop(self.source, [])
         return representation
 
