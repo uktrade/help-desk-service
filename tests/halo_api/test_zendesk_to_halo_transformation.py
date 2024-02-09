@@ -2,6 +2,7 @@ from copy import deepcopy
 from unittest import mock
 from unittest.mock import MagicMock
 
+import markdown
 import pytest
 from django.conf import settings
 
@@ -82,7 +83,8 @@ class TestZendeskToHaloSerialization:
         assert halo_equivalent == expected_summary
 
     def test_zendesk_description_is_halo_details(self, new_zendesk_ticket_with_description):
-        expected_details = new_zendesk_ticket_with_description["description"]
+        raw_details = new_zendesk_ticket_with_description["description"]
+        expected_details = markdown.markdown(raw_details)
         serializer_field = HaloDetailsFromZendeskField()
 
         halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_description)
@@ -90,7 +92,8 @@ class TestZendeskToHaloSerialization:
         assert halo_equivalent == expected_details
 
     def test_zendesk_comment_is_halo_details(self, new_zendesk_ticket_with_comment):
-        expected_details = new_zendesk_ticket_with_comment["comment"]["body"]
+        raw_details = new_zendesk_ticket_with_comment["comment"]["body"]
+        expected_details = markdown.markdown(raw_details)
         serializer_field = HaloDetailsFromZendeskField()
 
         halo_equivalent = serializer_field.get_attribute(new_zendesk_ticket_with_comment)

@@ -1,6 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 
+import markdown
 from django.conf import settings
 from django.core.cache import caches
 from drf_spectacular.utils import extend_schema_field
@@ -301,13 +302,13 @@ class HaloSummaryFromZendeskField(serializers.CharField):
 
 class HaloDetailsFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
+        body = None
         if "comment" in instance:
             comment = instance.pop("comment", {})
             body = comment.pop("body", "")
-            return body
         if "description" in instance:
-            return instance.pop("description", "")
-        return None
+            body = instance.pop("description", "")
+        return markdown.markdown(body)
 
 
 class HaloTagsFromZendeskField(serializers.ListField):
