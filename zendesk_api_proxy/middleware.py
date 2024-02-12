@@ -176,10 +176,10 @@ class ZendeskAPIProxyMiddleware:
             self.cache_user_request_data(
                 request, help_desk_creds, zendesk_response_json, halo_response_json
             )
-        logger.info(
+        logger.warning(
             f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
         )
-        logger.info(
+        logger.warning(
             f"Halo response: {django_response.content.decode('utf-8') if django_response else None}"
         )
         return zendesk_response or django_response
