@@ -376,6 +376,16 @@ class HaloUserEmailFromZendeskRequesterField(serializers.EmailField):
         return requester.get("email", None)
 
 
+class HaloNullIdField(serializers.IntegerField):
+    def get_attribute(self, instance):
+        id_value = instance.get("id", None)
+        if id_value is not None:
+            raise ZendeskFieldsNotSupportedException(
+                "ID cannot have a non-null value in ticket creation"
+            )
+        return id_value
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -401,6 +411,10 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
+    # Data Workspace will send an id field with a null value
+    # so we use this field to consume it
+    # without doing anything with it
+    # bogus_id = HaloNullIdField(required=False)
 
     def validate(self, data):
         return data
