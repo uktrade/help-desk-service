@@ -25,7 +25,7 @@ from help_desk_api.utils import get_zenpy_request_vars
 
 logger = logging.getLogger(__name__)
 
-set_level("warning")
+set_level("info")
 
 
 def get_view_class(path):
@@ -176,6 +176,12 @@ class ZendeskAPIProxyMiddleware:
             self.cache_user_request_data(
                 request, help_desk_creds, zendesk_response_json, halo_response_json
             )
+        logger.info(
+            f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
+        )
+        logger.info(
+            f"Halo response: {django_response.content.decode('utf-8') if django_response else None}"
+        )
         return zendesk_response or django_response
 
     def cache_user_request_data(self, request, help_desk_creds, zendesk_response, halo_response):
