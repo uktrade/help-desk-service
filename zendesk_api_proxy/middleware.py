@@ -41,8 +41,10 @@ def get_view_class(path):
         return False
 
 
-def method_supported(path, method):
+def method_supported(path, method: str):
+    logger.info(f"method_supported called with: {path}, {method}")
     view_class = get_view_class(path)
+    logger.info(f"method_supported: view_class {view_class}")
 
     for class_name, obj in inspect.getmembers(sys.modules["help_desk_api.views"]):
         try:
