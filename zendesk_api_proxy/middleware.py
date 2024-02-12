@@ -24,6 +24,7 @@ from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
 set_level("info")
 
@@ -118,7 +119,7 @@ class ZendeskAPIProxyMiddleware:
             sentry_sdk.capture_exception(exp)
             request_body = request.body
 
-        logger.info(f"Help Desk Service request received, body: {request_body}")
+        logger.warning(f"Help Desk Service request received, body: {request_body}")
 
         try:
             # Get out of proxy logic if there's an issue with the token
@@ -135,14 +136,14 @@ class ZendeskAPIProxyMiddleware:
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
-        logger.info("check_password passed")
+        logger.warning("check_password passed")
 
         zendesk_response = None
         django_response = None
 
         supported_endpoint = method_supported(request.path, request.method.upper())
 
-        logger.info(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
+        logger.warning(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
 
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             logger.info("Making Zendesk request")
