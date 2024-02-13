@@ -168,16 +168,8 @@ class ZendeskAPIProxyMiddleware:
         # on a subsequent create_ticket request
         resolver: ResolverMatch = resolve(request.path)
         if resolver.url_name == "create_user":
-            if zendesk_response:
-                zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
-            else:
-                zendesk_response_json = None
-            if django_response:
-                halo_response_json = json.loads(django_response.content.decode("utf-8"))
-            else:
-                halo_response_json = None
             self.cache_user_request_data(
-                request, help_desk_creds, zendesk_response_json, halo_response_json
+                request, help_desk_creds, zendesk_response, django_response
             )
         logger.warning(
             f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
@@ -202,13 +194,21 @@ class ZendeskAPIProxyMiddleware:
         it just wants the data associated with the ID that got sent back to the requester
         and which the requester then sent back in the create_ticket request.
         """
+        if zendesk_response:
+            zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
+        else:
+            zendesk_response_json = None
+        if halo_response:
+            halo_response_json = json.loads(halo_response.content.decode("utf-8"))
+        else:
+            halo_response_json = None
         logger.info(f"help_desk_creds: {help_desk_creds}")
-        logger.info(f"cache_user_request_data: {zendesk_response}")
+        logger.info(f"cache_user_request_data: {zendesk_response_json}")
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
             # because that is what we'll get in the create_ticket request
-            zendesk_user = zendesk_response.get("user", {})
+            zendesk_user = zendesk_response_json.get("user", {})
             cache_key = zendesk_user.get("id", None)
             logger.info(f"Zendesk user cache key: {cache_key}")  # /PS-IGNORE
             if cache_key is None:
@@ -219,7 +219,7 @@ class ZendeskAPIProxyMiddleware:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
-            halo_user = halo_response.get("user")
+            halo_user = halo_response_json.get("user")
             cache_key = halo_user.get("id", None)
             logger.info(f"Halo user cache key: {cache_key}")
             if cache_key is None:
