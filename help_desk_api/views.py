@@ -197,6 +197,34 @@ class TicketView(HaloBaseView, CustomPagination):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    def put(self, request, *args, **kwargs):
+        """
+        Data Workspace uses `update` to add a private note to
+        a dataset access request ticket after creation.
+        Zenpy uses PUT for `update`.
+        """
+        ticket_id = kwargs.get("id", None)
+        if ticket_id is None:
+            # Shouldn't get here as URL routing ought to have provided it.
+            # But just in case…
+            return Response(
+                "Ticket ID is required for HTTP PUT request",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ticket_data = request.data.get("ticket", {})
+        comment_data = ticket_data.get("comment", {})
+        comment_body = comment_data.get("body", None)
+        if comment_body is not None:
+            # Halo adds comments differently to Zendesk
+            halo_response = self.halo_manager.add_comment(request.data)
+            return halo_response
+        else:
+            # Nothing gets here at present, but something might one day
+            return Response(
+                f"Unexpected PUT to {request.path} without comment",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class UploadsView(HaloBaseView):
     """

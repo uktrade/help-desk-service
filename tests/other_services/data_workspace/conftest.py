@@ -1,4 +1,5 @@
 import pytest
+from django.urls import reverse
 
 
 @pytest.fixture()
@@ -23,6 +24,49 @@ def dataset_access_request_initial():
             },
         }
     }
+
+
+@pytest.fixture()
+def newly_created_ticket_id():
+    return 35058
+
+
+@pytest.fixture()
+def ticket_request_kwargs(newly_created_ticket_id):
+    return {"id": newly_created_ticket_id}
+
+
+@pytest.fixture()
+def dataset_access_request_supplementary_private_note(newly_created_ticket_id):
+    return {
+        "ticket": {
+            "id": newly_created_ticket_id,
+            "comment": {
+                "body": "Automated comment on ticket creation ",
+                "id": None,
+                "public": False,
+            },
+        }
+    }
+
+
+@pytest.fixture()
+def halo_put_ticket_comment_request(
+    rf,
+    halo_creds_only,
+    zendesk_authorization_header,
+    dataset_access_request_supplementary_private_note,
+    ticket_request_kwargs,
+):
+    url = reverse("api:ticket", kwargs=ticket_request_kwargs)
+    request = rf.put(
+        url,
+        data=dataset_access_request_supplementary_private_note,
+        content_type="application/json",
+        HTTP_AUTHORIZATION=zendesk_authorization_header,
+    )
+    setattr(request, "help_desk_creds", halo_creds_only)
+    return request
 
 
 @pytest.fixture()

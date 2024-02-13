@@ -1,6 +1,7 @@
 import base64
 
 import pytest
+from django.urls import reverse
 
 from help_desk_api.models import HelpDeskCreds
 
@@ -443,3 +444,16 @@ def halo_upload_response_body():
 @pytest.fixture()
 def zendesk_user_create_or_update_request_body():
     return {"user": {"email": "someone@example.com", "name": "Some One"}}  # /PS-IGNORE
+
+
+@pytest.fixture()
+def halo_get_tickets_request(rf, halo_creds_only, zendesk_authorization_header):
+    url = reverse("api:tickets")
+    request = rf.get(
+        url,
+        data={},
+        content_type="application/json",
+        HTTP_AUTHORIZATION=zendesk_authorization_header,
+    )
+    setattr(request, "help_desk_creds", halo_creds_only)
+    return request
