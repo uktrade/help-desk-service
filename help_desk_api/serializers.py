@@ -41,6 +41,15 @@ class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
         return not is_public
 
 
+class HaloOutcomeFromZendesk(serializers.CharField):
+    def get_attribute(self, instance):
+        comment_data = instance.get("comment", None)
+        if comment_data is None:
+            return None
+        is_public = comment_data.get("public", False)
+        return "Public Note" if is_public else self.default
+
+
 class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     """
     Zendesk Comments Serializer
@@ -49,6 +58,7 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     ticket_id = HaloTicketIDFromZendesk()
     note = HaloNoteFromZendesk()
     hiddenfromuser = HaloHiddenFromUserFromZendesk()
+    outcome = HaloOutcomeFromZendesk(default="Private Note")
 
     def validate(self, data):
         # validate

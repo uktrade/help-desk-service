@@ -428,3 +428,21 @@ class TestZendeskToHaloTicketCommentSerialization:
 
         assert "hiddenfromuser" in halo_equivalent
         assert halo_equivalent["hiddenfromuser"] == expected_hiddenfromuser
+
+    def test_serialized_representation_has_private_outcome(self, private_ticket_comment):
+        expected_outcome = "Private Note"
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
+
+        assert "outcome" in halo_equivalent
+        assert halo_equivalent["outcome"] == expected_outcome
+
+    def test_serialized_representation_has_public_outcome(self, public_ticket_comment):
+        expected_outcome = "Public Note"
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(public_ticket_comment["ticket"])
+
+        assert "outcome" in halo_equivalent
+        assert halo_equivalent["outcome"] == expected_outcome
