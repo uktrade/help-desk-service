@@ -14,6 +14,7 @@ from help_desk_api.serializers import (
     HaloTagsFromZendeskField,
     ZendeskFieldsNotSupportedException,
     ZendeskTicketNoValidUserException,
+    ZendeskToHaloCreateCommentSerializer,
     ZendeskToHaloCreateTicketSerializer,
     ZendeskToHaloCreateUserSerializer,
 )
@@ -397,3 +398,33 @@ class TestZendeskToHaloSerialiserWithUserCache:
 
         with pytest.raises(ZendeskTicketNoValidUserException):
             serializer.to_representation(ticket_request_lacking_any_requester)
+
+
+class TestZendeskToHaloTicketCommentSerialization:
+    def test_serialized_representation_has_ticket_id(self, private_ticket_comment):
+        expected_ticket_id = private_ticket_comment["ticket"]["id"]
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
+
+        assert "ticket_id" in halo_equivalent
+        assert halo_equivalent["ticket_id"] == expected_ticket_id
+
+    def test_serialized_representation_has_note(self, private_ticket_comment):
+        expected_note = private_ticket_comment["ticket"]["comment"]["body"]
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
+
+        assert "note" in halo_equivalent
+        assert halo_equivalent["note"] == expected_note
+
+    def test_serialized_representation_has_hiddenfromuser(self, private_ticket_comment):
+        is_public = private_ticket_comment["ticket"]["comment"]["public"]
+        expected_hiddenfromuser = not is_public
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
+
+        assert "hiddenfromuser" in halo_equivalent
+        assert halo_equivalent["hiddenfromuser"] == expected_hiddenfromuser

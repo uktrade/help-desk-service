@@ -77,3 +77,31 @@ Sectors: Aerospace, Space, Technology and smart cities""",  # /PS-IGNORE
             "submitter_id": 13785027233565,
         }
     }
+
+
+@pytest.fixture()
+def private_ticket_comment():
+    return {
+        "ticket": {
+            "id": 123,
+            "comment": {
+                "body": "A comment",
+                "id": None,
+                "public": False,
+            },
+        }
+    }
+
+
+@pytest.fixture()
+def public_ticket_comment():
+    return {
+        "ticket": {
+            "id": 123,
+            "comment": {
+                "body": "A comment",
+                "id": None,
+                "public": True,
+            },
+        }
+    }

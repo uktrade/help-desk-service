@@ -19,26 +19,43 @@ class ZendeskTicketNoValidUserException(Exception):
     pass
 
 
+class HaloTicketIDFromZendesk(serializers.IntegerField):
+    def get_attribute(self, instance):
+        ticket_id = instance.get("id", None)
+        return ticket_id
+
+
+class HaloNoteFromZendesk(serializers.CharField):
+    def get_attribute(self, instance):
+        comment_data = instance.get("comment", {})
+        body = comment_data.get("body", None)
+        return body
+
+
+class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
+    def get_attribute(self, instance):
+        comment_data = instance.get("comment", None)
+        if comment_data is None:
+            return None
+        is_public = comment_data.get("public", False)
+        return not is_public
+
+
 class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     """
     Zendesk Comments Serializer
     """
 
-    ticket_id = serializers.IntegerField()
-    outcome = serializers.CharField()
-    note = serializers.CharField()
+    ticket_id = HaloTicketIDFromZendesk()
+    note = HaloNoteFromZendesk()
+    hiddenfromuser = HaloHiddenFromUserFromZendesk()
 
     def validate(self, data):
         # validate
         return data
 
     def to_representation(self, data):
-        zendesk_data = {
-            "ticket_id": data["ticket_id"],
-            "outcome": "comment",
-            "note": data["ticket"]["comment"]["body"],
-        }
-        return super().to_representation(zendesk_data)
+        return super().to_representation(data)
 
 
 class ZendeskToHaloUpdateCommentSerializer(serializers.Serializer):
