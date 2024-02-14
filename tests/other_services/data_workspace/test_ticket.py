@@ -54,6 +54,9 @@ class TestDataWorkspaceUsingHaloApi:
         expected_payload["ticket_id"] = request_data["ticket"]["id"]
         expected_payload["note"] = request_data["ticket"]["comment"]["body"]
         expected_payload["hiddenfromuser"] = not request_data["ticket"]["comment"]["public"]
+        expected_payload["outcome"] = (
+            "Public Note" if request_data["ticket"]["comment"]["public"] else "Private Note"
+        )
         view = TicketView.as_view()
 
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
