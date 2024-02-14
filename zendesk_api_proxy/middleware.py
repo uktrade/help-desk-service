@@ -194,23 +194,17 @@ class ZendeskAPIProxyMiddleware:
         it just wants the data associated with the ID that got sent back to the requester
         and which the requester then sent back in the create_ticket request.
         """
-        if zendesk_response:
-            zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
-        else:
-            zendesk_response_json = None
-        if halo_response:
-            halo_response_json = json.loads(halo_response.content.decode("utf-8"))
-        else:
-            halo_response_json = None
+        halo_response_json, zendesk_response_json = self.get_json_responses(
+            halo_response, zendesk_response
+        )
         logger.info(f"help_desk_creds: {help_desk_creds}")
         logger.info(f"cache_user_request_data: {zendesk_response_json}")
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
             # because that is what we'll get in the create_ticket request
-            zendesk_user = zendesk_response_json.get("user", {})
-            cache_key = zendesk_user.get("id", None)
-            logger.info(f"Zendesk user cache key: {cache_key}")  # /PS-IGNORE
+            cache_key = self.get_cache_key(zendesk_response_json.get("user", {}))
+            logger.info(f"Zendesk user cache key: {cache_key}")
             if cache_key is None:
                 # This should never happen, so just bail for now
                 sentry_sdk.capture_message("Failed to get user from cache (Zendesk branch)")
@@ -219,8 +213,7 @@ class ZendeskAPIProxyMiddleware:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
-            halo_user = halo_response_json.get("user")
-            cache_key = halo_user.get("id", None)
+            cache_key = self.get_cache_key(halo_response_json.get("user", {}))
             logger.info(f"Halo user cache key: {cache_key}")
             if cache_key is None:
                 # This should never happen if we got here, so just bail for now
@@ -231,6 +224,21 @@ class ZendeskAPIProxyMiddleware:
         if cache is not None:
             logger.info(f"Cacheing user with key: {cache_key} data: {request_data}")
             cache.set(cache_key, request_data)
+
+    def get_cache_key(self, response_json):
+        cache_key = response_json.get("id", None)
+        return cache_key
+
+    def get_json_responses(self, halo_response, zendesk_response):
+        if zendesk_response:
+            zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
+        else:
+            zendesk_response_json = None
+        if halo_response:
+            halo_response_json = json.loads(halo_response.content.decode("utf-8"))
+        else:
+            halo_response_json = None
+        return halo_response_json, zendesk_response_json
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
         django_response = None
