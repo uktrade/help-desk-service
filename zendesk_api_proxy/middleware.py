@@ -168,8 +168,12 @@ class ZendeskAPIProxyMiddleware:
         # on a subsequent create_ticket request
         resolver: ResolverMatch = resolve(request.path)
         if resolver.url_name == "create_user":
-            self.cache_user_request_data(
-                request, help_desk_creds, zendesk_response, django_response
+            self.cache_request_data(
+                request,
+                help_desk_creds,
+                zendesk_response,
+                django_response,
+                {"cache_name": settings.USER_DATA_CACHE, "datum_key": "user"},
             )
         logger.warning(
             f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
@@ -179,7 +183,9 @@ class ZendeskAPIProxyMiddleware:
         )
         return zendesk_response or django_response
 
-    def cache_user_request_data(self, request, help_desk_creds, zendesk_response, halo_response):
+    def cache_request_data(
+        self, request, help_desk_creds, zendesk_response, halo_response, cache_config
+    ):
         """
         Cache request data for create_or_update user.
         This is necessary as D-F-API gets the user in one request,
@@ -197,36 +203,45 @@ class ZendeskAPIProxyMiddleware:
         halo_response_json, zendesk_response_json = self.get_json_responses(
             halo_response, zendesk_response
         )
-        logger.info(f"help_desk_creds: {help_desk_creds}")
-        logger.info(f"cache_user_request_data: {zendesk_response_json}")
+        logger.info(
+            f"Cacheing {cache_config['datum_key']} with services: {help_desk_creds.help_desk}"
+        )
+        logger.info(f"Cacheing response: {zendesk_response_json}")
+        cache_key = self.get_cache_key_for_credentials(
+            zendesk_response_json, halo_response_json, help_desk_creds, cache_config["datum_key"]
+        )
+        if cache_key is None:
+            # This should never happen if we got here, so just bail for now
+            sentry_sdk.capture_message(f"Failed to get {cache_config['datum_key']} for cacheing")
+            return
+        request_data = json.loads(request.body.decode("utf-8"))
+        cache = caches[cache_config["cache_name"]]
+        if cache is not None:
+            logger.info(
+                f"Cacheing {cache_config['datum_key']} with key: {cache_key} data: {request_data}"
+            )
+            cache.set(cache_key, request_data)
+
+    def get_cache_key_for_credentials(
+        self, zendesk_response_json, halo_response_json, help_desk_creds, datum_key="user"
+    ):
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
             # because that is what we'll get in the create_ticket request
-            cache_key = self.get_cache_key(zendesk_response_json.get("user", {}))
-            logger.info(f"Zendesk user cache key: {cache_key}")
-            if cache_key is None:
-                # This should never happen, so just bail for now
-                sentry_sdk.capture_message("Failed to get user from cache (Zendesk branch)")
-                return
+            cache_key = self.get_cache_key(zendesk_response_json, datum_key)
+            logger.info(f"Zendesk {datum_key} cache key: {cache_key}")
         elif HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
-            cache_key = self.get_cache_key(halo_response_json.get("user", {}))
-            logger.info(f"Halo user cache key: {cache_key}")
-            if cache_key is None:
-                # This should never happen if we got here, so just bail for now
-                sentry_sdk.capture_message("Failed to get user from cache (Halo branch)")
-                return
-        request_data = json.loads(request.body.decode("utf-8"))
-        cache = caches[settings.USER_DATA_CACHE]
-        if cache is not None:
-            logger.info(f"Cacheing user with key: {cache_key} data: {request_data}")
-            cache.set(cache_key, request_data)
+            cache_key = self.get_cache_key(halo_response_json, datum_key)
+            logger.info(f"Halo {datum_key} cache key: {cache_key}")
+        return cache_key
 
-    def get_cache_key(self, response_json):
-        cache_key = response_json.get("id", None)
+    def get_cache_key(self, response_json, datum_key="user"):
+        datum = response_json.get(datum_key, {})
+        cache_key = datum.get("id", None)
         return cache_key
 
     def get_json_responses(self, halo_response, zendesk_response):

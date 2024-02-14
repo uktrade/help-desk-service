@@ -295,7 +295,7 @@ class TestHttpMethodsSupported:
         middleware = ZendeskAPIProxyMiddleware(mock_get_response)
 
         with mock.patch(
-            "zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.cache_user_request_data"
+            "zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.cache_request_data"
         ):
             middleware(request)
 
