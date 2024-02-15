@@ -355,6 +355,16 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
             )
         return mapping
 
+    def fix_special_cases(self, field_id, field_value):
+        if settings.APP_ENV == "staging":
+            from help_desk_api.utils.staging_field_id_mappings import special_cases
+
+            if field_id in special_cases:
+                special_case = special_cases[field_id]
+                field_id = special_case.replacement_id
+                field_value = special_case.replacement_value
+        return field_id, field_value
+
     def to_representation(self, value):
         # D-F-API sends some fields with the ID as the key, so work around that
         if "id" in value:
@@ -367,6 +377,7 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
             and field_value == self.specially_excluded_field_values[field_id]
         ):
             return None
+        field_id, field_value = self.fix_special_cases(field_id, field_value)
         mapping = self.halo_mapping_by_zendesk_id(field_id)
         if mapping.value_mappings:
             if mapping.is_multiselect:

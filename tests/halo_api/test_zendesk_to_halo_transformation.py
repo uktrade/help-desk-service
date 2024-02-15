@@ -242,6 +242,23 @@ class TestZendeskToHaloCustomFieldsSerialisation:
 
         assert halo_equivalent == expected_value_mappings
 
+    def test_data_workspace_staging_special_case_corrected(self, settings):
+        special_case_custom_field_id = "44394845"
+        special_case_custom_field_value = "data_catalogue"
+
+        expected_special_case_custom_field_id = "31281329"
+        expected_special_case_custom_field_value = "data_workspace"
+
+        serializer = HaloCustomFieldFromZendeskField()
+        settings.APP_ENV = "staging"
+
+        fixed_id, fixed_value = serializer.fix_special_cases(
+            special_case_custom_field_id, special_case_custom_field_value
+        )
+
+        assert fixed_id == expected_special_case_custom_field_id
+        assert fixed_value == expected_special_case_custom_field_value
+
 
 class TestZendeskToHaloUserSerialization:
     def test_serializer_leaves_original_data_intact(
