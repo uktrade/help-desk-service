@@ -155,6 +155,11 @@ class ZendeskAPIProxyMiddleware:
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             logger.info("Making Halo request")  # /PS-IGNORE
+            # Need to pass Zendesk ticket ID, if any
+            zendesk_response_json = self.get_json_response(zendesk_response, {})
+            zendesk_ticket = zendesk_response_json.get("ticket", {})
+            zendesk_ticket_id = zendesk_ticket.get("id", None)
+            setattr(request, "zendesk_ticket_id", zendesk_ticket_id)
             try:
                 django_response = self.make_halo_request(
                     help_desk_creds, request, supported_endpoint
@@ -245,15 +250,10 @@ class ZendeskAPIProxyMiddleware:
         return cache_key
 
     def get_json_responses(self, halo_response, zendesk_response):
-        if zendesk_response:
-            zendesk_response_json = json.loads(zendesk_response.content.decode("utf-8"))
-        else:
-            zendesk_response_json = None
-        if halo_response:
-            halo_response_json = json.loads(halo_response.content.decode("utf-8"))
-        else:
-            halo_response_json = None
-        return halo_response_json, zendesk_response_json
+        return self.get_json_response(halo_response), self.get_json_response(zendesk_response)
+
+    def get_json_response(self, response, default=None):
+        return json.loads(response.content.decode("utf-8")) if response else default
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
         django_response = None
