@@ -412,6 +412,17 @@ def new_halo_ticket():
     }
 
 
+@pytest.fixture()
+def new_halo_ticket_response(new_halo_ticket):
+    return HttpResponse(
+        json.dumps(new_halo_ticket, cls=DjangoJSONEncoder),
+        headers={
+            "Content-Type": "application/json",
+        },
+        status=HTTPStatus.CREATED,
+    )
+
+
 @pytest.fixture(scope="session")
 def access_token():
     return {"access_token": "fake-access-token"}  # /PS-IGNORE
