@@ -1,6 +1,10 @@
 import base64
+import json
+from http import HTTPStatus
 
 import pytest
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
 from django.urls import reverse
 
 from help_desk_api.models import HelpDeskCreds
@@ -457,3 +461,37 @@ def halo_get_tickets_request(rf, halo_creds_only, zendesk_authorization_header):
     )
     setattr(request, "help_desk_creds", halo_creds_only)
     return request
+
+
+@pytest.fixture()
+def zendesk_create_ticket_response_body():
+    # Heavily cut down
+    return {
+        "ticket": {
+            "url": "https://staging-uktrade.zendesk.com/api/v2/tickets/35062.json",
+            "id": 35062,
+            "via": {"channel": "api", "source": {"from": {}, "to": {}, "rel": None}},
+            "subject": "Access Request for Data hub source dataset testing",
+            "raw_subject": "Access Request for Data hub source dataset testing",
+            "description": "Access request for",
+            "priority": None,
+            "status": "new",
+            "recipient": None,
+            "requester_id": 13785027233565,
+            "submitter_id": 13785027233565,
+            "assignee_id": None,
+            "organization_id": None,
+            "group_id": None,
+        }
+    }
+
+
+@pytest.fixture()
+def zendesk_create_ticket_response(zendesk_create_ticket_response_body):
+    return HttpResponse(
+        json.dumps(zendesk_create_ticket_response_body, cls=DjangoJSONEncoder),
+        headers={
+            "Content-Type": "application/json",
+        },
+        status=HTTPStatus.CREATED,
+    )
