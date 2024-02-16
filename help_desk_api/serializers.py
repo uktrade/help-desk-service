@@ -424,6 +424,12 @@ class HaloNullIdField(serializers.IntegerField):
         return id_value
 
 
+class HaloCopyOfZendeskTicketIdField(serializers.CharField):
+    def get_attribute(self, instance):
+        zendesk_ticket_id = instance.get("zendesk_ticket_id", None)
+        return str(zendesk_ticket_id)
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -442,10 +448,10 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     summary = HaloSummaryFromZendeskField()
     details = HaloDetailsFromZendeskField()
     tags = HaloTagsFromZendeskField(required=False)
-    # comment = ZendeskCommentToHaloField()
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
+    userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
@@ -474,6 +480,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket.pop("requester", None)  # TODO: add proper support
         ticket.pop("requester_id", None)  # TODO: add proper support
         ticket.pop("submitter_id", None)  # TODO: add proper support
+        ticket.pop("zendesk_ticket_id", None)  # TODO: add proper support
         ticket.pop("id", None)
         halo_payload.update(**ticket)
 

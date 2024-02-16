@@ -463,3 +463,15 @@ class TestZendeskToHaloTicketCommentSerialization:
 
         assert "outcome" in halo_equivalent
         assert halo_equivalent["outcome"] == expected_outcome
+
+
+class TestZendeskIdsSentToHalo:
+    def test_ticket_id_in_halo_userdef5_field(self, new_zendesk_ticket_with_comment):
+        expected_ticket_id = 12345
+        new_zendesk_ticket_with_comment["zendesk_ticket_id"] = expected_ticket_id
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
+
+        assert "userdef5" in halo_equivalent
+        assert halo_equivalent["userdef5"] == str(expected_ticket_id)
