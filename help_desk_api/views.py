@@ -186,6 +186,10 @@ class TicketView(HaloBaseView, CustomPagination):
                 # 5. Serialized data (in Zendesk format) sent to caller
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
+                zendesk_ticket_data = request.data
+                zendesk_ticket_data["zendesk_ticket_id"] = getattr(
+                    request, "zendesk_ticket_id", None
+                )
                 zendesk_ticket = self.halo_manager.create_ticket(request.data)
                 # 4. View uses serializer class to transform Halo format to Zendesk
                 serializer = HaloToZendeskTicketContainerSerializer(zendesk_ticket)
