@@ -383,3 +383,31 @@ class TestZendeskResponseIDsPersisted:
         assert (
             zendesk_data_passed_to_halo_manager["zendesk_ticket_id"] == expected_zendesk_ticket_id
         )
+
+    @mock.patch("help_desk_api.views.HaloManager.create_ticket")
+    @mock.patch("halo.halo_manager.HaloAPIClient._HaloAPIClient__authenticate")
+    def test_halo_only_ticket_creation_passes_null_zendesk_ticket_id(
+        self,
+        mock_halo_authenticate,
+        mock_halo_manager_create_ticket: MagicMock,
+        new_zendesk_ticket_with_comment: dict,
+        halo_creds_only,
+        zendesk_authorization_header,
+        new_halo_ticket,
+        client: Client,
+    ):
+        mock_halo_authenticate.return_value = "mock-token"
+        mock_halo_manager_create_ticket.return_value = new_halo_ticket
+        url = reverse("api:tickets")
+
+        client.post(
+            url,
+            data=new_zendesk_ticket_with_comment,
+            content_type="application/json",
+            headers={"Authorization": zendesk_authorization_header},
+        )
+
+        mock_halo_manager_create_ticket.assert_called_once()
+        zendesk_data_passed_to_halo_manager = mock_halo_manager_create_ticket.call_args.args[0]
+        assert "zendesk_ticket_id" in zendesk_data_passed_to_halo_manager
+        assert zendesk_data_passed_to_halo_manager["zendesk_ticket_id"] is None
