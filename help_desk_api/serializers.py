@@ -715,7 +715,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     group_id = ZendeskGroupFromHaloField()
     # external_id = serializers.CharField() # TODO: fix when getting zenslackchat working
     tags = ZendeskTagsFromHaloField()
-    custom_fields = ZendeskCustomFieldsFromHaloField()
+    # custom_fields = ZendeskCustomFieldsFromHaloField()  /PS-IGNORE
     recipient = ZendeskRecipientFromHaloField()
     created_at = ZendeskCreatedAtFromHaloField()
     updated_at = ZendeskUpdatedAtFromHaloField()
