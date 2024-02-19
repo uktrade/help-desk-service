@@ -221,7 +221,7 @@ class TicketView(HaloBaseView, CustomPagination):
         if comment_body is not None:
             # Halo adds comments differently to Zendesk
             halo_response = self.halo_manager.add_comment(request.data)
-            return halo_response
+            return Response(halo_response, status=status.HTTP_200_OK)
         else:
             # Nothing gets here at present, but something might one day
             return Response(
