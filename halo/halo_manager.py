@@ -184,7 +184,7 @@ class HaloManager:
         serializer = ZendeskToHaloCreateCommentSerializer()
         halo_equivalent = serializer.to_representation(ticket_data)
 
-        halo_response = self.client.post("Actions", payload=halo_equivalent)
+        halo_response = self.client.post("Actions", payload=[halo_equivalent])
         return halo_response
 
     def get_comments(self, ticket_id: int) -> list[dict]:
