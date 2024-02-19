@@ -19,20 +19,20 @@ class ZendeskTicketNoValidUserException(Exception):
     pass
 
 
-class HaloTicketIDFromZendesk(serializers.IntegerField):
+class HaloTicketIDFromZendeskField(serializers.IntegerField):
     def get_attribute(self, instance):
         ticket_id = instance.get("id", None)
         return ticket_id
 
 
-class HaloNoteFromZendesk(serializers.CharField):
+class HaloNoteFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", {})
         body = comment_data.get("body", None)
         return body
 
 
-class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
+class HaloHiddenFromUserFromZendeskField(serializers.BooleanField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", None)
         if comment_data is None:
@@ -41,7 +41,7 @@ class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
         return not is_public
 
 
-class HaloOutcomeFromZendesk(serializers.CharField):
+class HaloOutcomeFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", None)
         if comment_data is None:
@@ -55,10 +55,10 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     Zendesk Comments Serializer
     """
 
-    ticket_id = HaloTicketIDFromZendesk()
-    note = HaloNoteFromZendesk()
-    hiddenfromuser = HaloHiddenFromUserFromZendesk()
-    outcome = HaloOutcomeFromZendesk(default="Private Note")
+    ticket_id = HaloTicketIDFromZendeskField()
+    note = HaloNoteFromZendeskField()
+    hiddenfromuser = HaloHiddenFromUserFromZendeskField()
+    outcome = HaloOutcomeFromZendeskField(default="Private Note")
 
     def validate(self, data):
         # validate
