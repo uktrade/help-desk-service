@@ -108,6 +108,21 @@ class HaloToZendeskCommentSerializer(serializers.Serializer):
         return super().to_representation(instance)
 
 
+class HaloToZendeskTicketCommentSerializer(serializers.Serializer):
+    """
+    As Zendesk adds a comment
+    by updating the ticket object, we need to be able to respond
+    by sending back a `ticket_audit` along with the `ticket`.
+
+    We know Data Workspace does this, but it does nothing
+    with the result. So we can send a very minimal response for now.
+    """
+
+    def to_representation(self, instance):
+        representation = {"audit": {}, "ticket": {"id": instance["ticket_id"]}}
+        return representation
+
+
 class HaloToZendeskCustomFieldsSerializer(serializers.Serializer):
     """
     Zendesk CustomFields Serializer

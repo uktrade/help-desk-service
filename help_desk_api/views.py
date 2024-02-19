@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from help_desk_api.pagination import CustomPagination
 from help_desk_api.serializers import (
     HaloToZendeskCommentSerializer,
+    HaloToZendeskTicketCommentSerializer,
     HaloToZendeskTicketContainerSerializer,
     HaloToZendeskTicketsContainerSerializer,
     HaloToZendeskUploadSerializer,
@@ -221,7 +222,8 @@ class TicketView(HaloBaseView, CustomPagination):
         if comment_body is not None:
             # Halo adds comments differently to Zendesk
             halo_response = self.halo_manager.add_comment(request.data)
-            return Response(halo_response, status=status.HTTP_200_OK)
+            serializer = HaloToZendeskTicketCommentSerializer(halo_response)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             # Nothing gets here at present, but something might one day
             return Response(
