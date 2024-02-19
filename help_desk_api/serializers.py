@@ -740,7 +740,13 @@ class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
         super().__init__(data, **kwargs)
 
     def to_representation(self, instance):
-        return super().to_representation(instance)
+        # Zendesk returns an "audit" object alongside the ticket
+        # and Zenpy handles things differently if it's present.
+        # But our stuff doesn't seem to use it at all,
+        # so let's see if just an empty one is enough.
+        representation = super().to_representation(instance)
+        representation["audit"] = {}
+        return representation
 
 
 class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):
