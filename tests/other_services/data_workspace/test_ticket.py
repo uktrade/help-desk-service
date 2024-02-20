@@ -1,11 +1,9 @@
 import json
 from collections import OrderedDict
-from http import HTTPStatus
 from unittest import mock
 from unittest.mock import MagicMock
 
 from django.http import HttpRequest
-from rest_framework.response import Response
 
 from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
 from help_desk_api.views import TicketView
@@ -31,7 +29,7 @@ class TestDataWorkspaceUsingHaloApi:
         ticket_request_kwargs: dict,
     ):
         view = TicketView.as_view()
-        mock_halo_add_comment.return_value = Response("", status=HTTPStatus.OK)
+        mock_halo_add_comment.return_value = {"ticket_id": 1234}
 
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
 
@@ -46,7 +44,7 @@ class TestDataWorkspaceUsingHaloApi:
         halo_put_ticket_comment_request: HttpRequest,
         ticket_request_kwargs: dict,
     ):
-        mock_halo_post.return_value = Response("", status=HTTPStatus.OK)
+        mock_halo_post.return_value = {"ticket_id": 1234}
 
         request_content = halo_put_ticket_comment_request.body.decode("utf-8")
         request_data = json.loads(request_content)
@@ -61,4 +59,4 @@ class TestDataWorkspaceUsingHaloApi:
 
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
 
-        mock_halo_post.assert_called_once_with("Actions", payload=expected_payload)
+        mock_halo_post.assert_called_once_with("Actions", payload=[expected_payload])
