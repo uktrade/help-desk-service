@@ -60,10 +60,6 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     hiddenfromuser = HaloHiddenFromUserFromZendesk()
     outcome = HaloOutcomeFromZendesk(default="Private Note")
 
-    def validate(self, data):
-        # validate
-        return data
-
     def to_representation(self, data):
         return super().to_representation(data)
 
