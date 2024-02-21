@@ -183,6 +183,7 @@ AUTH_USER_MODEL = "user.User"
 HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
 
 USER_DATA_CACHE = "userdata"
+TICKET_DATA_CACHE = "ticketdata"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
@@ -191,7 +192,12 @@ CACHES = {
     USER_DATA_CACHE: {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": f"middleware_{USER_DATA_CACHE}_cache_table",
-        "TIMEOUT": 86400,  # seconds; == 24 hours
+        "TIMEOUT": 86_400,  # seconds; == 24 hours
+    },
+    TICKET_DATA_CACHE: {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": f"middleware_{TICKET_DATA_CACHE}_cache_table",
+        "TIMEOUT": 432_000,  # seconds; == 5 days
     },
 }
 
@@ -218,9 +224,8 @@ CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
 # set the SET_HSTS_HEADERS environment variable to a value that Python will evaulate as False, e.g.
 # export SET_HSTS_HEADERS=''
 
-# Set security related headers
-# SET_HSTS_HEADERS = env.bool("SET_HSTS_HEADERS", default=True)
-# if SET_HSTS_HEADERS:
-#     SECURE_HSTS_SECONDS = 31536000
-#     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-#     SECURE_SSL_REDIRECT = True
+SET_HSTS_HEADERS = env.bool("SET_HSTS_HEADERS", default=True)
+if SET_HSTS_HEADERS:
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_SSL_REDIRECT = True
