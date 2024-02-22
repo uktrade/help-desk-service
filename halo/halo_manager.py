@@ -2,7 +2,7 @@ import base64
 import logging
 
 from django.conf import settings
-from halo.data_class import ZendeskException, ZendeskTicketNotFoundException
+from halo.data_class import ZendeskTicketNotFoundException
 from halo.halo_api_client import HaloAPIClient, HaloRecordNotFoundException
 
 from help_desk_api.serializers import (
@@ -84,7 +84,10 @@ class HaloManager:
         include a "skip_verify_email": true property.
         If you don't specify a role parameter, the new user is assigned the role of end user.
         """
-        halo_user = ZendeskToHaloCreateUserSerializer(zendesk_request)
+        if zendesk_request is None:
+            zendesk_request = {}
+        user_data = zendesk_request.get("user", {})
+        halo_user = ZendeskToHaloCreateUserSerializer(user_data)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
 
@@ -117,7 +120,7 @@ class HaloManager:
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
-        logger.debug(f"Look for Ticket by is Halo ID:<{ticket_id}>")  # /PS-IGNORE
+        logger.debug(f"Look for Ticket by is Halo ID: <{ticket_id}>")  # /PS-IGNORE
         try:
             # 3. Manager calls Halo API and
             # returns Halo flavoured return value
@@ -127,7 +130,7 @@ class HaloManager:
 
             return halo_response  # {"ticket": [halo_response]}
         except HaloRecordNotFoundException:
-            message = f"Could not find Halo ticket with ID:<{ticket_id}>"  # /PS-IGNORE
+            message = f"Could not find Halo ticket with ID: <{ticket_id}>"  # /PS-IGNORE
 
             logger.debug(message)
             raise ZendeskTicketNotFoundException(message)
@@ -138,21 +141,8 @@ class HaloManager:
         if zendesk_request is None:
             zendesk_request = {}
         ticket_data = zendesk_request.get("ticket", {})
-        if "comment" not in ticket_data:
-            # Most services get this wrong, so patch it up
-            if "description" in ticket_data:
-                ticket_data["comment"] = {"body": ticket_data.pop("description")}
-        # TODO: what if a ticket has both comment and description? Shouldn't happen, but…
-        #   See https://developer.zendesk.com/api-reference/
-        #   ticketing/tickets/tickets/#description-and-first-comment
-        if "comment" in ticket_data:
-            halo_payload = ZendeskToHaloCreateTicketSerializer(ticket_data)
-            halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
-        else:
-            # Getting here means the ticket had neither description nor comment
-            logging.error("create ticket payload must have ticket and comment")
-            raise ZendeskException
-
+        halo_payload = ZendeskToHaloCreateTicketSerializer(ticket_data)
+        halo_response = self.client.post(path="Tickets", payload=[halo_payload.data])
         return halo_response
 
     def update_ticket(self, zendesk_request: dict = None) -> dict:
@@ -186,6 +176,16 @@ class HaloManager:
                 ]
 
         return updated_ticket
+
+    def add_comment(self, zendesk_request: dict = None):
+        if zendesk_request is None:
+            zendesk_request = {}
+        ticket_data = zendesk_request.get("ticket", {})
+        serializer = ZendeskToHaloCreateCommentSerializer()
+        halo_equivalent = serializer.to_representation(ticket_data)
+
+        halo_response = self.client.post("Actions", payload=halo_equivalent)
+        return halo_response
 
     def get_comments(self, ticket_id: int) -> list[dict]:
         comments = []
@@ -222,7 +222,7 @@ class HaloManager:
 
     def upload_file(self, filename: str, data: bytes, content_type: str = "text/plain"):
         file_content_base64 = base64.b64encode(data).decode("ascii")  # /PS-IGNORE
-        payload = f"data:{content_type};base64,{file_content_base64}"
+        payload = f"data:{content_type};base64,{file_content_base64}"  # noqa: E231,E702
         params = {
             "filename": filename,
             "isimage": content_type.startswith("image"),

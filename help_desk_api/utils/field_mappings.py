@@ -19,7 +19,7 @@ class StringInt:
 
 
 class StringBool:
-    def __init__(self, *, default='FALSE'):
+    def __init__(self, *, default="FALSE"):
         self._default = default
 
     def __set_name__(self, owner, name):
@@ -49,11 +49,13 @@ class ZendeskToHaloMapping:
     halo_id: int = 0
     halo_title: str = ""
     special_treatment: StringBool = StringBool()
+    is_multiselect: bool = False
+    value_mappings: dict | None = None
 
     def __repr__(self):
         constructor_kwargs = []
         for member in inspect.getmembers(self):
-            if not member[0].startswith("__"):
+            if not member[0].startswith("_"):
                 if not inspect.ismethod(member[1]):
                     constructor_kwargs.append(f"{member[0]}={repr(member[1])}")
 

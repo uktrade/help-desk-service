@@ -117,11 +117,13 @@ class TestUserViews:
         mock_post.side_effects = fake_responses
 
         request_data = {
-            "site_id": 1,
-            "name": "name",
-            "email": "test@email.com",  # /PS-IGNORE
-            "id": 123,
-        }  # /PS-IGNORE
+            "user": {
+                "site_id": 1,
+                "name": "name",
+                "email": "test@email.com",  # /PS-IGNORE
+                "id": 123,
+            }  # /PS-IGNORE
+        }
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["id"] == 123
@@ -143,11 +145,12 @@ class TestUserViews:
         mock_post.side_effects = fake_responses
 
         request_data = {
-            "site_id": 1,
-            "name": "name",
-            "email": "test@test.com",  # /PS-IGNORE
-            "id": 1,
-        }  # /PS-IGNORE
+            "user": {
+                "name": "name",
+                "email": "test@email.com",  # /PS-IGNORE
+                "id": 123,
+            }  # /PS-IGNORE
+        }
         with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientBadRequestException"
@@ -157,7 +160,11 @@ class TestUserViews:
         """
         Update User Success
         """
-        mock_ticket_post = {"id": 1, "name": "test", "emailaddress": "test@test.com"}  # /PS-IGNORE
+        mock_ticket_post = {
+            "id": 1,
+            "name": "test",
+            "emailaddress": "test@example.com",  # /PS-IGNORE
+        }
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
@@ -168,11 +175,13 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 201
         mock_post.side_effects = fake_responses
 
-        request_data = {"id": 1, "name": "x", "email": "test@test.com", "site_id": 1}  # /PS-IGNORE
+        request_data = {
+            "user": {"id": 1, "name": "x", "email": "test@example.com"}  # /PS-IGNORE
+        }  # /PS-IGNORE
         user = halo_manager.create_user(request_data)
         assert isinstance(user, dict)
         assert user["name"] == "test"
-        assert user["emailaddress"] == "test@test.com"  # /PS-IGNORE
+        assert user["emailaddress"] == "test@example.com"  # /PS-IGNORE
 
     @patch("requests.post")
     def test_update_ticket_failure(self, mock_post, access_token):
@@ -190,7 +199,13 @@ class TestUserViews:
         fake_responses[1].return_value.status_code = 400
         mock_post.side_effects = fake_responses
 
-        request_data = {"id": 1, "name": "test", "email": "test@x.com", "site_id": 1}  # /PS-IGNORE
+        request_data = {
+            "user": {
+                "id": 1,
+                "name": "test",
+                "email": "test@example.com",  # /PS-IGNORE
+            }  # /PS-IGNORE
+        }  # /PS-IGNORE
         with pytest.raises(HaloClientBadRequestException) as excinfo:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientBadRequestException"

@@ -26,7 +26,6 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
@@ -37,31 +36,32 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket_data = {
-            "tickettype_id": 31,
-            # "team": "Data Workspace",  # /PS-IGNORE
-            "category_4": "Data Workspace",  # /PS-IGNORE
-            # "ticket_tags": "once,upon,a time",  # /PS-IGNORE
-            "summary": "Trying to work out what's happening to ticket_tags",
-            "details": """Access request for
-
-Username:   {username}
-Journey:    {access_request.human_readable_journey}
-Dataset:    {catalogue_item}
-SSO Login:  {access_request.requester.email}
-People search: {people_url}
-
-
-Details for the request can be found at
-
-{access_request_url}
-
-""",  # /PS-IGNORE
-            "userid": 44,  # my external email-related ID
-        }
+        ticket_data = [
+            {
+                "site_id": 18,
+                "summary": f"""Halo via API at {datetime.utcnow().isoformat()}""",  # /PS-IGNORE
+                "details": "Blah",
+                "tags": [{"text": "bug"}],
+                "customfields": [
+                    {"name": "CFBrowser", "value": "Safari 16.3, Macos 10.15.7"},  # /PS-IGNORE
+                    {"name": "CFService", "value": "datahub"},
+                    {
+                        "name": "CFESSBusinessType",
+                        "value": [
+                            {
+                                "id": "38",
+                            }
+                        ],
+                    },
+                ],
+                "users_name": "Some Body",
+                "reportedby": "somebody@example.com",  # /PS-IGNORE
+                "dont_do_rules": False,
+            }
+        ]
 
         response = halo_client.post(
-            "Tickets", payload=[ticket_data]
+            "Tickets", payload=ticket_data
         )  # expects an array even for one ticket
 
         if options["output"]:
@@ -74,5 +74,6 @@ Details for the request can be found at
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
                 json.dump(response, output_file, indent=4)
+                print(f"Output written to {output_path}")
         else:
             json.dump(response, self.stdout, indent=4)

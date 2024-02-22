@@ -6,9 +6,12 @@ import sys
 
 import requests
 import sentry_sdk
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
+from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
+from django.urls import ResolverMatch, resolve
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from sentry_sdk import set_level
@@ -21,8 +24,9 @@ from help_desk_api.urls import urlpatterns as api_url_patterns
 from help_desk_api.utils import get_zenpy_request_vars
 
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
 
-set_level("warning")
+set_level("info")
 
 
 def get_view_class(path):
@@ -37,8 +41,10 @@ def get_view_class(path):
         return False
 
 
-def method_supported(path, method):
+def method_supported(path, method: str):
+    logger.info(f"method_supported called with: {path}, {method}")
     view_class = get_view_class(path)
+    logger.info(f"method_supported: view_class {view_class}")
 
     for class_name, obj in inspect.getmembers(sys.modules["help_desk_api.views"]):
         try:
@@ -108,13 +114,14 @@ class ZendeskAPIProxyMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request):  # noqa: C901
         try:
-            request_log = request.body.decode("utf-8")
-        except Exception:
-            request_log = request.body
+            request_body = request.body.decode("utf-8")
+        except Exception as exp:
+            sentry_sdk.capture_exception(exp)
+            request_body = request.body
 
-        logger.warning(f"Help Desk Service request received, body: {request_log}")
+        logger.warning(f"Help Desk Service request received, body: {request_body}")
 
         try:
             # Get out of proxy logic if there's an issue with the token
@@ -125,10 +132,9 @@ class ZendeskAPIProxyMiddleware:
 
         help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
-        logger.warning(f"HelpDeskCreds: {help_desk_creds.pk}")
-        logger.warning(f"zendesk_email: {help_desk_creds.zendesk_email}")
+        logger.info(f"HelpDeskCreds: {help_desk_creds.pk}")
+        logger.info(f"zendesk_email: {help_desk_creds.zendesk_email}")
 
-        logger.warning(f"password: {token} known_token: {help_desk_creds.zendesk_token}")
         if not check_password(token, help_desk_creds.zendesk_token):
             return HttpResponseServerError()
 
@@ -142,12 +148,18 @@ class ZendeskAPIProxyMiddleware:
         logger.warning(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
 
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
-            logger.warning("Making Zendesk request")
+            logger.info("Making Zendesk request")
             zendesk_response = self.make_zendesk_request(
                 help_desk_creds, request, token, supported_endpoint
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
+            logger.info("Making Halo request")  # /PS-IGNORE
+            # Need to pass Zendesk ticket ID, if any
+            zendesk_response_json = self.get_json_response(zendesk_response, {})
+            zendesk_ticket = zendesk_response_json.get("ticket", {})
+            zendesk_ticket_id = zendesk_ticket.get("id", None)
+            setattr(request, "zendesk_ticket_id", zendesk_ticket_id)
             try:
                 django_response = self.make_halo_request(
                     help_desk_creds, request, supported_endpoint
@@ -155,13 +167,105 @@ class ZendeskAPIProxyMiddleware:
             except ZendeskFieldsNotSupportedException as exp:
                 sentry_sdk.capture_exception(exp)
                 django_response = HttpResponseBadRequest(f"Incorrect payload: {exp}", status=400)
+        # If this is /api/v2/users/create_or_update,
+        # we need to save the Zendesk request data under the user ID
+        # as there's no other way to map the latter to the former
+        # on a subsequent create_ticket request
+        resolver: ResolverMatch = resolve(request.path)
+        if resolver.url_name == "create_user":
+            self.cache_request_data(
+                request,
+                help_desk_creds,
+                zendesk_response,
+                django_response,
+                {"cache_name": settings.USER_DATA_CACHE, "datum_key": "user"},
+            )
+        logger.warning(
+            f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
+        )
+        logger.warning(
+            f"Halo response: {django_response.content.decode('utf-8') if django_response else None}"
+        )
         return zendesk_response or django_response
+
+    def cache_request_data(
+        self, request, help_desk_creds, zendesk_response, halo_response, cache_config
+    ):
+        """
+        Cache request data for create_or_update user.
+        This is necessary as D-F-API gets the user in one request,
+        then creates the ticket for that user in a separate request
+        which only contains the user ID.
+        The z-to-h serializer thus needs a way to associate a Zendesk user ID
+        with a Halo user.
+        As Halo allows us to just specify the email and name in the ticket creation request,
+        being able to map the created Zendesk ID to that data will do.
+        In the case of Halo-only running, the Halo user ID will serve the same purpose,
+        i.e. the serializer won't know or care that it's using a Halo ID;
+        it just wants the data associated with the ID that got sent back to the requester
+        and which the requester then sent back in the create_ticket request.
+        """
+        halo_response_json, zendesk_response_json = self.get_json_responses(
+            halo_response, zendesk_response
+        )
+        logger.info(
+            f"Cacheing {cache_config['datum_key']} with services: {help_desk_creds.help_desk}"
+        )
+        logger.info(f"Cacheing response: {zendesk_response_json}")
+        cache_key = self.get_cache_key_for_credentials(
+            zendesk_response_json, halo_response_json, help_desk_creds, cache_config["datum_key"]
+        )
+        if cache_key is None:
+            # This should never happen if we got here, so just bail for now
+            sentry_sdk.capture_message(f"Failed to get {cache_config['datum_key']} for cacheing")
+            return
+        request_data = json.loads(request.body.decode("utf-8"))
+        cache = caches[cache_config["cache_name"]]
+        if cache is not None:
+            logger.info(
+                f"Cacheing {cache_config['datum_key']} with key: {cache_key} data: {request_data}"
+            )
+            cache.set(cache_key, request_data)
+
+    def get_cache_key_for_credentials(
+        self, zendesk_response_json, halo_response_json, help_desk_creds, datum_key="user"
+    ):
+        cache_key = None
+        if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
+            # Use the Zendesk user ID as the cache key
+            # because that is what we'll get in the create_ticket request
+            cache_key = self.get_cache_key(zendesk_response_json, datum_key)
+            logger.info(f"Zendesk {datum_key} cache key: {cache_key}")
+        elif HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
+            # Use the Halo user ID as the cache key
+            # as if there's no Zendesk request, that's what will end up coming back
+            # in the subsequent create_ticket request
+            cache_key = self.get_cache_key(halo_response_json, datum_key)
+            logger.info(f"Halo {datum_key} cache key: {cache_key}")
+        return cache_key
+
+    def get_cache_key(self, response_json, datum_key="user"):
+        datum = response_json.get(datum_key, {})
+        cache_key = datum.get("id", None)
+        return cache_key
+
+    def get_json_responses(self, halo_response, zendesk_response):
+        return self.get_json_response(halo_response), self.get_json_response(zendesk_response)
+
+    def get_json_response(self, response, default=None):
+        return json.loads(response.content.decode("utf-8")) if response else default
 
     def make_halo_request(self, help_desk_creds, request, supported_endpoint):
         django_response = None
         if supported_endpoint:
             setattr(request, "help_desk_creds", help_desk_creds)
             django_response = self.get_response(request)
+            logger.info(
+                f"""
+            halo response status: {django_response.status_code}
+             with body: {django_response.content}
+            """
+            )
         return django_response
 
     def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
@@ -175,9 +279,9 @@ class ZendeskAPIProxyMiddleware:
             token,
             request.GET.urlencode(),
         )
-        logger.warning(
+        logger.info(
             f"""
-        proxy_zendesk response: {proxy_response.status_code}
+        proxy_zendesk response status: {proxy_response.status_code}
          with body: {proxy_response.content}
         """
         )

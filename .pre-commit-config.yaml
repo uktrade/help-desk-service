@@ -1,3 +1,5 @@
+default_language_version:
+    python: python3.11
 repos:
 -   repo: https://github.com/uktrade/pii-secret-check-hooks
     rev: 0.0.0.35

@@ -1,5 +1,12 @@
+import json
+from http import HTTPStatus
 from unittest import mock
+from unittest.mock import MagicMock
 
+import pytest
+from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory
 from django.urls import reverse
 from zendesk_api_proxy.middleware import ZendeskAPIProxyMiddleware
@@ -203,3 +210,139 @@ class TestHaloOnly:
         middleware(request)
 
         get_response.assert_not_called()
+
+
+@mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+class TestUserRequestCache:
+    def test_zendesk_data_cached(
+        self,
+        make_zendesk_request: mock.MagicMock,
+        zendesk_authorization_header: str,
+        rf: RequestFactory,
+        zendesk_required_settings,
+        zendesk_creds_only: HelpDeskCreds,
+        zendesk_user_create_or_update_request_body,
+        zendesk_user_create_or_update_response_body,
+    ):
+        user_create_or_update_response = HttpResponse(
+            json.dumps(zendesk_user_create_or_update_response_body, cls=DjangoJSONEncoder),
+            headers={
+                "Content-Type": "application/json",
+            },
+            status=HTTPStatus.OK,
+        )
+        make_zendesk_request.return_value = user_create_or_update_response
+        get_response = mock.MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(get_response)
+        request = rf.post(
+            reverse("api:create_user"),
+            data=zendesk_user_create_or_update_request_body,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=zendesk_authorization_header,
+        )
+
+        with mock.patch("zendesk_api_proxy.middleware.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            expected_cache_key = zendesk_user_create_or_update_response_body["user"]["id"]
+            expected_cache_value = zendesk_user_create_or_update_request_body
+
+            middleware(request)
+
+            mock_caches.__getitem__.assert_called_once_with(settings.USER_DATA_CACHE)
+            mock_cache.set.assert_called_once_with(expected_cache_key, expected_cache_value)
+
+
+class TestHttpMethodsSupported:
+    """
+    The discovery that Data Workspace uses the Zenpy `ticket.updata()` method
+    which in turn uses the HTTP PUT method
+    has revealed that we don't have any basic testing of
+    how the middleware handles HTTP methods.
+    """
+
+    @pytest.mark.parametrize(
+        ["url", "http_method"],
+        [
+            (reverse("api:tickets"), "get"),
+            (reverse("api:tickets"), "post"),
+            (reverse("api:me"), "get"),
+            (reverse("api:user", kwargs={"id": 123}), "get"),
+            (reverse("api:user", kwargs={"id": 123}), "post"),
+            (reverse("api:create_user"), "post"),
+            (reverse("api:ticket", kwargs={"id": 123}), "get"),
+            (reverse("api:ticket", kwargs={"id": 123}), "put"),
+            (reverse("api:ticket", kwargs={"id": 123}), "post"),
+            (reverse("api:comments", kwargs={"id": 123}), "get"),
+        ],
+    )
+    def test_middleware_supports_method_on_halo_view(
+        self,
+        url,
+        http_method,
+        zendesk_authorization_header: str,
+        halo_creds_only: HelpDeskCreds,
+        rf: RequestFactory,
+    ):
+        request_factory_method = getattr(rf, http_method)
+        request = request_factory_method(
+            url,
+            data={},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=zendesk_authorization_header,
+        )
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        with mock.patch(
+            "zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.cache_request_data"
+        ):
+            middleware(request)
+
+        mock_get_response.assert_called_once_with(request)
+
+
+class TestZendeskResponseIDsPersisted:
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
+    def test_zendesk_ticket_response_id_passed_to_halo_request(
+        self,
+        mock_make_halo_request: MagicMock,
+        mock_make_zendesk_request: MagicMock,
+        zendesk_create_ticket_request,
+        zendesk_create_ticket_response: HttpResponse,
+        zendesk_and_halo_creds,
+    ):
+        mock_make_zendesk_request.return_value = zendesk_create_ticket_response
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        middleware(zendesk_create_ticket_request)
+
+        mock_make_halo_request.assert_called_once_with(
+            zendesk_and_halo_creds, zendesk_create_ticket_request, True
+        )
+
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
+    def test_create_ticket_request_has_zendesk_id(
+        self,
+        mock_make_halo_request: MagicMock,
+        mock_make_zendesk_request: MagicMock,
+        zendesk_create_ticket_request: HttpRequest,
+        zendesk_create_ticket_response: HttpResponse,
+        zendesk_and_halo_creds,
+    ):
+        raw_zendesk_response_data = zendesk_create_ticket_response.content.decode("utf-8")
+        zendesk_response_data = json.loads(raw_zendesk_response_data)
+        expected_zendesk_ticket_id = zendesk_response_data["ticket"]["id"]
+
+        mock_make_zendesk_request.return_value = zendesk_create_ticket_response
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        middleware(zendesk_create_ticket_request)
+
+        actual_request_used = mock_make_halo_request.call_args.args[1]
+        assert hasattr(actual_request_used, "zendesk_ticket_id")
+        assert getattr(actual_request_used, "zendesk_ticket_id") == expected_zendesk_ticket_id

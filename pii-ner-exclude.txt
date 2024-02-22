@@ -319,3 +319,149 @@ email_router` - Code for Lambda
 Lambda
 lambda_layer_requirements.txt
 http://localhost:8000
+somebody@example.com
+SW1A 1AA
+Unsuccessful User
+Unsuccessful Ticket
+Cache
+" Directory Forms API
+Andorra
+Enquiry Subject
+286
+CFITAsemail
+CFIMCompanyname
+IM Company
+Primary Company Contact Name
+Primary Contact Job Title
+Primary Contact Email Address
+Primary Contact Phone Number
+IM Companies House
+CFMoresectordetail
+Details of Export
+Trade Shows - Details
+11450660141853
+CFOtherdetails
+Market Access Barriers
+CFIMSector
+IM Sector
+Key Buyer - Customers
+Type of Support
+IM Markets
+CFCollateral
+ITA
+Trade Shows
+IM Employee Number
+CFHEPException
+11472151388061
+IM
+11472161834909
+11927571756189
+CFPreviousexports
+CFWherenotexported
+DEP Triage Journey
+UK Telephone Number
+SQL
+CFTagsTestValue
+CTTagsTest
+design_engineering_management_and_build__ess_sector_l2
+new_materials_and_technologies__ess_sector_l2
+jewellery__ess_sector_l2
+environment__ess_sector_l1
+technical_and_vocational_education_and_training__ess_sector_l2
+mining_vehicles_transport_and_equipment__ess_sector_l2
+film_and_tv
+non_-_europe_ess_export
+CFESScountryexportingto
+romania__eu27
+africa__non-eu
+asia_pacific__non-eu
+china_and_hong_kong__non-eu
+eastern_europe_and_central_asia__non-eu
+middle_east__afghanistan_and_pakistan__non-eu
+north_america__non-eu
+south_asia__non-eu
+guinea__ess_export
+argentina__ess_export
+honduras__ess_export
+mexico__ess_export
+the_bahamas__ess_export
+middle_east__afghanistan_and_pakistan__ess_export
+qatar__ess_export
+northernireland__ess_export
+ESS Export Market
+30041969
+CFService
+content_delivery
+data_hub_omis
+CFForecastBusinessStartDate
+CFimpact
+CFBrowser
+CFDirectorate
+360000180457
+360000180477
+CFReason
+360000188178
+CFESector
+market_guinea_bissau
+market_guyana
+market_kenya
+market_nigeria
+market_sri_lanka
+market_united_arab_emirates
+market_united_states
+euexit_wto
+eu_exit_enquiry_form__uk
+DIT
+360000214018
+africa
+north_america
+4_may
+18_may
+CFCOVIDPolicy
+other_business_support
+department_environment_food_and_rural_affairs_ph__ess_outcome
+department_for_education_ph__ess_outcome
+ESS Enquiry
+CFESSenquirysummary
+common_transit_convention__ess_need_l2
+nz_fta__ess_need_l1
+ukrpayments_to_a_russian_national_ess_need_l2
+ukrtrading_with_russia/russian_nationals_ess_need_l2
+ESS Companies House
+CFESSEnquiryIntentDIT
+ESS Enquiry Intent
+10_49__ess_num_of_employees_1
+europe_eu27
+japan__import
+kenya__import
+malawi__import
+maldives__import
+montenegro__import
+nepal__import
+new_zealand__import
+north_korea__import
+zimbabwe__import
+CFESSEnquirypolicyarea
+360023876777
+CFESSMultis
+malta__ess_import
+armenia__ess_import
+kenya__ess_import
+qatar__ess_import
+CFESSPostcode
+CFReference
+Helpline Case
+Problem
+Origin
+7080973348381
+ESS Marketing Consent
+Change Request Type
+8759223441949
+Change Request Status
+Change Request_Risk and Impact Analysis
+44394845
+DI
+Access Request for Data
+- Test Visualisation
+Private Note
+f"Zendesk

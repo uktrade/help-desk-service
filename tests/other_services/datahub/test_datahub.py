@@ -1,3 +1,5 @@
+import markdown
+
 from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
 from help_desk_api.utils.zendesk_to_halo_service_mappings import service_names_to_ids
 
@@ -13,7 +15,8 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
         assert halo_equivalent["summary"] == expected_summary
 
     def test_comment_is_details(self, datahub_frontend_support_ticket):
-        expected_details = datahub_frontend_support_ticket["ticket"]["comment"]["body"]
+        raw_details = datahub_frontend_support_ticket["ticket"]["comment"]["body"]
+        expected_details = markdown.markdown(raw_details)
         serializer = ZendeskToHaloCreateTicketSerializer(datahub_frontend_support_ticket["ticket"])
 
         halo_equivalent = serializer.data
