@@ -15,9 +15,6 @@ class Command(BaseCommand):
     groups_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/groups.json"
     services_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/services_field_options.json"
 
-    def __init__(self, stdout=None, stderr=None, **kwargs):
-        super().__init__(stdout, stderr, **kwargs)
-
     def add_arguments(self, parser):
         parser.add_argument(
             "-c",
