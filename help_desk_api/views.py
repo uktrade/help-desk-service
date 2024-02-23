@@ -191,10 +191,14 @@ class SingleTicketView(HaloBaseView):
             serializer = HaloToZendeskTicketCommentSerializer(halo_response)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            # Nothing gets here at present, but something might one day
+            # Data Workspace Tools Access Requests send an empty comment
             return Response(
-                f"Unexpected PUT to {request.path} without comment",
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "ticket": ticket_data,
+                    "audit": {},
+                },
+                status=status.HTTP_200_OK,
+                content_type="application/json",
             )
 
 

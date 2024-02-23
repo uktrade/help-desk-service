@@ -5,8 +5,9 @@ from unittest.mock import MagicMock
 
 from django.http import HttpRequest
 
+from help_desk_api.models import HelpDeskCreds
 from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
-from help_desk_api.views import TicketView
+from help_desk_api.views import SingleTicketView, TicketView
 
 
 class TestDataWorkspaceTicketSerialisation:
@@ -60,3 +61,22 @@ class TestDataWorkspaceUsingHaloApi:
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
 
         mock_halo_post.assert_called_once_with("Actions", payload=[expected_payload])
+
+    @mock.patch("halo.halo_manager.HaloAPIClient.post")
+    @mock.patch("halo.halo_manager.HaloAPIClient._HaloAPIClient__authenticate")
+    def test_empty_comment_for_tools_access_fakes_response(
+        self,
+        _mock_halo_authenticate: MagicMock,
+        mock_halo_post: MagicMock,
+        halo_creds_only: HelpDeskCreds,
+        empty_comment_for_dw_tools_access_request: HttpRequest,
+    ):
+        view = SingleTicketView.as_view()
+        setattr(empty_comment_for_dw_tools_access_request, "help_desk_creds", halo_creds_only)
+
+        response = view(empty_comment_for_dw_tools_access_request, **{"id": 321})
+
+        mock_halo_post.assert_not_called()
+        response_json = response.data
+        assert "ticket" in response_json
+        assert "audit" in response_json
