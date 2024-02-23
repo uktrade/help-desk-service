@@ -21,7 +21,18 @@ class ZendeskTicketNoValidUserException(Exception):
 
 class HaloTicketIDFromZendeskField(serializers.IntegerField):
     def get_attribute(self, instance):
-        ticket_id = instance.get("id", None)
+        """
+        When we get here, we either have a Zendesk or a Halo ticket ID.
+        If it's a Zendesk ID, we need to map it somehow.
+        For now, we rely on the cache.
+        """
+        original_ticket_id = instance.get("id", None)
+        cache = caches[settings.TICKET_DATA_CACHE]
+        ticket_id = cache.get(original_ticket_id)
+        if ticket_id is None:
+            # Oh no! Now what will become of us?
+            # Something will have to be done, but for now…
+            ticket_id = original_ticket_id
         return ticket_id
 
 
@@ -60,11 +71,8 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     hiddenfromuser = HaloHiddenFromUserFromZendeskField()
     outcome = HaloOutcomeFromZendeskField(default="Private Note")
 
-    def validate(self, data):
-        # validate
-        return data
-
     def to_representation(self, data):
+        # This override is just here as a place to add a breakpoint
         return super().to_representation(data)
 
 

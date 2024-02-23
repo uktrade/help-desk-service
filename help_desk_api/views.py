@@ -136,6 +136,68 @@ class CommentView(HaloBaseView):
         return Response(serializer.data)
 
 
+class SingleTicketView(HaloBaseView):
+    """
+    Handle requests for a single ticket.
+    Possible methods: GET, PUT
+    """
+
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+
+    def get(self, request, *args, **kwargs):
+        """
+        GET ticket/tickets from Halo
+        """
+        # 1. View receives Zendesk compatible request variables
+        # 2. View calls manager func with Zendesk class params
+        ticket_id = self.kwargs.get("id", None)
+        try:
+            if ticket_id:
+                halo_response = self.halo_manager.get_ticket(ticket_id=self.kwargs.get("id"))
+                # 4. View uses serializer class to transform Halo format to Zendesk
+                serializer = HaloToZendeskTicketContainerSerializer(halo_response)
+                # 5. Serialized data (in Zendesk format) sent to caller
+                return Response(serializer.data)
+            else:
+                raise HaloClientNotFoundException(f"Ticket with id {ticket_id} could not be found")
+        except HaloClientNotFoundException:
+            return Response(
+                f"Ticket with id {ticket_id} could not be found",
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    def put(self, request, *args, **kwargs):
+        """
+        Data Workspace uses `update` to add a private note to
+        a dataset access request ticket after creation.
+        Zenpy uses PUT for `update`.
+        """
+        ticket_id = kwargs.get("id", None)
+        if ticket_id is None:
+            # Shouldn't get here as URL routing ought to have provided it.
+            # But just in case…
+            return Response(
+                "Ticket ID is required for HTTP PUT request",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ticket_data = request.data.get("ticket", {})
+        comment_data = ticket_data.get("comment", {})
+        comment_body = comment_data.get("body", None)
+        if comment_body is not None:
+            # Halo adds comments differently to Zendesk
+            halo_response = self.halo_manager.add_comment(request.data)
+            serializer = HaloToZendeskTicketCommentSerializer(halo_response)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            # Nothing gets here at present, but something might one day
+            return Response(
+                f"Unexpected PUT to {request.path} without comment",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
 class TicketView(HaloBaseView, CustomPagination):
     """
     View for interacting with tickets

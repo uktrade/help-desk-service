@@ -180,6 +180,14 @@ class ZendeskAPIProxyMiddleware:
                 django_response,
                 {"cache_name": settings.USER_DATA_CACHE, "datum_key": "user"},
             )
+        elif resolver.url_name in ("tickets", "ticket") and request.method.upper() != "GET":
+            self.cache_request_data(
+                request,
+                help_desk_creds,
+                zendesk_response,
+                django_response,
+                {"cache_name": settings.TICKET_DATA_CACHE, "datum_key": "ticket"},
+            )
         logger.warning(
             f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
         )
@@ -192,12 +200,13 @@ class ZendeskAPIProxyMiddleware:
         self, request, help_desk_creds, zendesk_response, halo_response, cache_config
     ):
         """
-        Cache request data for create_or_update user.
+        Cache request data for create_or_update user and create_ticket.
         This is necessary as D-F-API gets the user in one request,
         then creates the ticket for that user in a separate request
         which only contains the user ID.
-        The z-to-h serializer thus needs a way to associate a Zendesk user ID
-        with a Halo user.
+        Meanwhile, Data Workspace creates the ticket then adds a comment to it.
+        The z-to-h serializer thus needs a way to associate a Zendesk ID
+        with a Halo record.
         As Halo allows us to just specify the email and name in the ticket creation request,
         being able to map the created Zendesk ID to that data will do.
         In the case of Halo-only running, the Halo user ID will serve the same purpose,
@@ -219,13 +228,24 @@ class ZendeskAPIProxyMiddleware:
             # This should never happen if we got here, so just bail for now
             sentry_sdk.capture_message(f"Failed to get {cache_config['datum_key']} for cacheing")
             return
-        request_data = json.loads(request.body.decode("utf-8"))
-        cache = caches[cache_config["cache_name"]]
+        cache_name = cache_config["cache_name"]
+        cache = caches[cache_name]
         if cache is not None:
-            logger.info(
-                f"Cacheing {cache_config['datum_key']} with key: {cache_key} data: {request_data}"
-            )
-            cache.set(cache_key, request_data)
+            # This conditional is a bit of a code smell :-/
+            if cache_name == settings.USER_DATA_CACHE:
+                request_data = json.loads(request.body.decode("utf-8"))
+                logger.info(
+                    f"Cacheing {cache_config['datum_key']} "
+                    f"with key: {cache_key} data: {request_data}"
+                )
+                cache.set(cache_key, request_data)
+            elif halo_response_json and "ticket" in halo_response_json:
+                halo_ticket_id = halo_response_json["ticket"]["id"]
+                logger.info(
+                    f"Cacheing {cache_config['datum_key']} "
+                    f"with key: {cache_key} data: {halo_ticket_id}"
+                )
+                cache.set(cache_key, halo_ticket_id)
 
     def get_cache_key_for_credentials(
         self, zendesk_response_json, halo_response_json, help_desk_creds, datum_key="user"
