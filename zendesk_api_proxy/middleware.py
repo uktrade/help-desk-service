@@ -180,7 +180,7 @@ class ZendeskAPIProxyMiddleware:
                 django_response,
                 {"cache_name": settings.USER_DATA_CACHE, "datum_key": "user"},
             )
-        elif resolver.url_name in ("tickets", "ticket") and request.method.upper() != "GET":
+        elif resolver.url_name in ("tickets",) and request.method.upper() != "GET":
             self.cache_request_data(
                 request,
                 help_desk_creds,
