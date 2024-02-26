@@ -40,7 +40,8 @@ class HaloNoteFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", {})
         body = comment_data.get("body", None)
-        return body
+        body_html = markdown.markdown(body)
+        return body_html
 
 
 class HaloHiddenFromUserFromZendeskField(serializers.BooleanField):
@@ -67,7 +68,7 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     """
 
     ticket_id = HaloTicketIDFromZendeskField()
-    note = HaloNoteFromZendeskField()
+    note_html = HaloNoteFromZendeskField()
     hiddenfromuser = HaloHiddenFromUserFromZendeskField()
     outcome = HaloOutcomeFromZendeskField(default="Private Note")
 

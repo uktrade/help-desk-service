@@ -421,13 +421,13 @@ class TestZendeskToHaloSerialiserWithUserCache:
 
 class TestZendeskToHaloTicketCommentSerialization:
     def test_serialized_representation_has_note(self, private_ticket_comment):
-        expected_note = private_ticket_comment["ticket"]["comment"]["body"]
+        expected_note = markdown.markdown(private_ticket_comment["ticket"]["comment"]["body"])
         serializer = ZendeskToHaloCreateCommentSerializer()
 
         halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
 
-        assert "note" in halo_equivalent
-        assert halo_equivalent["note"] == expected_note
+        assert "note_html" in halo_equivalent
+        assert halo_equivalent["note_html"] == expected_note
 
     def test_serialized_representation_has_hiddenfromuser(self, private_ticket_comment):
         is_public = private_ticket_comment["ticket"]["comment"]["public"]

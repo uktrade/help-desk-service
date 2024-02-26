@@ -3,6 +3,7 @@ from collections import OrderedDict
 from unittest import mock
 from unittest.mock import MagicMock
 
+import markdown
 from django.http import HttpRequest
 
 from help_desk_api.models import HelpDeskCreds
@@ -51,7 +52,7 @@ class TestDataWorkspaceUsingHaloApi:
         request_data = json.loads(request_content)
         expected_payload = OrderedDict()
         expected_payload["ticket_id"] = request_data["ticket"]["id"]
-        expected_payload["note"] = request_data["ticket"]["comment"]["body"]
+        expected_payload["note_html"] = markdown.markdown(request_data["ticket"]["comment"]["body"])
         expected_payload["hiddenfromuser"] = not request_data["ticket"]["comment"]["public"]
         expected_payload["outcome"] = (
             "Public Note" if request_data["ticket"]["comment"]["public"] else "Private Note"
