@@ -136,6 +136,7 @@ class ZendeskAPIProxyMiddleware:
         logger.info(f"zendesk_email: {help_desk_creds.zendesk_email}")
 
         if not check_password(token, help_desk_creds.zendesk_token):
+            sentry_sdk.capture_message(f"Token not valid for {help_desk_creds.zendesk_email}")
             return HttpResponseServerError()
 
         logger.warning("check_password passed")
