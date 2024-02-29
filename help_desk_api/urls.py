@@ -1,6 +1,13 @@
 from django.urls import include, path
 
-from help_desk_api.views import CommentView, MeView, TicketView, UploadsView, UserView
+from help_desk_api.views import (
+    CommentView,
+    MeView,
+    SingleTicketView,
+    TicketView,
+    UploadsView,
+    UserView,
+)
 
 app_name = "help_desk_api"
 
@@ -21,7 +28,7 @@ urlpatterns = [
         include(
             [
                 path("v2/tickets.json", TicketView.as_view(), name="tickets"),
-                path("v2/tickets/<int:id>.json", TicketView.as_view(), name="ticket"),
+                path("v2/tickets/<int:id>.json", SingleTicketView.as_view(), name="ticket"),
                 path("v2/tickets/<int:id>/comments.json", CommentView.as_view(), name="comments"),
                 path("v2/users/<int:id>.json", UserView.as_view(), name="user"),
                 path("v2/users/create_or_update.json", UserView.as_view(), name="create_user"),

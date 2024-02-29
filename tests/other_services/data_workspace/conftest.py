@@ -1,4 +1,5 @@
 import pytest
+from django.test import RequestFactory
 from django.urls import reverse
 
 
@@ -85,3 +86,22 @@ def visualisation_access_request_initial():
             },
         }
     }
+
+
+@pytest.fixture()
+def empty_comment_for_dw_tools_access_request_body():
+    return {"ticket": {"id": 35098, "comment": {"id": None, "public": False}}}
+
+
+@pytest.fixture()
+def empty_comment_for_dw_tools_access_request(
+    zendesk_authorization_header, empty_comment_for_dw_tools_access_request_body, rf: RequestFactory
+):
+    url = reverse("api:tickets")
+    request = rf.put(
+        url,
+        data=empty_comment_for_dw_tools_access_request_body,
+        content_type="application/json",
+        headers={"Authorization": zendesk_authorization_header},
+    )
+    return request

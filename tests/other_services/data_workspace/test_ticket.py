@@ -1,14 +1,14 @@
 import json
 from collections import OrderedDict
-from http import HTTPStatus
 from unittest import mock
 from unittest.mock import MagicMock
 
+import markdown
 from django.http import HttpRequest
-from rest_framework.response import Response
 
+from help_desk_api.models import HelpDeskCreds
 from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
-from help_desk_api.views import TicketView
+from help_desk_api.views import SingleTicketView, TicketView
 
 
 class TestDataWorkspaceTicketSerialisation:
@@ -31,7 +31,7 @@ class TestDataWorkspaceUsingHaloApi:
         ticket_request_kwargs: dict,
     ):
         view = TicketView.as_view()
-        mock_halo_add_comment.return_value = Response("", status=HTTPStatus.OK)
+        mock_halo_add_comment.return_value = {"ticket_id": 1234}
 
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
 
@@ -46,13 +46,13 @@ class TestDataWorkspaceUsingHaloApi:
         halo_put_ticket_comment_request: HttpRequest,
         ticket_request_kwargs: dict,
     ):
-        mock_halo_post.return_value = Response("", status=HTTPStatus.OK)
+        mock_halo_post.return_value = {"ticket_id": 1234}
 
         request_content = halo_put_ticket_comment_request.body.decode("utf-8")
         request_data = json.loads(request_content)
         expected_payload = OrderedDict()
         expected_payload["ticket_id"] = request_data["ticket"]["id"]
-        expected_payload["note"] = request_data["ticket"]["comment"]["body"]
+        expected_payload["note_html"] = markdown.markdown(request_data["ticket"]["comment"]["body"])
         expected_payload["hiddenfromuser"] = not request_data["ticket"]["comment"]["public"]
         expected_payload["outcome"] = (
             "Public Note" if request_data["ticket"]["comment"]["public"] else "Private Note"
@@ -61,4 +61,23 @@ class TestDataWorkspaceUsingHaloApi:
 
         view(halo_put_ticket_comment_request, **ticket_request_kwargs)
 
-        mock_halo_post.assert_called_once_with("Actions", payload=expected_payload)
+        mock_halo_post.assert_called_once_with("Actions", payload=[expected_payload])
+
+    @mock.patch("halo.halo_manager.HaloAPIClient.post")
+    @mock.patch("halo.halo_manager.HaloAPIClient._HaloAPIClient__authenticate")
+    def test_empty_comment_for_tools_access_fakes_response(
+        self,
+        _mock_halo_authenticate: MagicMock,
+        mock_halo_post: MagicMock,
+        halo_creds_only: HelpDeskCreds,
+        empty_comment_for_dw_tools_access_request: HttpRequest,
+    ):
+        view = SingleTicketView.as_view()
+        setattr(empty_comment_for_dw_tools_access_request, "help_desk_creds", halo_creds_only)
+
+        response = view(empty_comment_for_dw_tools_access_request, **{"id": 321})
+
+        mock_halo_post.assert_not_called()
+        response_json = response.data
+        assert "ticket" in response_json
+        assert "audit" in response_json

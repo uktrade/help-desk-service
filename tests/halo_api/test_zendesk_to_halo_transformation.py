@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 import markdown
 import pytest
 from django.conf import settings
+from django.core.cache import caches
 
 from help_desk_api.serializers import (
     HaloCustomFieldFromZendeskField,
@@ -12,6 +13,7 @@ from help_desk_api.serializers import (
     HaloDetailsFromZendeskField,
     HaloSummaryFromZendeskField,
     HaloTagsFromZendeskField,
+    HaloTicketIDFromZendeskField,
     ZendeskFieldsNotSupportedException,
     ZendeskTicketNoValidUserException,
     ZendeskToHaloCreateCommentSerializer,
@@ -418,23 +420,14 @@ class TestZendeskToHaloSerialiserWithUserCache:
 
 
 class TestZendeskToHaloTicketCommentSerialization:
-    def test_serialized_representation_has_ticket_id(self, private_ticket_comment):
-        expected_ticket_id = private_ticket_comment["ticket"]["id"]
-        serializer = ZendeskToHaloCreateCommentSerializer()
-
-        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
-
-        assert "ticket_id" in halo_equivalent
-        assert halo_equivalent["ticket_id"] == expected_ticket_id
-
     def test_serialized_representation_has_note(self, private_ticket_comment):
-        expected_note = private_ticket_comment["ticket"]["comment"]["body"]
+        expected_note = markdown.markdown(private_ticket_comment["ticket"]["comment"]["body"])
         serializer = ZendeskToHaloCreateCommentSerializer()
 
         halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
 
-        assert "note" in halo_equivalent
-        assert halo_equivalent["note"] == expected_note
+        assert "note_html" in halo_equivalent
+        assert halo_equivalent["note_html"] == expected_note
 
     def test_serialized_representation_has_hiddenfromuser(self, private_ticket_comment):
         is_public = private_ticket_comment["ticket"]["comment"]["public"]
@@ -463,3 +456,49 @@ class TestZendeskToHaloTicketCommentSerialization:
 
         assert "outcome" in halo_equivalent
         assert halo_equivalent["outcome"] == expected_outcome
+
+    def test_ticket_id_field_gets_halo_id_from_cache(
+        self, zendesk_add_private_comment_request_body
+    ):
+        """
+        Comment creation gets a Zendesk ticket ID
+        which we need to map to the correct Halo ticket ID
+        from the ticket ID cache
+        """
+        zendesk_ticket_id = zendesk_add_private_comment_request_body["ticket"]["id"]
+        expected_ticket_id = zendesk_ticket_id + 1
+        cache = caches[settings.TICKET_DATA_CACHE]
+        cache.set(zendesk_ticket_id, expected_ticket_id)
+        field = HaloTicketIDFromZendeskField()
+
+        halo_ticket_id = field.get_attribute(zendesk_add_private_comment_request_body["ticket"])
+
+        assert halo_ticket_id == expected_ticket_id
+
+    def test_serialized_representation_has_halo_ticket_id_from_cache(
+        self, zendesk_add_private_comment_request_body
+    ):
+        zendesk_ticket_id = zendesk_add_private_comment_request_body["ticket"]["id"]
+        expected_ticket_id = zendesk_ticket_id + 1
+        cache = caches[settings.TICKET_DATA_CACHE]
+        cache.set(zendesk_ticket_id, expected_ticket_id)
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(
+            zendesk_add_private_comment_request_body["ticket"]
+        )
+
+        assert "ticket_id" in halo_equivalent
+        assert halo_equivalent["ticket_id"] == expected_ticket_id
+
+
+class TestZendeskIdsSentToHalo:
+    def test_ticket_id_in_halo_userdef5_field(self, new_zendesk_ticket_with_comment):
+        expected_ticket_id = 12345
+        new_zendesk_ticket_with_comment["zendesk_ticket_id"] = expected_ticket_id
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
+
+        assert "userdef5" in halo_equivalent
+        assert halo_equivalent["userdef5"] == str(expected_ticket_id)

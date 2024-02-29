@@ -14,7 +14,7 @@ class TestSupportedOperations:
         "path, view_class",
         [
             ("/api/v2/users/123.json", "help_desk_api.views.UserView"),
-            ("/api/v2/tickets/123.json", "help_desk_api.views.TicketView"),
+            ("/api/v2/tickets/123.json", "help_desk_api.views.SingleTicketView"),
             ("/api/v2/tickets/123/comments.json", "help_desk_api.views.CommentView"),
             ("/api/v2/users/me.json", "help_desk_api.views.MeView"),
         ],
@@ -62,7 +62,7 @@ class TestSupportedOperations:
         assert not method_supported(path, method)
 
     """
-    The following @mock.patch lines ensure the external services don't actually
+    The following patch lines ensure the external services don't actually
     have requests made to them by the test.
     """
 
@@ -81,12 +81,11 @@ class TestSupportedOperations:
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_required_settings,
         zendesk_creds_only,
         zendesk_authorization_header,
         url,
     ):
-
         response = Response()
         response._content = b"{}"
         response.status_code = HTTPStatus.OK
@@ -115,12 +114,11 @@ class TestSupportedOperations:
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_required_settings,
         zendesk_creds_only,
         zendesk_authorization_header,
         url,
     ):
-
         response = Response()
         response._content = b"{}"
         response.status_code = HTTPStatus.OK
@@ -149,12 +147,11 @@ class TestSupportedOperations:
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_required_settings,
         zendesk_creds_only,
         zendesk_authorization_header,
         url,
     ):
-
         response = Response()
         response._content = b"{}"
         response.status_code = HTTPStatus.OK
@@ -195,7 +192,7 @@ class TestSupportedOperations:
         self,
         proxy_zendesk: mock.MagicMock,
         client: Client,
-        zendesk_required_settings,  # fixture: see /tests/conftest.py
+        zendesk_required_settings,
         zendesk_creds_only,
         zendesk_authorization_header,
         url,

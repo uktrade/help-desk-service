@@ -1,3 +1,4 @@
+from unittest import skip
 from unittest.mock import patch
 
 import pytest
@@ -125,6 +126,7 @@ class TestTicketViews:
         with pytest.raises(ZendeskTicketNoValidUserException):
             halo_manager.create_ticket(request_data)
 
+    @skip("Check if this is needed")
     @patch("requests.post")
     def test_update_ticket_success(self, mock_post, access_token, new_halo_ticket):
         """

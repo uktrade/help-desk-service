@@ -19,20 +19,32 @@ class ZendeskTicketNoValidUserException(Exception):
     pass
 
 
-class HaloTicketIDFromZendesk(serializers.IntegerField):
+class HaloTicketIDFromZendeskField(serializers.IntegerField):
     def get_attribute(self, instance):
-        ticket_id = instance.get("id", None)
+        """
+        When we get here, we either have a Zendesk or a Halo ticket ID.
+        If it's a Zendesk ID, we need to map it somehow.
+        For now, we rely on the cache.
+        """
+        original_ticket_id = instance.get("id", None)
+        cache = caches[settings.TICKET_DATA_CACHE]
+        ticket_id = cache.get(original_ticket_id)
+        if ticket_id is None:
+            # Oh no! Now what will become of us?
+            # Something will have to be done, but for now…
+            ticket_id = original_ticket_id
         return ticket_id
 
 
-class HaloNoteFromZendesk(serializers.CharField):
+class HaloNoteFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", {})
         body = comment_data.get("body", None)
-        return body
+        body_html = markdown.markdown(body)
+        return body_html
 
 
-class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
+class HaloHiddenFromUserFromZendeskField(serializers.BooleanField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", None)
         if comment_data is None:
@@ -41,7 +53,7 @@ class HaloHiddenFromUserFromZendesk(serializers.BooleanField):
         return not is_public
 
 
-class HaloOutcomeFromZendesk(serializers.CharField):
+class HaloOutcomeFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", None)
         if comment_data is None:
@@ -55,12 +67,13 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     Zendesk Comments Serializer
     """
 
-    ticket_id = HaloTicketIDFromZendesk()
-    note = HaloNoteFromZendesk()
-    hiddenfromuser = HaloHiddenFromUserFromZendesk()
-    outcome = HaloOutcomeFromZendesk(default="Private Note")
+    ticket_id = HaloTicketIDFromZendeskField()
+    note_html = HaloNoteFromZendeskField()
+    hiddenfromuser = HaloHiddenFromUserFromZendeskField()
+    outcome = HaloOutcomeFromZendeskField(default="Private Note")
 
     def to_representation(self, data):
+        # This override is just here as a place to add a breakpoint
         return super().to_representation(data)
 
 
@@ -102,6 +115,21 @@ class HaloToZendeskCommentSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         return super().to_representation(instance)
+
+
+class HaloToZendeskTicketCommentSerializer(serializers.Serializer):
+    """
+    As Zendesk adds a comment
+    by updating the ticket object, we need to be able to respond
+    by sending back a `ticket_audit` along with the `ticket`.
+
+    We know Data Workspace does this, but it does nothing
+    with the result. So we can send a very minimal response for now.
+    """
+
+    def to_representation(self, instance):
+        representation = {"audit": {}, "ticket": {"id": instance["ticket_id"]}}
+        return representation
 
 
 class HaloToZendeskCustomFieldsSerializer(serializers.Serializer):
@@ -420,6 +448,12 @@ class HaloNullIdField(serializers.IntegerField):
         return id_value
 
 
+class HaloCopyOfZendeskTicketIdField(serializers.CharField):
+    def get_attribute(self, instance):
+        zendesk_ticket_id = instance.get("zendesk_ticket_id", None)
+        return str(zendesk_ticket_id)
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -438,10 +472,10 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     summary = HaloSummaryFromZendeskField()
     details = HaloDetailsFromZendeskField()
     tags = HaloTagsFromZendeskField(required=False)
-    # comment = ZendeskCommentToHaloField()
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
+    userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
@@ -470,6 +504,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket.pop("requester", None)  # TODO: add proper support
         ticket.pop("requester_id", None)  # TODO: add proper support
         ticket.pop("submitter_id", None)  # TODO: add proper support
+        ticket.pop("zendesk_ticket_id", None)  # TODO: add proper support
         ticket.pop("id", None)
         halo_payload.update(**ticket)
 
@@ -704,7 +739,7 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     group_id = ZendeskGroupFromHaloField()
     # external_id = serializers.CharField() # TODO: fix when getting zenslackchat working
     tags = ZendeskTagsFromHaloField()
-    custom_fields = ZendeskCustomFieldsFromHaloField()
+    # custom_fields = ZendeskCustomFieldsFromHaloField()  /PS-IGNORE
     recipient = ZendeskRecipientFromHaloField()
     created_at = ZendeskCreatedAtFromHaloField()
     updated_at = ZendeskUpdatedAtFromHaloField()
@@ -729,7 +764,13 @@ class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
         super().__init__(data, **kwargs)
 
     def to_representation(self, instance):
-        return super().to_representation(instance)
+        # Zendesk returns an "audit" object alongside the ticket
+        # and Zenpy handles things differently if it's present.
+        # But our stuff doesn't seem to use it at all,
+        # so let's see if just an empty one is enough.
+        representation = super().to_representation(instance)
+        representation["audit"] = {}
+        return representation
 
 
 class HaloToZendeskTicketsContainerSerializer(serializers.Serializer):
