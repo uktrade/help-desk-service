@@ -32,6 +32,7 @@ class HaloAPIClient:
         # print("client_secret=", client_secret)
 
         if cache.get("access_token", None):
+            logger.error("Using cached Halo token")
             return cache.get("access_token")
 
         data = {
@@ -40,6 +41,7 @@ class HaloAPIClient:
             "client_secret": client_secret,
             "scope": "all",
         }
+        logger.error("Requesting Halo token")
         response = requests.post(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/auth/token",
             data=data,
@@ -48,8 +50,11 @@ class HaloAPIClient:
                 "Accept": "application/json",
             },
         )
+        logger.error("Completed request for Halo token")
         if response.status_code != 200:
-            logger.error(f"{response.status_code} response from auth endpoint")
+            message = f"{response.status_code} response from auth endpoint"
+            sentry_sdk.capture_message(message)
+            logger.error(message)
             logger.error(response)
             raise HaloClientNotFoundException()
 
@@ -60,7 +65,7 @@ class HaloAPIClient:
     def get(self, path, params=None):
         if params is None:
             params = {}
-        logger.error(f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
+        logger.error(f"Halo GET: https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
         response = requests.get(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             params=params,
@@ -68,6 +73,7 @@ class HaloAPIClient:
                 "Authorization": f"Bearer {self.access_token}",
             },
         )
+        logger.error("Completed Halo GET")
         # TODO error handling
         if response.status_code != 200:
             logger.error(f"{response.status_code} response from get endpoint")
@@ -75,8 +81,8 @@ class HaloAPIClient:
         return response.json()
 
     def post(self, path, payload):
-        logger.warning(f"POST to URL https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
         logger.warning(json.dumps(payload))
+        logger.warning(f"Halo POST: https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
         response = requests.post(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             data=json.dumps(payload),
@@ -85,6 +91,7 @@ class HaloAPIClient:
                 "Content-Type": "application/json",
             },
         )
+        logger.error("Completed Halo POST")
         logger.error(response)
         if response.status_code != HTTPStatus.CREATED:
             logger.error(f"{response.status_code} response from POST endpoint")
