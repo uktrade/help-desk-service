@@ -9,6 +9,7 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
+from help_desk_api.utils.utils import break_on_single_line_endings
 
 
 class ZendeskFieldsNotSupportedException(Exception):
@@ -359,7 +360,8 @@ class HaloDetailsFromZendeskField(serializers.CharField):
             body = comment.pop("body", "")
         if "description" in instance:
             body = instance.pop("description", "")
-        return markdown.markdown(body)
+
+        return markdown.markdown(break_on_single_line_endings(body))
 
 
 class HaloTagsFromZendeskField(serializers.ListField):

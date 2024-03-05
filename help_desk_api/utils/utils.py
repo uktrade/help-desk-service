@@ -1,6 +1,16 @@
 import base64
+import re
 
 from rest_framework import authentication, exceptions
+
+
+def break_on_single_line_endings(text: str):
+    """
+    Markdown ignores a single \n
+    whereas Zendesk add <br> for them in descriptions
+    """
+    modified_text = re.sub(r"(?<!\n)\n(?!\n)", "<br>\n", text)
+    return modified_text
 
 
 def get_zenpy_request_vars(request):
