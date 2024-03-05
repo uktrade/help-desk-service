@@ -4,7 +4,25 @@ import re
 from rest_framework import authentication, exceptions
 
 
-def break_on_single_line_endings(text: str):
+def apply_zendesk_automatic_html(text: str):
+    """
+    Zendesk automatically converts certain things to HTML.
+    Halo doesn't.
+    So we apply what we can to try to make things a bit consistent.
+    """
+    text_with_links = create_links(text)
+    text_with_html_breaks = create_html_breaks(text_with_links)
+    return text_with_html_breaks
+
+
+def create_links(text):
+    """
+    TODO: convert URLs and email addresses
+    """
+    return text
+
+
+def create_html_breaks(text):
     """
     Markdown ignores a single \n
     whereas Zendesk add <br> for them in descriptions
