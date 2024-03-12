@@ -1,6 +1,34 @@
 import base64
+import re
 
 from rest_framework import authentication, exceptions
+
+
+def apply_zendesk_automatic_html(text: str):
+    """
+    Zendesk automatically converts certain things to HTML.
+    Halo doesn't.
+    So we apply what we can to try to make things a bit consistent.
+    """
+    text_with_links = create_links(text)
+    text_with_html_breaks = create_html_breaks(text_with_links)
+    return text_with_html_breaks
+
+
+def create_links(text):
+    """
+    TODO: convert URLs and email addresses
+    """
+    return text
+
+
+def create_html_breaks(text):
+    """
+    Markdown ignores a single \n
+    whereas Zendesk add <br> for them in descriptions
+    """
+    modified_text = re.sub(r"(?<!\n)\n(?!\n)", "<br>\n", text)
+    return modified_text
 
 
 def get_zenpy_request_vars(request):
