@@ -28,7 +28,9 @@ def lambda_handler(event: SQSEvent, context):
     record: SQSRecord
     for record in event.records:
         s3_event: S3Event = record.decoded_nested_s3_event
-        s3_events.append(s3_event)
+        s3_events.append(
+            {"bucket_name": s3_event.bucket_name, "object_key": unquote_plus(s3_event.object_key)}
+        )
         bucket_name = s3_event.bucket_name
         object_key = unquote_plus(s3_event.object_key)
         email_content = get_email_from_bucket(bucket_name, object_key)
