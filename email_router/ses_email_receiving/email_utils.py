@@ -155,9 +155,3 @@ class APIClient:
             data=json.dumps(ticket_data),
         )
         return zendesk_response
-
-
-class SNSRecord:
-    def __init__(self, sns_record):
-        super().__init__()
-        self.sns_record = sns_record
