@@ -6,8 +6,7 @@ from urllib.parse import unquote_plus
 import boto3
 from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
-
-from .email_utils import APIClient, ParsedEmail
+from email_utils import APIClient, ParsedEmail
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
