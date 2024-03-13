@@ -144,7 +144,7 @@ class APIClient:
             }
         }
         if uploads:
-            ticket_data["ticket"]["comment"]["attachments"] = uploads
+            ticket_data["ticket"]["comment"]["uploads"] = uploads
         zendesk_response = requests.post(
             ticket_creation_url,
             headers={
