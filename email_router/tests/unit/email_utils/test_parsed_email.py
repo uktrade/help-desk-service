@@ -62,3 +62,26 @@ class TestParsedEmail:
         expected_datetime = mocked_datetime.isoformat()
 
         assert attachment["filename"] == f"attachment-{expected_datetime}.dat"
+
+
+class TestNameAndEmail:
+    def test_get_sender_name_without_email_address(self, parsed_outlook_email):
+        expected_sender_name = "Some BODY (DBT)"
+
+        sender_name = parsed_outlook_email.sender_name
+
+        assert sender_name == expected_sender_name
+
+    def test_get_sender_email_address_without_name(self, parsed_outlook_email):
+        expected_sender_email = "some.body@example.com"  # /PS-IGNORE
+
+        sender_email = parsed_outlook_email.sender_email
+
+        assert sender_email == expected_sender_email
+
+    def test_sender_name_fallback_to_email_username_part(self, simple_mailbox_from_email):
+        expected_sender_name = ParsedEmail.FALLBACK_DISPLAY_NAME
+
+        sender_name = simple_mailbox_from_email.sender_name
+
+        assert sender_name == expected_sender_name

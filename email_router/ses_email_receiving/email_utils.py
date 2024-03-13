@@ -5,12 +5,18 @@ from datetime import datetime
 from email import policy
 from email.message import EmailMessage
 from email.parser import BytesParser
+from email.utils import parseaddr
 
 import requests
 from markdown import markdown
 
 
 class ParsedEmail:
+    # RFC 5322 section 3.4 specifies that the display name  /PS-IGNORE
+    # in a `mailbox` is optional, but Zendesk
+    # needs one for the `requester` value.
+    FALLBACK_DISPLAY_NAME = "unknown"
+
     message: EmailMessage
 
     def __init__(self, raw_bytes):
@@ -19,8 +25,24 @@ class ParsedEmail:
 
     @property
     def sender(self):
-        # Get the From header and decode it if necessary
+        # Get the From header
         return self.message.get("From")
+
+    @property
+    def mailbox_parts(self):
+        return parseaddr(self.sender)
+
+    @property
+    def sender_name(self):
+        # Get the user's name from the From header
+        if self.mailbox_parts[0]:
+            return self.mailbox_parts[0]
+        return self.FALLBACK_DISPLAY_NAME
+
+    @property
+    def sender_email(self):
+        # Get the user's email address from the From header
+        return self.mailbox_parts[1]
 
     @property
     def subject(self):
@@ -133,3 +155,9 @@ class APIClient:
             data=json.dumps(ticket_data),
         )
         return zendesk_response
+
+
+class SNSRecord:
+    def __init__(self, sns_record):
+        super().__init__()
+        self.sns_record = sns_record
