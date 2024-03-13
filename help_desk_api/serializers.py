@@ -358,9 +358,13 @@ class HaloDetailsFromZendeskField(serializers.CharField):
         if "comment" in instance:
             comment = instance.pop("comment", {})
             body = comment.pop("body", "")
+            # Prefer HTML (sent by email router)
+            html_body = comment.pop("html_body", "")
+            if html_body:
+                body = html_body
         if "description" in instance:
             body = instance.pop("description", "")
-
+        # HTML is safe here as it's valid input to a Markdown parser  /PS-IGNORE
         return markdown.markdown(apply_zendesk_automatic_html(body))
 
 
