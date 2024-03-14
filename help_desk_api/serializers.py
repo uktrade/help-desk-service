@@ -460,6 +460,25 @@ class HaloCopyOfZendeskTicketIdField(serializers.CharField):
         return str(zendesk_ticket_id)
 
 
+class HaloAttachmentFromZendeskUploadField(serializers.IntegerField):
+    def to_representation(self, instance):
+        # If this was a Zendesk and Halo request,
+        # the Halo token should have been cached.
+        # If the value isn't in the cache,
+        # assume it was Halo-only and use the token as-is.
+        cache = caches[settings.UPLOAD_DATA_CACHE]
+        halo_token = cache.get(instance, instance)
+        return {"id": halo_token}
+        # return super().get_attribute(instance)
+
+
+class HaloAttachmentsFromZendeskUploadsSerializer(serializers.ListField):
+    child = HaloAttachmentFromZendeskUploadField()
+
+    def to_representation(self, data):
+        return super().to_representation(data)
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -482,6 +501,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
     userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
+    attachments = HaloAttachmentsFromZendeskUploadsSerializer(source="uploads", required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
