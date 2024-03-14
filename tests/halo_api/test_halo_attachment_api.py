@@ -1,11 +1,9 @@
 import base64
 import json
-from unittest import mock, skip
+from unittest import mock
 from unittest.mock import MagicMock
 
 from halo.halo_manager import HaloManager
-
-from help_desk_api.serializers import ZendeskToHaloCreateTicketSerializer
 
 
 class TestHaloAttachmentAPI:
@@ -32,14 +30,3 @@ class TestHaloAttachmentAPI:
         assert actual_payload["filename"] == attachment_filename
         assert "data_base64" in actual_payload
         assert actual_payload["data_base64"] == expected_payload
-
-    @skip("Need to check attachments API some more")
-    def test_zendesk_comment_attachments_converted_to_halo_ticket_attachments(
-        self, new_zendesk_ticket_with_comment_attachments
-    ):
-        serializer = ZendeskToHaloCreateTicketSerializer(
-            new_zendesk_ticket_with_comment_attachments["ticket"]
-        )
-        halo_request_data = serializer.data
-
-        assert "attachments" in halo_request_data
