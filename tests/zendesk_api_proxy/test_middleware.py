@@ -339,6 +339,38 @@ class TestZendeskRequestCache:
         cached_halo_id = cache.get(expected_cache_key)
         assert cached_halo_id == expected_cache_value
 
+    @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
+    def test_halo_upload_id_cached_under_zendesk_id(
+        self,
+        make_halo_request: mock.MagicMock,
+        make_zendesk_request: mock.MagicMock,
+        zendesk_authorization_header: str,
+        zendesk_required_settings,
+        zendesk_and_halo_creds: HelpDeskCreds,
+        zendesk_upload_request: HttpRequest,
+        zendesk_upload_response: HttpResponse,
+        halo_upload_response: HttpResponse,
+    ):
+        make_zendesk_request.return_value = zendesk_upload_response
+        make_halo_request.return_value = halo_upload_response
+        get_response = mock.MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(get_response)
+
+        with mock.patch("zendesk_api_proxy.middleware.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            zendesk_response_content = zendesk_upload_response.content.decode("utf-8")
+            zendesk_response_json = json.loads(zendesk_response_content)
+            expected_cache_key = zendesk_response_json["upload"]["token"]
+            halo_response_content = halo_upload_response.content.decode("utf-8")
+            halo_response_json = json.loads(halo_response_content)
+            expected_cache_value = halo_response_json["upload"]["token"]
+
+            middleware(zendesk_upload_request)
+
+            mock_caches.__getitem__.assert_called_once_with(settings.UPLOAD_DATA_CACHE)
+            mock_cache.set.assert_called_once_with(expected_cache_key, expected_cache_value)
+
 
 class TestHttpMethodsSupported:
     """

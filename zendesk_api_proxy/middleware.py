@@ -185,7 +185,7 @@ class ZendeskAPIProxyMiddleware:
                 help_desk_creds,
                 zendesk_response,
                 django_response,
-                {"cache_name": settings.USER_DATA_CACHE, "datum_key": "user"},
+                {"cache_name": settings.USER_DATA_CACHE, "datum_keys": ("user", "id")},
             )
         elif resolver.url_name in ("tickets",) and request.method.upper() != "GET":
             self.cache_request_data(
@@ -193,7 +193,15 @@ class ZendeskAPIProxyMiddleware:
                 help_desk_creds,
                 zendesk_response,
                 django_response,
-                {"cache_name": settings.TICKET_DATA_CACHE, "datum_key": "ticket"},
+                {"cache_name": settings.TICKET_DATA_CACHE, "datum_keys": ("ticket", "id")},
+            )
+        elif resolver.url_name == "uploads":
+            self.cache_request_data(
+                request,
+                help_desk_creds,
+                zendesk_response,
+                django_response,
+                {"cache_name": settings.UPLOAD_DATA_CACHE, "datum_keys": ("upload", "token")},
             )
         logger.warning(
             f"Zendesk response: {zendesk_response.content.decode('utf-8') if zendesk_response else None}"  # noqa:E501
@@ -225,15 +233,15 @@ class ZendeskAPIProxyMiddleware:
             halo_response, zendesk_response
         )
         logger.info(
-            f"Cacheing {cache_config['datum_key']} with services: {help_desk_creds.help_desk}"
+            f"Cacheing {cache_config['datum_keys']} with services: {help_desk_creds.help_desk}"
         )
         logger.info(f"Cacheing response: {zendesk_response_json}")
         cache_key = self.get_cache_key_for_credentials(
-            zendesk_response_json, halo_response_json, help_desk_creds, cache_config["datum_key"]
+            zendesk_response_json, halo_response_json, help_desk_creds, cache_config["datum_keys"]
         )
         if cache_key is None:
             # This should never happen if we got here, so just bail for now
-            sentry_sdk.capture_message(f"Failed to get {cache_config['datum_key']} for cacheing")
+            sentry_sdk.capture_message(f"Failed to get {cache_config['datum_keys']} for cacheing")
             return
         cache_name = cache_config["cache_name"]
         cache = caches[cache_name]
@@ -242,38 +250,45 @@ class ZendeskAPIProxyMiddleware:
             if cache_name == settings.USER_DATA_CACHE:
                 request_data = json.loads(request.body.decode("utf-8"))
                 logger.info(
-                    f"Cacheing {cache_config['datum_key']} "
+                    f"Cacheing {cache_config['datum_keys']} "
                     f"with key: {cache_key} data: {request_data}"
                 )
                 cache.set(cache_key, request_data)
             elif halo_response_json and "ticket" in halo_response_json:
                 halo_ticket_id = halo_response_json["ticket"]["id"]
                 logger.info(
-                    f"Cacheing {cache_config['datum_key']} "
+                    f"Cacheing {cache_config['datum_keys']} "
                     f"with key: {cache_key} data: {halo_ticket_id}"
                 )
                 cache.set(cache_key, halo_ticket_id)
+            elif halo_response_json and "upload" in halo_response_json:
+                halo_upload_token = halo_response_json["upload"]["token"]
+                logger.info(
+                    f"Cacheing {cache_config['datum_keys']} "
+                    f"with key: {cache_key} data: {halo_upload_token}"
+                )
+                cache.set(cache_key, halo_upload_token)
 
     def get_cache_key_for_credentials(
-        self, zendesk_response_json, halo_response_json, help_desk_creds, datum_key="user"
+        self, zendesk_response_json, halo_response_json, help_desk_creds, datum_keys=("user", "id")
     ):
         cache_key = None
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             # Use the Zendesk user ID as the cache key
             # because that is what we'll get in the create_ticket request
-            cache_key = self.get_cache_key(zendesk_response_json, datum_key)
-            logger.info(f"Zendesk {datum_key} cache key: {cache_key}")
+            cache_key = self.get_cache_key(zendesk_response_json, datum_keys)
+            logger.info(f"Zendesk {datum_keys} cache key: {cache_key}")
         elif HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
             # Use the Halo user ID as the cache key
             # as if there's no Zendesk request, that's what will end up coming back
             # in the subsequent create_ticket request
-            cache_key = self.get_cache_key(halo_response_json, datum_key)
-            logger.info(f"Halo {datum_key} cache key: {cache_key}")
+            cache_key = self.get_cache_key(halo_response_json, datum_keys)
+            logger.info(f"Halo {datum_keys} cache key: {cache_key}")
         return cache_key
 
-    def get_cache_key(self, response_json, datum_key="user"):
-        datum = response_json.get(datum_key, {})
-        cache_key = datum.get("id", None)
+    def get_cache_key(self, response_json, datum_keys=("user", "id")):
+        datum = response_json.get(datum_keys[0], {})
+        cache_key = datum.get(datum_keys[1], None)
         return cache_key
 
     def get_json_responses(self, halo_response, zendesk_response):

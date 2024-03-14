@@ -506,3 +506,49 @@ def zendesk_create_ticket_response(zendesk_create_ticket_response_body):
         },
         status=HTTPStatus.CREATED,
     )
+
+
+@pytest.fixture(scope="session")
+def zendesk_upload_request_body():
+    return b"\x48\x65\x6c\x6c\x6f"
+
+
+@pytest.fixture()
+def zendesk_upload_request(
+    rf, zendesk_and_halo_creds, zendesk_authorization_header, zendesk_upload_request_body
+):
+    url = reverse("api:uploads")
+    request = rf.post(
+        url,
+        data=zendesk_upload_request_body,
+        content_type="application/octet-stream",
+        HTTP_AUTHORIZATION=zendesk_authorization_header,
+    )
+    setattr(request, "help_desk_creds", zendesk_and_halo_creds)
+    return request
+
+
+@pytest.fixture(scope="session")
+def zendesk_upload_response_data():
+    return {"upload": {"token": "1234"}}
+
+
+@pytest.fixture(scope="session")
+def zendesk_upload_response(zendesk_upload_response_data):
+    response_json = json.dumps(zendesk_upload_response_data)
+    response = HttpResponse(bytes(response_json, "utf-8"))
+    response.status_code = HTTPStatus.CREATED
+    return response
+
+
+@pytest.fixture(scope="session")
+def halo_upload_response_data():
+    return {"upload": {"token": 4321}}
+
+
+@pytest.fixture(scope="session")
+def halo_upload_response(halo_upload_response_data):
+    response_json = json.dumps(halo_upload_response_data)
+    response = HttpResponse(bytes(response_json, "utf-8"))
+    response.status_code = HTTPStatus.CREATED
+    return response
