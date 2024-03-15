@@ -18,6 +18,17 @@ def lambda_handler(event: SQSEvent, context):
     iso_utcnow = get_iso_utcnow()
     parameters = get_parameters()
 
+    s3 = boto3.client("s3")
+
+    bucket_name = ""
+    if not bucket_name:
+        bucket_name = "dbt-help-desk-incoming-mail-dev"
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=f"tempdebug/event-{iso_utcnow}",
+        Body=json.dumps(event.raw_event, indent=4),
+    )
+
     api_client = APIClient(
         zendesk_email=parameters["ZENDESK_EMAIL"],
         zendesk_token=parameters["ZENDESK_TOKEN"],
