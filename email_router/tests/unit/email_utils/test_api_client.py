@@ -22,7 +22,7 @@ class TestAPIClient:
                 "subject": parsed_email.subject,
                 "comment": {
                     "body": parsed_email.payload,
-                    "attachments": mocked_upload_tokens,
+                    "uploads": mocked_upload_tokens,
                 },
                 "recipient": "test@example.example",  # /PS-IGNORE
             }
