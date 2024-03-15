@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from json import JSONDecodeError
 from urllib.parse import unquote_plus
 
 import boto3
@@ -25,10 +26,16 @@ def lambda_handler(event: SQSEvent, context):
 
     emails = []
     s3_events = []
+    unexpected_events = []
     bucket_name = ""
     record: SQSRecord
     for record in event.records:
-        s3_event: S3Event = record.decoded_nested_s3_event
+        try:
+            s3_event: S3Event = record.decoded_nested_s3_event
+        except JSONDecodeError:
+            # This can happen with things like SQS test events sent at initialisation  /PS-IGNORE
+            unexpected_events.append({"problem": "JSONDecodeError", "record": record})  # /PS-IGNORE
+            continue
         s3_events.append(
             {"bucket_name": s3_event.bucket_name, "object_key": unquote_plus(s3_event.object_key)}
         )
@@ -39,6 +46,7 @@ def lambda_handler(event: SQSEvent, context):
         except ClientError:
             # This happens if access is denied, e.g. if the object has been deleted
             # If we ignore it, the queue message will then be discarded
+            unexpected_events.append({"problem": "ClientError", "record": record})  # /PS-IGNORE
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
         api_client.create_ticket_from_message(parsed_email)
@@ -59,6 +67,7 @@ def lambda_handler(event: SQSEvent, context):
         "parameters": parameters,
         "event": event.raw_event,
         "s3_events": s3_events,
+        "unexpected_events": unexpected_events,
     }
 
     s3 = boto3.client("s3")
