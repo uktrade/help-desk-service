@@ -6,6 +6,7 @@ from urllib.parse import unquote_plus
 import boto3
 from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
+from botocore.exceptions import ClientError
 from email_utils import APIClient, ParsedEmail
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
@@ -33,7 +34,12 @@ def lambda_handler(event: SQSEvent, context):
         )
         bucket_name = s3_event.bucket_name
         object_key = unquote_plus(s3_event.object_key)
-        email_content = get_email_from_bucket(bucket_name, object_key)
+        try:
+            email_content = get_email_from_bucket(bucket_name, object_key)
+        except ClientError:
+            # This happens if access is denied, e.g. if the object has been deleted
+            # If we ignore it, the queue message will then be discarded
+            continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
         api_client.create_ticket_from_message(parsed_email)
         emails.append(parsed_email.subject)
