@@ -75,6 +75,8 @@ def lambda_handler(event: SQSEvent, context):
     }
 
     s3 = boto3.client("s3")
+    if not bucket_name:
+        bucket_name = "dbt-help-desk-incoming-mail-dev"
     s3.put_object(
         Bucket=bucket_name,
         Key=output_filename,
