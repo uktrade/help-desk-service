@@ -551,15 +551,12 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         #     "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         # }
         recipient = zendesk_ticket_data.pop("recipient", None)
+        # Zendesk includes attachments in comments, Halo in the ticket
+        comment = data_copy.get("comment", {})
+        upload_tokens = comment.get("uploads", None)
+        if upload_tokens:
+            data_copy["uploads"] = upload_tokens
         serialized_halo_payload = super().to_representation(data_copy)
-        if "comment" in serialized_halo_payload:
-            comment = serialized_halo_payload.pop("comment")
-            if comment:
-                attachment_tokens = comment.get("attachments", [])
-                if attachment_tokens:
-                    serialized_halo_payload["attachments"] = [
-                        {"id": attachment_token} for attachment_token in attachment_tokens
-                    ]
         if recipient:
             if "customfields" not in serialized_halo_payload:
                 serialized_halo_payload["customfields"] = []

@@ -552,3 +552,10 @@ class TestUploadSerialization:
             halo_equivalent = serializer.to_representation(zendesk_upload_tokens)
 
             assert halo_equivalent == expected_halo_attachments
+
+    def test_ticket_serialiser_passes_uploads_from_comment(self, new_zendesk_ticket_with_uploads):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_uploads["ticket"])
+
+        assert "attachments" in halo_equivalent
