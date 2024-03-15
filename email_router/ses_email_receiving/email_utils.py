@@ -1,5 +1,4 @@
 import base64
-import json
 import mimetypes
 from datetime import datetime
 from email import policy
@@ -7,8 +6,9 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import parseaddr
 
-import requests
 from markdown import markdown
+from zenpy import Zenpy
+from zenpy.lib.api_objects import Comment, CustomField, Ticket, User
 
 
 class ParsedEmail:
@@ -100,6 +100,7 @@ class APIClient:
         creds = f"{zendesk_email}/token:{zendesk_token}"
         encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
         self.auth_header = f"Basic {encoded_creds.decode('ascii')}"
+        self.client = Zenpy(subdomain="", email=zendesk_email, token=zendesk_token)
 
     def create_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
@@ -107,51 +108,37 @@ class APIClient:
         return zendesk_response
 
     def upload_attachments(self, attachments):
-        upload_url = f"{self.api_url}uploads.json"  # /PS-IGNORE
         upload_tokens = []
         for attachment in attachments:
-            params = {"filename": attachment["filename"]}
-            disposition_header = (
-                f"{attachment['content_disposition']};filename={attachment['filename']}"
+            payload = attachment["payload"]
+            filename = attachment["filename"]
+            content_type = attachment["content_type"]
+            upload = self.client.attachments.upload(
+                payload, target_name=filename, content_type=content_type
             )
-            headers = {
-                "Content-Type": attachment["content_type"],
-                "Content-Disposition": disposition_header,
-                "Accept": "application/json",
-            }
-            upload_response = requests.post(
-                upload_url,
-                params=params,
-                headers=headers,
-                auth=self.auth,
-                data=attachment["payload"],
-            )
-            upload_response_json = upload_response.json()
-            upload_token = upload_response_json["upload"]["token"]
-            upload_tokens.append(upload_token)
-        return upload_tokens
+            upload_tokens.append(upload.token)
+            return upload_tokens
 
-    def create_ticket(self, message: ParsedEmail, uploads=None):
-        ticket_creation_url = f"{self.api_url}tickets.json"  # /PS-IGNORE
-        content_type = "application/json"
-        ticket_data = {
-            "ticket": {
-                "subject": message.subject,
-                "comment": {
-                    "body": message.payload,
-                },
-                "recipient": message.recipient,
-            }
-        }
-        if uploads:
-            ticket_data["ticket"]["comment"]["uploads"] = uploads
-        zendesk_response = requests.post(
-            ticket_creation_url,
-            headers={
-                "Content-Type": content_type,
-                "Accept": "application/json",
-            },
-            auth=self.auth,
-            data=json.dumps(ticket_data),
+    def create_ticket(self, message: ParsedEmail, upload_tokens=None):
+        timestamp = datetime.utcnow().isoformat()
+        subject = f"{message.subject} (Posted by AWS Lambda at {timestamp})"
+        description = message.payload
+        recipient = parseaddr(message.recipient)[1]
+
+        zenpy_user = User(
+            email=f"test-{datetime.utcnow().microsecond}-{message.sender_email}",
+            name=f"test-{datetime.utcnow().microsecond} {message.sender_name}",
         )
-        return zendesk_response
+        zenpy_ticket = Ticket(
+            subject=subject,
+            comment=Comment(
+                html_body=description,
+                uploads=upload_tokens,
+            ),
+            requester=zenpy_user,
+            custom_fields=[CustomField(id=31281329, value="datahub")],
+            recipient=recipient,
+        )
+
+        ticket_audit = self.client.tickets.create(zenpy_ticket)
+        return ticket_audit
