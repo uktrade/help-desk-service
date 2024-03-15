@@ -104,7 +104,7 @@ class APIClient:
 
     def create_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
-        zendesk_response = self.create_ticket(message, uploads=upload_tokens)
+        zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
         return zendesk_response
 
     def upload_attachments(self, attachments):
