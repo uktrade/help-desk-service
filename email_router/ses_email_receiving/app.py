@@ -19,15 +19,20 @@ def lambda_handler(event: SQSEvent, context):
     parameters = get_parameters()
 
     s3 = boto3.client("s3")
-
-    bucket_name = ""
-    if not bucket_name:
-        bucket_name = "dbt-help-desk-incoming-mail"
-    s3.put_object(
-        Bucket=bucket_name,
-        Key=f"tempdebug/event-{iso_utcnow}",
-        Body=json.dumps(event.raw_event, indent=4),
-    )
+    raw_records = event.raw_event.get("Records", [])
+    first_record = raw_records[0] if raw_records else {}
+    record_body = first_record.get("body", {})
+    record_type = record_body.get("Event", None)
+    if record_type == "s3:TestEvent":  # /PS-IGNORE
+        bucket_name = ""
+        if not bucket_name:
+            bucket_name = "dbt-help-desk-incoming-mail"
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=f"tempdebug/event-{iso_utcnow}",
+            Body=json.dumps(event.raw_event, indent=4),
+        )
+        return
 
     api_client = APIClient(
         zendesk_email=parameters["ZENDESK_EMAIL"],
