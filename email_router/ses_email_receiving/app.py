@@ -21,7 +21,7 @@ def lambda_handler(event: SQSEvent, context):
     s3 = boto3.client("s3")
     raw_records = event.raw_event.get("Records", [])
     first_record = raw_records[0] if raw_records else {}
-    record_body = first_record.get("body", {})
+    record_body = json.loads(first_record.get("body", {}))
     record_type = record_body.get("Event", None)
     if record_type == "s3:TestEvent":  # /PS-IGNORE
         bucket_name = ""
