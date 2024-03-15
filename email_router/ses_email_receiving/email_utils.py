@@ -120,14 +120,13 @@ class APIClient:
             return upload_tokens
 
     def create_ticket(self, message: ParsedEmail, upload_tokens=None):
-        timestamp = datetime.utcnow().isoformat()
-        subject = f"{message.subject} (Posted by AWS Lambda at {timestamp})"
+        subject = message.subject
         description = message.payload
         recipient = parseaddr(message.recipient)[1]
 
         zenpy_user = User(
-            email=f"test-{datetime.utcnow().microsecond}-{message.sender_email}",
-            name=f"test-{datetime.utcnow().microsecond} {message.sender_name}",
+            email=message.sender_email,
+            name=message.sender_name,
         )
         zenpy_ticket = Ticket(
             subject=subject,
