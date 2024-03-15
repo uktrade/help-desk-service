@@ -4,7 +4,7 @@ from email_router.ses_email_receiving.email_utils import ParsedEmail
 
 @pytest.fixture()
 def outlook_email_bytes():
-    with open("tests/unit/fixtures/emails/outlook-email.txt", "rb") as file:
+    with open("email_router/tests/unit/fixtures/emails/outlook-email.txt", "rb") as file:
         yield file
 
 
@@ -23,7 +23,9 @@ def simple_mailbox_from_email_bytes():
     so this fixture has that form of mailbox in the From: field
     so that we can test our fallback for that case.
     """
-    with open("tests/unit/fixtures/emails/simple-mailbox-from-field.txt", "rb") as file:
+    with open(
+        "email_router/tests/unit/fixtures/emails/simple-mailbox-from-field.txt", "rb"
+    ) as file:
         yield file
 
 
