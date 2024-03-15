@@ -34,7 +34,9 @@ def lambda_handler(event: SQSEvent, context):
             s3_event: S3Event = record.decoded_nested_s3_event
         except JSONDecodeError:
             # This can happen with things like SQS test events sent at initialisation  /PS-IGNORE
-            unexpected_events.append({"problem": "JSONDecodeError", "record": record})  # /PS-IGNORE
+            unexpected_events.append(
+                {"problem": "JSONDecodeError", "event": event.raw_event}  # /PS-IGNORE
+            )
             continue
         s3_events.append(
             {"bucket_name": s3_event.bucket_name, "object_key": unquote_plus(s3_event.object_key)}
@@ -46,7 +48,9 @@ def lambda_handler(event: SQSEvent, context):
         except ClientError:
             # This happens if access is denied, e.g. if the object has been deleted
             # If we ignore it, the queue message will then be discarded
-            unexpected_events.append({"problem": "ClientError", "record": record})  # /PS-IGNORE
+            unexpected_events.append(
+                {"problem": "ClientError", "event": event.raw_event}  # /PS-IGNORE
+            )
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
         api_client.create_ticket_from_message(parsed_email)
