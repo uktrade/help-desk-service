@@ -161,7 +161,7 @@ def new_zendesk_ticket_with_comment():
 
 
 @pytest.fixture(scope="session")
-def new_zendesk_ticket_with_comment_attachments():
+def new_zendesk_ticket_with_uploads():
     """
     This is an example of the ticket submission for a
     new dataset request
@@ -171,7 +171,7 @@ def new_zendesk_ticket_with_comment_attachments():
         "ticket": {
             "comment": {
                 "body": "Initial comment is the way descriptions ought to be added",
-                "attachments": [7, 14, 21],
+                "uploads": [7, 14, 21],
             },
             "subject": "Test for attachments",  # /PS-IGNORE
             "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
