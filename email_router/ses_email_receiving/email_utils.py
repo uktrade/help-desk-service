@@ -100,7 +100,7 @@ class APIClient:
         creds = f"{zendesk_email}/token:{zendesk_token}"
         encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
         self.auth_header = f"Basic {encoded_creds.decode('ascii')}"
-        self.client = Zenpy(subdomain="", email=zendesk_email, token=zendesk_token)
+        self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
     def create_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
