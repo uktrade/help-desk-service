@@ -1,4 +1,3 @@
-import base64
 import mimetypes
 from datetime import datetime
 from email import policy
@@ -8,7 +7,7 @@ from email.utils import parseaddr
 
 from markdown import markdown
 from zenpy import Zenpy
-from zenpy.lib.api_objects import Comment, CustomField, Ticket, User
+from zenpy.lib.api_objects import Comment, Ticket, User
 
 
 class ParsedEmail:
@@ -91,15 +90,9 @@ class ParsedEmail:
 
 
 class APIClient:
-    def __init__(
-        self, zendesk_email, zendesk_token, api_url="http://localhost:8000/api/v2/"  # /PS-IGNORE
-    ) -> None:
+    def __init__(self, zendesk_email, zendesk_token) -> None:
         super().__init__()
-        self.api_url = api_url
-        self.auth = (f"{zendesk_email}/token", zendesk_token)
-        creds = f"{zendesk_email}/token:{zendesk_token}"
-        encoded_creds = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
-        self.auth_header = f"Basic {encoded_creds.decode('ascii')}"
+        # Zenpy requires a subdomain, but this will be overridden by ZENPY_FORCE_NETLOC  /PS-IGNORE
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
     def create_ticket_from_message(self, message: ParsedEmail):
@@ -107,14 +100,20 @@ class APIClient:
         zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
         return zendesk_response
 
+    def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
+        upload = self.client.attachments.upload(
+            payload, target_name=target_name, content_type=content_type
+        )
+        return upload
+
     def upload_attachments(self, attachments):
         upload_tokens = []
         for attachment in attachments:
             payload = attachment["payload"]
             filename = attachment["filename"]
             content_type = attachment["content_type"]
-            upload = self.client.attachments.upload(
-                payload, target_name=filename, content_type=content_type
+            upload = self.upload_attachment(
+                payload=payload, target_name=filename, content_type=content_type
             )
             upload_tokens.append(upload.token)
         return upload_tokens
@@ -128,14 +127,14 @@ class APIClient:
             email=message.sender_email,
             name=message.sender_name,
         )
+        zenpy_comment = Comment(
+            html_body=description,
+            uploads=upload_tokens,
+        )
         zenpy_ticket = Ticket(
             subject=subject,
-            comment=Comment(
-                html_body=description,
-                uploads=upload_tokens,
-            ),
+            comment=zenpy_comment,
             requester=zenpy_user,
-            custom_fields=[CustomField(id=31281329, value="datahub")],
             recipient=recipient,
         )
 
