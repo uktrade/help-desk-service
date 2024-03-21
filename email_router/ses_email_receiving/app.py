@@ -37,7 +37,6 @@ def lambda_handler(event: SQSEvent, context):
     api_client = APIClient(
         zendesk_email=parameters["ZENDESK_EMAIL"],
         zendesk_token=parameters["ZENDESK_TOKEN"],
-        api_url=parameters["HELP_DESK_API_URL"],
     )
 
     emails = []
