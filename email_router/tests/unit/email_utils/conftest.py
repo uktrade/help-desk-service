@@ -32,3 +32,25 @@ def simple_mailbox_from_email_bytes():
 @pytest.fixture()
 def simple_mailbox_from_email(simple_mailbox_from_email_bytes):
     return ParsedEmail(raw_bytes=simple_mailbox_from_email_bytes)
+
+
+@pytest.fixture()
+def email_sans_attachments_bytes():
+    with open("email_router/tests/unit/fixtures/emails/email-sans-attachments.txt", "rb") as file:
+        yield file
+
+
+@pytest.fixture()
+def parsed_email_sans_attachments(email_sans_attachments_bytes):
+    return ParsedEmail(raw_bytes=email_sans_attachments_bytes)
+
+
+@pytest.fixture()
+def plain_text_email_bytes():
+    with open("email_router/tests/unit/fixtures/emails/plain-text-email.txt", "rb") as file:
+        yield file
+
+
+@pytest.fixture()
+def parsed_plain_text_email(plain_text_email_bytes):
+    return ParsedEmail(raw_bytes=plain_text_email_bytes)

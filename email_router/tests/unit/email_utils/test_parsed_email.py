@@ -25,6 +25,16 @@ class TestParsedEmail:
 
         assert body.get_content_type() == "text/html"
 
+    def test_plain_text_email_content_type(self, parsed_plain_text_email: ParsedEmail):
+        body: EmailMessage = parsed_plain_text_email.body
+
+        assert body.get_content_type() == "text/plain"
+
+    def test_plain_text_body_converted_to_html(self, parsed_plain_text_email: ParsedEmail):
+        payload = parsed_plain_text_email.payload
+
+        assert payload.startswith("<p>")
+
     def test_decoded_payload(self, parsed_email):
         payload = parsed_email.payload
 
