@@ -117,7 +117,7 @@ class APIClient:
                 payload, target_name=filename, content_type=content_type
             )
             upload_tokens.append(upload.token)
-            return upload_tokens
+        return upload_tokens
 
     def create_ticket(self, message: ParsedEmail, upload_tokens=None):
         subject = message.subject
