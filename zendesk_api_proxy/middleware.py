@@ -10,9 +10,9 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.urls import ResolverMatch, resolve
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
 from rest_framework.views import APIView
 from sentry_sdk import set_level
 
@@ -133,18 +133,22 @@ class ZendeskAPIProxyMiddleware:
             # Get out of proxy logic if there's an issue with the token
             # This raises NotAuthenticated if no Authorization header found  /PS-IGNORE
             token, email = get_zenpy_request_vars(request)
-        except APIException as exp:
+            try:
+                help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
+            except HelpDeskCreds.DoesNotExist:
+                raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
+            if not check_password(token, help_desk_creds.zendesk_token):
+                raise AuthenticationFailed(
+                    detail=f"Credentials not valid for {help_desk_creds.zendesk_email}"
+                )
+        except AuthenticationFailed as exp:
             sentry_sdk.capture_exception(exp)
+            raise
+        except NotAuthenticated:
             return self.get_response(request)
-
-        help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
 
         logger.info(f"HelpDeskCreds: {help_desk_creds.pk}")
         logger.info(f"zendesk_email: {help_desk_creds.zendesk_email}")
-
-        if not check_password(token, help_desk_creds.zendesk_token):
-            sentry_sdk.capture_message(f"Token not valid for {help_desk_creds.zendesk_email}")
-            return HttpResponseServerError()
 
         logger.warning("check_password passed")
 
