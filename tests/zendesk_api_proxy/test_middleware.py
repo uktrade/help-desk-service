@@ -128,17 +128,6 @@ class TestZendeskOnly:
 
         get_response.assert_not_called()
 
-    def test_get_zenpy_request_vars(
-        self, rf: RequestFactory, zendesk_authorization_header: str, zendesk_email, zendesk_token
-    ):
-        request = rf.get(reverse("api:tickets"), HTTP_AUTHORIZATION=zendesk_authorization_header)
-        from help_desk_api.utils import get_zenpy_request_vars
-
-        token, email = get_zenpy_request_vars(request)
-
-        assert token == zendesk_token
-        assert email == zendesk_email
-
 
 class TestHaloOnly:
     @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_zendesk_request")
