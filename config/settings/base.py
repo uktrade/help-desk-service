@@ -225,6 +225,8 @@ CLAM_AV_HOST = env("CLAM_AV_HOST", default="")
 # export SET_HSTS_HEADERS=''
 
 # Set security related headers
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # /PS-IGNORE
+
 SET_HSTS_HEADERS = env.bool("SET_HSTS_HEADERS", default=True)
 if SET_HSTS_HEADERS:
     SECURE_HSTS_SECONDS = 31536000
