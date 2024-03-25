@@ -131,6 +131,7 @@ class ZendeskAPIProxyMiddleware:
 
         try:
             # Get out of proxy logic if there's an issue with the token
+            # This raises NotAuthenticated if no Authorization header found  /PS-IGNORE
             token, email = get_zenpy_request_vars(request)
         except APIException as exp:
             sentry_sdk.capture_exception(exp)
