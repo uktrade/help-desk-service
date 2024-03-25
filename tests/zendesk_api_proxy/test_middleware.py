@@ -7,7 +7,7 @@ import pytest
 from django.conf import settings
 from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.test import Client, RequestFactory
 from django.urls import reverse
 from rest_framework.exceptions import AuthenticationFailed
@@ -539,3 +539,73 @@ class TestCredentials:
 
         with pytest.raises(AuthenticationFailed):
             middleware(request)
+
+    @mock.patch("help_desk_api.views.HaloManager")
+    @mock.patch("help_desk_api.views.HaloBaseView.initial")
+    def test_api_request_lacking_authorization_header_blocked_from_api_view(
+        self, mock_api_view_initial: MagicMock, mock_halo_manager: MagicMock, client: Client
+    ):
+        url = reverse("api:ticket", kwargs={"id": 123})
+
+        client.get(
+            url,
+            data={},
+            content_type="application/json",
+        )
+
+        mock_api_view_initial.assert_not_called()
+        mock_halo_manager.assert_not_called()
+
+    def test_api_request_lacking_authorization_header_returns_401_unauthorized(
+        self, client: Client
+    ):
+        url = reverse("api:ticket", kwargs={"id": 123})
+
+        response: HttpResponse = client.get(
+            url,
+            data={},
+            content_type="application/json",
+        )
+
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_api_request_lacking_authorization_header_returns_zendesk_error_content(
+        self, client: Client
+    ):
+        url = reverse("api:ticket", kwargs={"id": 123})
+
+        response: JsonResponse = client.get(
+            url,
+            data={},
+            content_type="application/json",
+        )
+
+        response_content = response.json()
+        assert "error" in response_content
+        assert response_content["error"] == "Couldn't authenticate you"
+
+    @mock.patch("help_desk_api.views.SingleTicketView.get")
+    @mock.patch("help_desk_api.views.HaloManager")
+    def test_api_request_with_authorization_header_reaches_api_view(
+        self,
+        mock_halo_manager: MagicMock,
+        mock_ticket_view_get: MagicMock,
+        client: Client,
+        halo_creds_only: HelpDeskCreds,
+        zendesk_authorization_header: str,
+        zendesk_create_ticket_response: HttpResponse,
+    ):
+        url = reverse("api:ticket", kwargs={"id": 123})
+        mock_halo_manager_instance = MagicMock()
+        mock_halo_manager.return_value = mock_halo_manager_instance
+        mock_ticket_view_get.return_value = zendesk_create_ticket_response
+
+        client.get(
+            url,
+            data={},
+            content_type="application/json",
+            headers={"Authorization": zendesk_authorization_header},
+        )
+
+        mock_halo_manager.assert_called_once()
+        mock_ticket_view_get.assert_called_once()
