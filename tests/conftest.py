@@ -53,6 +53,20 @@ def zendesk_authorization_header(zendesk_email, zendesk_token):
 
 
 @pytest.fixture()
+def unknown_email_zendesk_authorization_header(zendesk_email, zendesk_token):
+    creds = f"zzz{zendesk_email}/token:{zendesk_token}"
+    authorization = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
+    return f"Basic {authorization.decode('ascii')}"
+
+
+@pytest.fixture()
+def incorrect_token_zendesk_authorization_header(zendesk_email, zendesk_token):
+    creds = f"{zendesk_email}/token:zzz{zendesk_token}"  # /PS-IGNORE
+    authorization = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
+    return f"Basic {authorization.decode('ascii')}"
+
+
+@pytest.fixture()
 def zendesk_and_halo_creds(db, zendesk_email, zendesk_token) -> HelpDeskCreds:
     credentials = HelpDeskCreds.objects.create(
         zendesk_email=zendesk_email,

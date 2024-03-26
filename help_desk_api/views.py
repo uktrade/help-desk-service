@@ -1,4 +1,8 @@
+from http import HTTPStatus
+
 import sentry_sdk
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import JsonResponse
 from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
@@ -19,10 +23,34 @@ from help_desk_api.serializers import (
 )
 
 
-class HaloBaseView(APIView):
+class HaloBaseView(UserPassesTestMixin, APIView):
     """
     Base view for Halo interaction
     """
+
+    def test_func(self):
+        """
+        Our middleware passes through requests without an Authorization header
+        as otherwise the admin wouldn't work. But this means that
+        unauthenticated requests can also come to these views, which is a Bad Thing.
+        So we check that the request has made it through authentication,
+        indicated by the presence of the Authorization header
+        and of help_desk_creds derived therefrom in the request,
+        and knock them back otherwise.
+        """
+        return all(
+            ["Authorization" in self.request.headers, hasattr(self.request, "help_desk_creds")]
+        )
+
+    def handle_no_permission(self):
+        """
+        If `test_func` won't let us in, return 401 Unauthorized
+        """
+        response = JsonResponse(
+            data={"error": "Couldn't authenticate you"},
+            status=HTTPStatus.UNAUTHORIZED,
+        )
+        return response
 
     def initial(self, request, *args, **kwargs):
         self.halo_manager = HaloManager(
