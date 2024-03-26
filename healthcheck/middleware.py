@@ -12,4 +12,5 @@ class StatsMiddleware:
         response_time = time.time() - request.start_time
         response.context_data["response_time"] = response_time
         response["Cache-Control"] = "no-cache, no-store, must-revalidate"  # /PS-IGNORE
+        response["X-Robots-Tag"] = "noindex"
         return response
