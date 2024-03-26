@@ -30,8 +30,10 @@ jobs:
                   command: make flake8
             - run:
                   name: run tests
-                  command: make pytest
+                  command: make pytest-cov
             - codecov/upload
+            - store_test_results:
+                  path: ./test-reports/
             - run:
                   name: stop containers
                   command: make down
