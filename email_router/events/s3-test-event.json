@@ -1,0 +1,8 @@
+{
+  "Service": "Amazon S3",
+  "Event": "s3:TestEvent",
+  "Time": "2024-03-06T11:57:32.962Z",
+  "Bucket": "support-email-dbt-test-deployment",
+  "RequestId": "GXE7SN30A0XB7M1R",
+  "HostId": "MNl6xIQUVttRm7yK3EurToCiBjh8DDJIr8KtrHR5JcJ8QBgWxc/Gd3tu3hArVLp32Cz1BQWTeco="
+}

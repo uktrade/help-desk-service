@@ -26,5 +26,5 @@ sentry_sdk.init(
     os.environ.get("SENTRY_DSN"),
     environment=os.environ.get("SENTRY_ENVIRONMENT"),
     integrations=[DjangoIntegration()],
-    before_send=strip_handled_exceptions,
+    # before_send=strip_handled_exceptions,
 )

@@ -8,6 +8,8 @@ from django.conf import settings
 from django.core.cache import caches
 
 from help_desk_api.serializers import (
+    HaloAttachmentFromZendeskUploadField,
+    HaloAttachmentsFromZendeskUploadsSerializer,
     HaloCustomFieldFromZendeskField,
     HaloCustomFieldsSerializer,
     HaloDetailsFromZendeskField,
@@ -502,3 +504,58 @@ class TestZendeskIdsSentToHalo:
 
         assert "userdef5" in halo_equivalent
         assert halo_equivalent["userdef5"] == str(expected_ticket_id)
+
+
+class TestUploadSerialization:
+    def test_field_uses_zendesk_upload_token_to_fetch_cached_halo_id(self):
+        zendesk_upload_token = 1234
+        halo_upload_token = 4321
+        field = HaloAttachmentFromZendeskUploadField()
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            mock_cache.get.return_value = halo_upload_token
+
+            field.to_representation(zendesk_upload_token)
+
+            mock_caches.__getitem__.assert_called_once_with(settings.UPLOAD_DATA_CACHE)
+            mock_cache.get.assert_called_once_with(zendesk_upload_token, zendesk_upload_token)
+
+    def test_field_maps_zendesk_upload_token_to_halo_attachment(self):
+        zendesk_upload_token = "1234"
+        halo_upload_token = 4321
+        expected_halo_value = {"id": halo_upload_token}
+        field = HaloAttachmentFromZendeskUploadField()
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            mock_cache.get.return_value = halo_upload_token
+
+            halo_equivalent = field.to_representation(zendesk_upload_token)
+
+            assert halo_equivalent == expected_halo_value
+
+    def test_serialiser_maps_list_of_zendesk_upload_tokens(self):
+        zendesk_upload_tokens = ["a", "b", "c"]
+        halo_upload_tokens = [
+            1,
+            2,
+            3,
+        ]
+        expected_halo_attachments = [{"id": id} for id in halo_upload_tokens]
+        serializer = HaloAttachmentsFromZendeskUploadsSerializer()
+        with mock.patch("help_desk_api.serializers.caches") as mock_caches:
+            mock_cache = MagicMock()
+            mock_caches.__getitem__.return_value = mock_cache
+            mock_cache.get.side_effect = halo_upload_tokens
+
+            halo_equivalent = serializer.to_representation(zendesk_upload_tokens)
+
+            assert halo_equivalent == expected_halo_attachments
+
+    def test_ticket_serialiser_passes_uploads_from_comment(self, new_zendesk_ticket_with_uploads):
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_uploads["ticket"])
+
+        assert "attachments" in halo_equivalent
