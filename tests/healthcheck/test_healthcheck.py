@@ -84,3 +84,10 @@ class TestHealthCheckResponses:
         assert (
             response.headers["Cache-Control"] == "no-cache, no-store, must-revalidate"  # /PS-IGNORE
         )
+
+    @mock.patch("healthcheck.views.HelpDeskCreds")
+    def test_response_robots_noindex_header(self, mock_help_desk_creds, client):
+        response = client.get(reverse("healthcheck"))
+
+        assert "X-Robots-Tag" in response.headers  # /PS-IGNORE
+        assert response.headers["X-Robots-Tag"] == "noindex"  # /PS-IGNORE
