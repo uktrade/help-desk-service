@@ -162,7 +162,7 @@ class ZendeskAPIProxyMiddleware:
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             logger.info("Making Zendesk request")
             zendesk_response = self.make_zendesk_request(
-                help_desk_creds, request, supported_endpoint
+                help_desk_creds, request, token, supported_endpoint
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
@@ -315,7 +315,7 @@ class ZendeskAPIProxyMiddleware:
             )
         return django_response
 
-    def make_zendesk_request(self, help_desk_creds, request, supported_endpoint):
+    def make_zendesk_request(self, help_desk_creds, request, token, supported_endpoint):
         # Don't need to call the below in Halo because error will be raised anyway
         if not supported_endpoint:
             logger.warning(f"{request.path} is not supported by this service")
@@ -323,7 +323,7 @@ class ZendeskAPIProxyMiddleware:
             request,
             help_desk_creds.zendesk_subdomain,
             help_desk_creds.zendesk_email,
-            help_desk_creds.zendesk_token,
+            token,
             request.GET.urlencode(),
         )
         logger.info(
