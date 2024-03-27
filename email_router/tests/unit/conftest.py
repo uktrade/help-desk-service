@@ -30,11 +30,6 @@ def zendesk_upload_request_body():
     return b"\x48\x65\x6c\x6c\x6f"
 
 
-@pytest.fixture()
-def zendesk_upload_request():
-    pass
-
-
 @pytest.fixture(scope="session")
 def zendesk_upload_response():
     response = Response()
