@@ -15,6 +15,10 @@ aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
 @event_source(data_class=SQSEvent)
 def lambda_handler(event: SQSEvent, context):
+    """
+    Note: values written to the S3 bucket are for logging and debugging purposes
+    and that code will be removed when the function is deemed stable.
+    """
     iso_utcnow = get_iso_utcnow()
     parameters = get_parameters()
 
