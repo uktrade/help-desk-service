@@ -83,7 +83,7 @@ pytest:
 	docker-compose run --rm help-desk-service pytest
 
 pytest-cov:
-	docker-compose run --rm help-desk-service pytest --cov-report=xml:test-reports
+	docker-compose run --rm help-desk-service pytest --junitxml=test-reports/junit.xml
 
 superuser:
 	docker-compose run --rm help-desk-service python manage.py createsuperuser
