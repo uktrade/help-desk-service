@@ -358,9 +358,13 @@ class HaloDetailsFromZendeskField(serializers.CharField):
         if "comment" in instance:
             comment = instance.pop("comment", {})
             body = comment.pop("body", "")
+            # Prefer HTML (sent by email router)
+            html_body = comment.pop("html_body", "")
+            if html_body:
+                body = html_body
         if "description" in instance:
             body = instance.pop("description", "")
-
+        # HTML is safe here as it's valid input to a Markdown parser  /PS-IGNORE
         return markdown.markdown(apply_zendesk_automatic_html(body))
 
 
@@ -456,6 +460,22 @@ class HaloCopyOfZendeskTicketIdField(serializers.CharField):
         return str(zendesk_ticket_id)
 
 
+class HaloAttachmentFromZendeskUploadField(serializers.IntegerField):
+    def to_representation(self, instance):
+        # If this was a Zendesk and Halo request,
+        # the Halo token should have been cached.
+        # If the value isn't in the cache,
+        # assume it was Halo-only and use the token as-is.
+        cache = caches[settings.UPLOAD_DATA_CACHE]
+        halo_token = cache.get(instance, instance)
+        return {"id": halo_token}
+        # return super().get_attribute(instance)
+
+
+class HaloAttachmentsFromZendeskUploadsSerializer(serializers.ListField):
+    child = HaloAttachmentFromZendeskUploadField()
+
+
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
     Zendesk to Halo Ticket
@@ -478,6 +498,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
     userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
+    attachments = HaloAttachmentsFromZendeskUploadsSerializer(source="uploads", required=False)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
@@ -527,15 +548,12 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         #     "tags": [{"text": tag} for tag in zendesk_ticket_data.get("tags", [])],
         # }
         recipient = zendesk_ticket_data.pop("recipient", None)
+        # Zendesk includes attachments in comments, Halo in the ticket
+        comment = data_copy.get("comment", {})
+        upload_tokens = comment.get("uploads", None)
+        if upload_tokens:
+            data_copy["uploads"] = upload_tokens
         serialized_halo_payload = super().to_representation(data_copy)
-        if "comment" in serialized_halo_payload:
-            comment = serialized_halo_payload.pop("comment")
-            if comment:
-                attachment_tokens = comment.get("attachments", [])
-                if attachment_tokens:
-                    serialized_halo_payload["attachments"] = [
-                        {"id": attachment_token} for attachment_token in attachment_tokens
-                    ]
         if recipient:
             if "customfields" not in serialized_halo_payload:
                 serialized_halo_payload["customfields"] = []

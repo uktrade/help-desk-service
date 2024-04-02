@@ -26,6 +26,11 @@ def parsed_email(email_bytes):
 
 
 @pytest.fixture(scope="session")
+def zendesk_upload_request_body():
+    return b"\x48\x65\x6c\x6c\x6f"
+
+
+@pytest.fixture(scope="session")
 def zendesk_upload_response():
     response = Response()
     response_dict = {"upload": {"token": "1234"}}
