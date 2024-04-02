@@ -475,9 +475,6 @@ class HaloAttachmentFromZendeskUploadField(serializers.IntegerField):
 class HaloAttachmentsFromZendeskUploadsSerializer(serializers.ListField):
     child = HaloAttachmentFromZendeskUploadField()
 
-    def to_representation(self, data):
-        return super().to_representation(data)
-
 
 class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """

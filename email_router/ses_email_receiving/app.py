@@ -28,9 +28,7 @@ def lambda_handler(event: SQSEvent, context):
     record_body = json.loads(first_record.get("body", {}))
     record_type = record_body.get("Event", None)
     if record_type == "s3:TestEvent":  # /PS-IGNORE
-        bucket_name = ""
-        if not bucket_name:
-            bucket_name = "dbt-help-desk-incoming-mail"
+        bucket_name = "dbt-help-desk-incoming-mail"
         s3.put_object(
             Bucket=bucket_name,
             Key=f"tempdebug/event-{iso_utcnow}",
