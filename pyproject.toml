@@ -6,7 +6,7 @@ authors = ["Ross Miller <ross.miller@digital.trade.gov.uk>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "3.10.*"
 Django = "^4.1.2"
 djangorestframework = "^3.14.0"
 Markdown = "^3.4.1"
