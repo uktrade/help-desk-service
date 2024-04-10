@@ -66,16 +66,10 @@ omit = [
     "*/fixture_data/*",
     "*conftest.py",
     "*manage.py",
-#    "*models.py",
     "*apps.py",
     "*/management/*",
     "scripts/*.py",
     "email_router/*",
-#
-#
-#    "*/tests/*",
-#    "*/migrations/*",
-#    "*test_*",
 ]
 
 [tool.coverage.report]
@@ -93,12 +87,12 @@ exclude_lines = [
 
     # Don't complain if non-runnable code isn't run:
     "if 0:",
-    "if __name__ == .__main__.:"
+    "if __name__ == .__main__.:",
 
     # We want to check coverage of tests, but not skipped ones
-    "@skip("
+    "@skip(",
 ]
 omit = [
-    "*/management/*"
+    "*/management/*",
 ]
 
