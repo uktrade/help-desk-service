@@ -73,6 +73,7 @@ omit = [
     "config/asgi.py",
     "config/wsgi.py",
     "config/settings/*",
+    "help_desk_api/utils/document_generation/*",
 ]
 
 [tool.coverage.report]
