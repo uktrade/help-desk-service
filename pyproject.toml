@@ -90,7 +90,7 @@ exclude_lines = [
     "if __name__ == .__main__.:",
 
     # We want to check coverage of tests, but not skipped ones
-    "@skip(",
+    "@skip",
 ]
 omit = [
     "*/management/*",
