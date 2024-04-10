@@ -59,6 +59,7 @@ ignore="H017,H030,H031"
 
 [tool.coverage.run]
 branch = true
+source = ["."]
 omit = [
     "*migrations*",
     "tests/fixture_data/*",
