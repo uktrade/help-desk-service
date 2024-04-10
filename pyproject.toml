@@ -100,4 +100,7 @@ exclude_lines = [
 omit = [
     "*/management/*",
 ]
+omit = [
+    "*/management/*"
+]
 
