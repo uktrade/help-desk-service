@@ -61,22 +61,22 @@ ignore="H017,H030,H031"
 branch = true
 source = ["."]
 omit = [
-    "*migrations*",
-    "tests/fixture_data/*",
-    "*conftest.py",
-    "*manage.py",
-    "*__init__.py",
-    "*models.py",
-    "*apps.py",
-    "*help_desk_api/management*",
-    "scripts/*.py",
-    "email_router/*",
-
-
-    "*/tests/*",
-    "*/migrations/*",
-    "*__init__*",
-    "*test_*",
+#    "*migrations*",
+#    "tests/fixture_data/*",
+#    "*conftest.py",
+#    "*manage.py",
+#    "*__init__.py",
+#    "*models.py",
+#    "*apps.py",
+#    "*help_desk_api/management*",
+#    "scripts/*.py",
+#    "email_router/*",
+#
+#
+#    "*/tests/*",
+#    "*/migrations/*",
+#    "*__init__*",
+#    "*test_*",
 ]
 
 [tool.coverage.report]
