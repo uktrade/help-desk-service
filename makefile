@@ -83,7 +83,7 @@ pytest:
 	docker-compose run --rm help-desk-service pytest
 
 pytest-cov:
-	docker-compose run --rm help-desk-service pytest --ignore email_router/ --cov --cov-config=.coveragerc --cov-report json
+	docker-compose run --rm help-desk-service pytest --ignore email_router/ --cov --cov-report json
 
 superuser:
 	docker-compose run --rm help-desk-service python manage.py createsuperuser
