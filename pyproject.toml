@@ -63,7 +63,7 @@ source = ["."]
 omit = [
     "*__init__*",
     "*/migrations/*",
-    "/tests/fixture_data/*",
+    "*/fixture_data/*",
     "*conftest.py",
     "*manage.py",
 #    "*models.py",
@@ -75,7 +75,6 @@ omit = [
 #
 #    "*/tests/*",
 #    "*/migrations/*",
-#    "*__init__*",
 #    "*test_*",
 ]
 
