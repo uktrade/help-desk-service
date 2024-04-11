@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-    codecov: codecov/codecov@3.2.2 # /PS-IGNORE
+    codecov: codecov/codecov@4.0.1 # /PS-IGNORE
 jobs:
     build:
         machine:
@@ -30,8 +30,10 @@ jobs:
                   command: make flake8
             - run:
                   name: run tests
-                  command: make pytest
+                  command: make pytest-cov
             - codecov/upload
+            - store_test_results:
+                  path: ./test-reports/
             - run:
                   name: stop containers
                   command: make down

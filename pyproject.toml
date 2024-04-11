@@ -56,3 +56,48 @@ include = '\.pyi?$'
 
 [tool.djlint]
 ignore="H017,H030,H031"
+
+[tool.coverage.run]
+branch = true
+source = ["."]
+omit = [
+    "*__init__*",
+    "*/migrations/*",
+    "*/fixture_data/*",
+    "*conftest.py",
+    "*manage.py",
+    "*apps.py",
+    "*/management/*",
+    "scripts/*.py",
+    "email_router/*",
+    "config/asgi.py",
+    "config/wsgi.py",
+    "config/settings/*",
+    "help_desk_api/utils/document_generation/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self\\.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "except ValidationError as e:",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+
+    # We want to check coverage of tests, but not skipped ones
+    "@skip",
+]
+omit = [
+    "*/management/*",
+]
+
