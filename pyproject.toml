@@ -97,6 +97,6 @@ exclude_lines = [
     # We want to check coverage of tests, but not skipped ones
     "@skip",
 ]
-omit = [
-    "*/management/*",
-]
+#omit = [
+#    "*/management/*",
+#]
