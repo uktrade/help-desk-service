@@ -481,3 +481,9 @@ Authorization
 HaloManager
 Zendesk API token
 Zendesk, Halo
+Vault
+DJANGO_SETTINGS_MODULE
+ELASTIC_APM_SECRET_TOKEN
+HALO_SUBDOMAIN
+EMAIL_ROUTER_API_URL
+Zendesk API URL
