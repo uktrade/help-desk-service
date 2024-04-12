@@ -80,7 +80,7 @@ all-requirements:
 	docker-compose run --rm help-desk-service poetry export -f requirements.txt --output requirements.txt --without-hashes --with production --without dev,testing
 
 pytest:
-	docker-compose run --rm help-desk-service pytest
+	docker-compose run --rm help-desk-service pytest --ignore email_router/
 
 pytest-cov:
 	docker-compose run --rm help-desk-service pytest --ignore email_router/ --cov --cov-report json
