@@ -36,6 +36,7 @@ The service will be available at: `http://localhost:8000/`
 
 - `config` - Django settings and top-level project config
 - `halo` -  Halo API client
+- `healthcheck` -  Service health check for Pingdom
 - `help_desk_api` - mapping of Zendesk API to Halo API
 - `zendesk_api_proxy` - Django middleware for dispatching incoming requests to Zendesk and/or Halo (according to configuration of `HelpDeskCreds`)
 
