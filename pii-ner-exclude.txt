@@ -479,3 +479,5 @@ Completed Zendesk PUT
 \n
 Authorization
 HaloManager
+Zendesk API token
+Zendesk, Halo
