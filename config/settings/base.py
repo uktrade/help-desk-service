@@ -63,7 +63,6 @@ SERVICE_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + SERVICE_APPS
 
 MIDDLEWARE = [
-    "config.temp_mw.temp_middleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
