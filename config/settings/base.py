@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import environ
+from django_log_formatter_asim import ASIMFormatter
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -62,6 +63,7 @@ SERVICE_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + SERVICE_APPS
 
 MIDDLEWARE = [
+    "config.temp_mw.temp_middleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -246,4 +248,39 @@ ELASTIC_APM = {
     "SERVER_URL": "https://apm.elk.uktrade.digital",
     "ENVIRONMENT": APP_ENV,
     "SERVER_TIMEOUT": env.str("ELASTIC_APM_SERVER_TIMEOUT"),
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "asim_formatter": {
+            "()": ASIMFormatter,
+        },
+        "simple": {
+            "style": "{",
+            "format": "{asctime} {levelname} {message}",
+        },
+    },
+    "handlers": {
+        "asim": {
+            "class": "logging.StreamHandler",
+            "formatter": "asim_formatter",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["asim"],
+            "level": "INFO",
+            "propagate": False,
+        }
+    },
 }

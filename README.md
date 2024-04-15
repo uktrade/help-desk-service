@@ -2,17 +2,21 @@
 
 A service for interacting with help desks such as Zendesk and Halo ITSM.
 
-The service provides an API that should be used for ticket management and creation.
+The service provides a subset of a Zendesk-compatible API that should be used for ticket management and creation.
 
-## Setup
+## Initial setup
 
 - Set up pre-commit as per https://github.com/uktrade/pii-secret-check-hooks
 - Copy the example env file `cp .env.example .env`
 - Build local docker instance:
     - `make build`
-    - `make migrate` or `make first-use` 
-- Start the local docker instance: `make up` or `make up-detached` to start in detached mode
-- The service will be available at: `http://localhost:8000/`
+    - `make first-use` 
+
+The service will be available at: `http://localhost:8000/`
+
+## Usage
+
+- Start the local docker instance: `make up`, or `make up-detached` to start in detached mode
 
 ## Update requirements files
 
@@ -30,8 +34,14 @@ The service provides an API that should be used for ticket management and creati
 
 ## Project structure
 
-- `config/` - Django settings and top-level project config
-- `help_desk_api/` - API for help desk ticket management
+- `config` - Django settings and top-level project config
+- `halo` -  Halo API client
+- `healthcheck` -  Service health check for Pingdom
+- `help_desk_api` - mapping of Zendesk API to Halo API
+- `zendesk_api_proxy` - Django middleware for dispatching incoming requests to Zendesk and/or Halo (according to configuration of `HelpDeskCreds`)
+
+## AWS components for email handling
+
 - `email_router` - Code for Lambda function to post received emails as tickets
   - `ses_email_receiving` - Lambda function code
   - `utils/build_layer.py` - Utility to package a Lambda layer based on `lambda_layer_requirements.txt`

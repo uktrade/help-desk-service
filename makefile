@@ -34,22 +34,22 @@ up:
 up-detached:
 	docker-compose up -d
 
+db-up-detached:  # /PS-IGNORE
+	docker-compose up -d db
+
 down:
 	docker-compose down
+
+first-use: down db-up-detached migrate createcachetables up-detached
+
 
 check-fixme:
 	! git --no-pager grep -rni fixme -- ':!./makefile' ':!./.circleci/config.yml'
 
-first-use:
-	docker-compose down
-	docker-compose up -d db
-	docker-compose run --rm help-desk-service python manage.py migrate
-	docker-compose up
-
 migrations:
 	docker-compose run --rm help-desk-service python manage.py makemigrations
 
-migrate:
+migrate: migrations
 	docker-compose run --rm help-desk-service python manage.py migrate
 
 checkmigrations:
@@ -80,7 +80,7 @@ all-requirements:
 	docker-compose run --rm help-desk-service poetry export -f requirements.txt --output requirements.txt --without-hashes --with production --without dev,testing
 
 pytest:
-	docker-compose run --rm help-desk-service pytest
+	docker-compose run --rm help-desk-service pytest --ignore email_router/
 
 pytest-cov:
 	docker-compose run --rm help-desk-service pytest --ignore email_router/ --cov --cov-report json
@@ -88,5 +88,6 @@ pytest-cov:
 superuser:
 	docker-compose run --rm help-desk-service python manage.py createsuperuser
 
-createcachetable:
+createcachetables:
 	docker-compose run --rm help-desk-service python manage.py createcachetable
+

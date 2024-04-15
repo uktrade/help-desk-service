@@ -1,20 +1,18 @@
 # Connecting the project to Zendesk
 
-- Set the relevant environment variables in the .env file:
-    - `HELP_DESK_INTERFACE=help_desk_client.zendesk_manager.ZendeskManager`
-    - `HELP_DESK_CREDS='email=[Zendesk user email address],token=[Zendesk token],subdomain=[Zendesk site subdomain]'` 
 - If you have not done so already, create a Django user
     - `make superuser`
-- Create a token for that user
-    - `make shell`
-    - run the following in the shell:
+- In the Django admin, create a `HelpDeskCreds` instance:
+    - `zendesk_email`: email address of a Zendesk account with required privileges (usually `administrator`)
+    - `zendesk_token`: a valid Zendesk API token
+    - `zendesk_subdomain`: the Zendesk subdomain for which these credentials are valid, e.g. `uktrade` for `uktrade.zendesk.com`
+    - `help_desk`: direct requests received using these Zendesk credentials to Zendesk, Halo, or both
+    - `halo_client_id`: Client ID for Halo API
+    - `halo_client_secret`: Secret for Halo API
 
-```python
-from rest_framework.authtoken.models import Token
-
-token = Token.objects.create(user=...)  # Add a reference to the user object here
-print(token.key)
-```
+N.B. The `zendesk_token` value is encrypted on save, and cannot be modified.
+To replace it with a new value, it will be necessary to delete the existing `HelpDeskCreds`
+and recreate it with the new token.
 
 - On your host machine, create the following env vars:
     - `ZENPY_FORCE_NETLOC=localhost:8000`
