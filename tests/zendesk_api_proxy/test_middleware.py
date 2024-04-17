@@ -20,8 +20,8 @@ class TestNonApiRoutes:
     @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_non_api_call_passed_through(
         self,
-        make_halo_request: mock.MagicMock,
-        make_zendesk_request: mock.MagicMock,
+        _make_halo_request: mock.MagicMock,
+        _make_zendesk_request: mock.MagicMock,
         rf: RequestFactory,
         zendesk_required_settings,
     ):
@@ -39,7 +39,7 @@ class TestZendeskOnly:
     @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_zendesk_request_calls_make_zendesk_request(
         self,
-        make_halo_request: mock.MagicMock,
+        _make_halo_request: mock.MagicMock,
         make_zendesk_request: mock.MagicMock,
         zendesk_authorization_header: str,
         rf: RequestFactory,
@@ -101,7 +101,7 @@ class TestZendeskOnly:
     @mock.patch("zendesk_api_proxy.middleware.ZendeskAPIProxyMiddleware.make_halo_request")
     def test_zendesk_request_does_not_call_get_response(
         self,
-        make_halo_request: mock.MagicMock,
+        _make_halo_request: mock.MagicMock,
         make_zendesk_request: mock.MagicMock,
         zendesk_authorization_header: str,
         rf: RequestFactory,
@@ -135,7 +135,7 @@ class TestHaloOnly:
     def test_halo_request_calls_make_halo_request(
         self,
         make_halo_request: mock.MagicMock,
-        make_zendesk_request: mock.MagicMock,
+        _make_zendesk_request: mock.MagicMock,
         zendesk_authorization_header: str,
         rf: RequestFactory,
         zendesk_not_required_settings,
@@ -197,7 +197,7 @@ class TestHaloOnly:
     def test_halo_request_does_not_call_get_response(
         self,
         make_halo_request: mock.MagicMock,
-        make_zendesk_request: mock.MagicMock,
+        _make_zendesk_request: mock.MagicMock,
         zendesk_authorization_header: str,
         rf: RequestFactory,
         zendesk_not_required_settings,
