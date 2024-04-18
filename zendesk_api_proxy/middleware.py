@@ -130,17 +130,7 @@ class ZendeskAPIProxyMiddleware:
         logger.warning(f"Help Desk Service request received, body: {request_body}")
 
         try:
-            # Get out of proxy logic if there's an issue with the token
-            # This raises NotAuthenticated if no Authorization header found  /PS-IGNORE
-            token, email = get_zenpy_request_vars(request)
-            try:
-                help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
-            except HelpDeskCreds.DoesNotExist:
-                raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
-            if not check_password(token, help_desk_creds.zendesk_token):
-                raise AuthenticationFailed(
-                    detail=f"Credentials not valid for {help_desk_creds.zendesk_email}"
-                )
+            help_desk_creds, token = self.get_authentication_values(request)
         except AuthenticationFailed as exp:
             sentry_sdk.capture_exception(exp)
             raise
@@ -215,6 +205,21 @@ class ZendeskAPIProxyMiddleware:
             f"Halo response: {django_response.content.decode('utf-8') if django_response else None}"
         )
         return zendesk_response or django_response
+
+    def get_authentication_values(self, request):
+        # Get out of proxy logic if there's an issue with the token
+        # get_zenpy_request_vars raises NotAuthenticated
+        # if no Authorization header found
+        token, email = get_zenpy_request_vars(request)
+        try:
+            help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
+        except HelpDeskCreds.DoesNotExist:
+            raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
+        if not check_password(token, help_desk_creds.zendesk_token):
+            raise AuthenticationFailed(
+                detail=f"Credentials not valid for {help_desk_creds.zendesk_email}"
+            )
+        return help_desk_creds, token
 
     def cache_request_data(
         self, request, help_desk_creds, zendesk_response, halo_response, cache_config
