@@ -3,6 +3,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+from django.db.models import QuerySet
 from django.http import HttpResponse, JsonResponse
 from django.test import Client, RequestFactory
 from django.urls import reverse
@@ -129,3 +130,49 @@ class TestCredentials:
 
         mock_halo_manager.assert_called_once()
         mock_ticket_view_get.assert_called_once()
+
+
+class TestGetAUthenticationValues:
+    def test_unknown_email_raises_401_unauthorized(
+        self, rf: RequestFactory, unknown_email_zendesk_authorization_header: str
+    ):
+        request = rf.get(
+            reverse("api:tickets"), HTTP_AUTHORIZATION=unknown_email_zendesk_authorization_header
+        )
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        with pytest.raises(AuthenticationFailed):
+            middleware.get_authentication_values(request)
+
+    def test_incorrect_token_raises_401_unauthorized(
+        self, rf: RequestFactory, incorrect_token_zendesk_authorization_header: str
+    ):
+        request = rf.get(
+            reverse("api:tickets"), HTTP_AUTHORIZATION=incorrect_token_zendesk_authorization_header
+        )
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        with pytest.raises(AuthenticationFailed):
+            middleware.get_authentication_values(request)
+
+    def test_valid_token_for_email_address_with_many_tokens(
+        self,
+        creds_for_one_email_with_many_tokens: QuerySet,
+        rf: RequestFactory,
+        first_token_authorization_header_for_same_email: str,
+        email_with_more_than_one_token: str,
+        first_token_for_same_email: str,
+    ):
+        request = rf.get(
+            reverse("api:tickets"),
+            HTTP_AUTHORIZATION=first_token_authorization_header_for_same_email,
+        )
+        mock_get_response = MagicMock()
+        middleware = ZendeskAPIProxyMiddleware(mock_get_response)
+
+        help_desk_creds, token = middleware.get_authentication_values(request)
+
+        assert help_desk_creds.zendesk_email == email_with_more_than_one_token
+        assert token == first_token_for_same_email
