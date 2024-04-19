@@ -50,7 +50,10 @@ class TestCredentials:
             middleware(request)
 
     def test_incorrect_token_raises_401_unauthorized(
-        self, rf: RequestFactory, incorrect_token_zendesk_authorization_header: str
+        self,
+        rf: RequestFactory,
+        zendesk_creds_only: HelpDeskCreds,
+        incorrect_token_zendesk_authorization_header: str,
     ):
         request = rf.get(
             reverse("api:tickets"), HTTP_AUTHORIZATION=incorrect_token_zendesk_authorization_header
@@ -146,7 +149,10 @@ class TestGetAUthenticationValues:
             middleware.get_authentication_values(request)
 
     def test_incorrect_token_raises_401_unauthorized(
-        self, rf: RequestFactory, incorrect_token_zendesk_authorization_header: str
+        self,
+        rf: RequestFactory,
+        zendesk_creds_only: HelpDeskCreds,
+        incorrect_token_zendesk_authorization_header: str,
     ):
         request = rf.get(
             reverse("api:tickets"), HTTP_AUTHORIZATION=incorrect_token_zendesk_authorization_header
