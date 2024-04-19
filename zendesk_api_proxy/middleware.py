@@ -211,15 +211,17 @@ class ZendeskAPIProxyMiddleware:
         # get_zenpy_request_vars raises NotAuthenticated
         # if no Authorization header found
         token, email = get_zenpy_request_vars(request)
-        try:
-            help_desk_creds = HelpDeskCreds.objects.get(zendesk_email=email)
-        except HelpDeskCreds.DoesNotExist:
+        help_desk_creds_for_email = HelpDeskCreds.objects.filter(zendesk_email=email)
+        if not help_desk_creds_for_email:
             raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
-        if not check_password(token, help_desk_creds.zendesk_token):
-            raise AuthenticationFailed(
-                detail=f"Credentials not valid for {help_desk_creds.zendesk_email}"
-            )
-        return help_desk_creds, token
+        matching_help_desk_creds = None
+        for help_desk_creds in help_desk_creds_for_email:
+            if check_password(token, help_desk_creds.zendesk_token):
+                matching_help_desk_creds = help_desk_creds
+                break
+        if matching_help_desk_creds is None:
+            raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
+        return matching_help_desk_creds, token
 
     def cache_request_data(
         self, request, help_desk_creds, zendesk_response, halo_response, cache_config
