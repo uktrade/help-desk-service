@@ -1,3 +1,4 @@
+import base64
 import json
 from http import HTTPStatus
 
@@ -6,6 +7,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.urls import reverse
+
+from help_desk_api.models import HelpDeskCreds
 
 
 @pytest.fixture()
@@ -320,3 +323,79 @@ def another_zendesk_create_ticket_response_body():
             "via": {"channel": "api", "source": {"from": {}, "to": {}, "rel": None}},
         },
     }
+
+
+# Fixtures for credentions stuff
+
+
+@pytest.fixture()
+def email_with_more_than_one_token() -> str:
+    return "test-multiple-tokens@example.com"  # /PS-IGNORE
+
+
+@pytest.fixture()
+def first_token_for_same_email() -> str:
+    return "first token"
+
+
+@pytest.fixture()
+def second_token_for_same_email() -> str:
+    return "second token"
+
+
+@pytest.fixture()
+def third_token_for_same_email() -> str:
+    return "third token"
+
+
+@pytest.fixture()
+def first_token_authorization_header_for_same_email(
+    email_with_more_than_one_token, first_token_for_same_email
+):
+    creds = f"{email_with_more_than_one_token}/token:{first_token_for_same_email}"
+    authorization = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
+    return f"Basic {authorization.decode('ascii')}"
+
+
+@pytest.fixture()
+def second_token_authorization_header_for_same_email(
+    email_with_more_than_one_token, second_token_for_same_email
+):
+    creds = f"{email_with_more_than_one_token}/token:{second_token_for_same_email}"
+    authorization = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
+    return f"Basic {authorization.decode('ascii')}"
+
+
+@pytest.fixture()
+def third_token_authorization_header_for_same_email(
+    email_with_more_than_one_token, third_token_for_same_email
+):
+    creds = f"{email_with_more_than_one_token}/token:{third_token_for_same_email}"
+    authorization = base64.b64encode(creds.encode("ascii"))  # /PS-IGNORE
+    return f"Basic {authorization.decode('ascii')}"
+
+
+@pytest.fixture()
+def creds_for_one_email_with_many_tokens(
+    db,
+    email_with_more_than_one_token,
+    first_token_for_same_email,
+    second_token_for_same_email,
+    third_token_for_same_email,
+) -> HelpDeskCreds:
+    for token in (
+        first_token_for_same_email,
+        second_token_for_same_email,
+        third_token_for_same_email,
+    ):
+        credentials = HelpDeskCreds.objects.create(
+            zendesk_email=email_with_more_than_one_token,
+            zendesk_token=token,
+            zendesk_subdomain="staging-uktrade",
+            help_desk=[
+                HelpDeskCreds.HelpDeskChoices.ZENDESK,
+            ],
+        )
+        credentials.set_token()
+        credentials.save()
+    return HelpDeskCreds.objects.all()
