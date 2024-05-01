@@ -32,9 +32,6 @@ SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
-# Server secrets
-VCAP_SERVICES = env.json("VCAP_SERVICES", {})
-
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -97,23 +94,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-if "postgres" in VCAP_SERVICES:
-    DATABASE_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
-else:
-    DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = env("DATABASE_URL")
 
 DATABASES = {"default": env.db()}
 
 # Redis
-if "redis" in VCAP_SERVICES:
-    credentials = VCAP_SERVICES["redis"][0]["credentials"]
-    REDIS_URL = "rediss://:{}@{}:{}/0?ssl_cert_reqs=required".format(
-        credentials["password"],
-        credentials["host"],
-        credentials["port"],
-    )
-else:
-    REDIS_URL = os.environ.get("REDIS_URL", "")
+REDIS_URL = env("DATABASE_URL")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
