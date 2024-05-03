@@ -13,7 +13,6 @@ Markdown = "^3.4.1"
 django-model-utils = "^4.2.0"
 zenpy = "^2.0.25"
 django-multiselectfield = "^0.1.12"
-psycopg2 = "^2.9.5"
 gunicorn = "22.0.0"
 django-environ = "^0.11.0"
 gevent = "^24.0.0"
@@ -41,10 +40,6 @@ flake8 = "^7.0.0"
 black = "^24.0.0"
 isort = "^5.10.1"
 mypy = "^1.9.0"
-
-[tool.poetry.group.testing.dependencies]
-
-[tool.poetry.group.production.dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
