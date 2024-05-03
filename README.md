@@ -45,3 +45,5 @@ The service will be available at: `http://localhost:8000/`
 - `email_router` - Code for Lambda function to post received emails as tickets
   - `ses_email_receiving` - Lambda function code
   - `utils/build_layer.py` - Utility to package a Lambda layer based on `lambda_layer_requirements.txt`
+
+## Notes for move to DBT Platform
