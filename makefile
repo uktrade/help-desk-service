@@ -77,7 +77,7 @@ bash:
 	docker-compose run --rm help-desk-service bash
 
 all-requirements:
-	docker-compose run --rm help-desk-service poetry export -f requirements.txt --output requirements.txt --without-hashes --with production --without dev,testing
+	docker-compose run --rm help-desk-service poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev
 
 pytest:
 	docker-compose run --rm help-desk-service pytest --ignore email_router/
