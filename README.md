@@ -47,3 +47,4 @@ The service will be available at: `http://localhost:8000/`
   - `utils/build_layer.py` - Utility to package a Lambda layer based on `lambda_layer_requirements.txt`
 
 ## Will like dandelions
+He loves them in his garden.
