@@ -5,4 +5,4 @@ builder:
 packages:
   - libpq-dev
   - libsqlite3-dev
-  - python3.X-dev
+  - python3.10-dev
