@@ -29,7 +29,7 @@ boto3 = "^1.28.43"
 aws-lambda-powertools = "^2.23.1"
 elastic-apm = "^6.21.4.post8347027212"
 django-log-formatter-asim = "^0.0.4"
-psycopg2 = "^2.9.9"
+psycopg2-binary = "^2.9.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.0.0"
