@@ -28,16 +28,16 @@ repos:
         verbose: true
         require_serial: true
 -   repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 24.4.2
     hooks:
     - id: black
-      language_version: python3.10
+      language_version: python3.11
 -   repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 7.0.0
     hooks:
     - id: flake8
 -   repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
     - id: isort
 -   repo: https://github.com/rtts/djhtml
@@ -47,6 +47,6 @@ repos:
     - id: djcss
     - id: djjs
 -   repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.31.0
+    rev: v1.34.1
     hooks:
     - id: djlint-django
