@@ -14,8 +14,8 @@ import os
 from pathlib import Path
 
 import environ
-from django_log_formatter_asim import ASIMFormatter
 from dbt_copilot_python.database import database_url_from_env
+from django_log_formatter_asim import ASIMFormatter
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -95,7 +95,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+
 DATABASE_URL = database_url_from_env("DATABASE_CREDENTIALS")
+print(f"DATABASE_URL: {DATABASE_URL}")
 
 DATABASES = {"default": env.db()}
 
