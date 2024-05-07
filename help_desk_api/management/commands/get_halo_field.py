@@ -35,7 +35,7 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        field_id = options["fieldid"]  # FieldInfo/206?includedetails=true
+        field_id = options["fieldid"]
         halo_field_data = halo_client.get(f"FieldInfo/{field_id}")
 
         output = halo_field_data
