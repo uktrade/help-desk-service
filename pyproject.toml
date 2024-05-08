@@ -31,6 +31,7 @@ elastic-apm = "^6.21.4.post8347027212"
 django-log-formatter-asim = "^0.0.4"
 psycopg2-binary = "^2.9.9"
 dbt-copilot-python = "^0.2.1"
+dj-database-url = "^2.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.0.0"
