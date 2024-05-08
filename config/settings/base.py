@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
 import environ
 from dbt_copilot_python.database import database_url_from_env
 from django_log_formatter_asim import ASIMFormatter
@@ -95,11 +96,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+try:
+    DATABASE_URL = database_url_from_env("DATABASE_CREDENTIALS")
+except KeyError:
+    DATABASE_URL = env.str("DATABASE_URL")
 
-DATABASE_URL = database_url_from_env("DATABASE_CREDENTIALS")
-print(f"DATABASE_URL: {DATABASE_URL}")
-
-DATABASES = {"default": env.db()}
+DATABASES = {"default": dj_database_url.config(default=DATABASE_URL)}
 
 # Redis
 REDIS_URL = env("REDIS_URL")
