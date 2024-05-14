@@ -48,4 +48,5 @@ The service will be available at: `http://localhost:8000/`
  
 ## This project runs on DBT Platform
 
+Staging has been set up
 
