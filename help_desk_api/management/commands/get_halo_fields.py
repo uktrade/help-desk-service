@@ -34,7 +34,7 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        halo_fields_data = halo_client.get("FieldInfo")  # /PS-IGNORE
+        halo_fields_data = halo_client.get("FieldInfo?includevalues=true")  # /PS-IGNORE
 
         output = halo_fields_data
 
@@ -48,5 +48,6 @@ class Command(BaseCommand):
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w", encoding="utf-8-sig") as output_file:
                 json.dump(output, output_file, indent=4)
+                print(f"Output written to {output_path}")
         else:
             json.dump(output, self.stdout, indent=4)
