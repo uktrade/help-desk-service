@@ -7,7 +7,7 @@ User = get_user_model()
 
 class SSOUserAdmin(UserAdmin):
     def has_add_permission(self, request):
-        return False
+        return request.user.is_superuser
 
     def has_change_permission(self, request, obj=None):
         return request.user.is_superuser
@@ -21,9 +21,9 @@ class SSOUserAdmin(UserAdmin):
             self.readonly_fields = [field.name for field in obj.__class__._meta.fields]
         return self.readonly_fields
 
-    exclude = ("password",)
+    # exclude = ("password",)
     fieldsets = (
-        ("Personal info", {"fields": ("first_name", "last_name", "email")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "email", "password")}),
         (
             "Permissions",
             {
