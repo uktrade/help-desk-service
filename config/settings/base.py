@@ -49,7 +49,6 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "multiselectfield",
     "drf_spectacular",
-    "elasticapm.contrib.django",
 ]
 
 SERVICE_APPS = [
