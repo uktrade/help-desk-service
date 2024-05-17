@@ -415,7 +415,7 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
                     field_value = [field_value]
                 field_value = [{"id": mapping.value_mappings[value]} for value in field_value]
             else:
-                field_value = mapping.value_mappings[field_value]
+                field_value = {"id": mapping.value_mappings[field_value]}
         return {"name": mapping.halo_title, "value": field_value}
 
 
