@@ -38,25 +38,28 @@ class Command(BaseCommand):
 
         ticket_data = [
             {
-                "site_id": 18,
+                # "site_id": 18,
                 "summary": f"""Halo via API at {datetime.utcnow().isoformat()}""",  # /PS-IGNORE
                 "details": "Blah",
                 "tags": [{"text": "bug"}],
                 "customfields": [
-                    {"name": "CFBrowser", "value": "Safari 16.3, Macos 10.15.7"},  # /PS-IGNORE
-                    {"name": "CFService", "value": "datahub"},
-                    {
-                        "name": "CFESSBusinessType",
-                        "value": [
-                            {
-                                "id": "38",
-                            }
-                        ],
-                    },
+                    # {"name": "CFBrowser", "value": "Safari 16.3, Macos 10.15.7"},  # /PS-IGNORE
+                    # {"name": "CFService", "value": "35"},
+                    # {"name": "CFImpact", "value": "2"},
+                    {"id": 206, "value": 35},
+                    {"id": 165, "value": 2},
+                    # {
+                    #     "name": "CFESSBusinessType",
+                    #     "value": [
+                    #         {
+                    #             "id": "38",
+                    #         }
+                    #     ],
+                    # },
                 ],
                 "users_name": "Some Body",
                 "reportedby": "somebody@example.com",  # /PS-IGNORE
-                "dont_do_rules": False,
+                # "dont_do_rules": False,
             }
         ]
 
