@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 "tags": [{"text": "bug"}],
                 "customfields": [
                     {"name": "CFBrowser", "value": "Safari 16.3, Macos 10.15.7"},  # /PS-IGNORE
-                    {"name": "CFService", "value": 9},
+                    {"name": "CFService", "value": 35},
                     {"name": "CFImpact", "value": 2},
                     {
                         "name": "CFEmailToAddress",
