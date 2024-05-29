@@ -22,9 +22,13 @@ def strip_handled_exceptions(event, _hint):
     return event
 
 
-sentry_sdk.init(
-    os.environ.get("SENTRY_DSN"),
-    environment=os.environ.get("SENTRY_ENVIRONMENT"),
-    integrations=[DjangoIntegration()],
-    # before_send=strip_handled_exceptions,
-)
+# Sentry
+SENTRY_DSN = env.str("SENTRY_DSN", None)
+# Configure Sentry if a DSN is set  /PS-IGNORE
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=env.str("SENTRY_ENVIRONMENT", "Staging"),
+        release=env.str("GIT_BRANCH"),
+        integrations=[DjangoIntegration()],
+    )
