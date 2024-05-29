@@ -415,7 +415,7 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
                     field_value = [field_value]
                 field_value = [{"id": mapping.value_mappings[value]} for value in field_value]
             else:
-                field_value = {"id": mapping.value_mappings[field_value]}
+                field_value = mapping.value_mappings[field_value]
         return {"name": mapping.halo_title, "value": field_value}
 
 
@@ -499,6 +499,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
     userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
     attachments = HaloAttachmentsFromZendeskUploadsSerializer(source="uploads", required=False)
+    tickettype_id = serializers.IntegerField(default=settings.HALO_DEFAULT_TICKET_TYPE_ID)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)
