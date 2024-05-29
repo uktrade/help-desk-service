@@ -506,6 +506,17 @@ class TestZendeskIdsSentToHalo:
         assert halo_equivalent["userdef5"] == str(expected_ticket_id)
 
 
+class TestHaloTicketTypeIdField:
+    def test_ticket_type_id_in_halo_field(self, new_zendesk_ticket_with_comment):
+        expected_ticket_type_id = settings.HALO_DEFAULT_TICKET_TYPE_ID
+        serializer = ZendeskToHaloCreateTicketSerializer()
+
+        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
+
+        assert "tickettype_id" in halo_equivalent
+        assert halo_equivalent["tickettype_id"] == expected_ticket_type_id
+
+
 class TestUploadSerialization:
     def test_field_uses_zendesk_upload_token_to_fetch_cached_halo_id(self):
         zendesk_upload_token = 1234
