@@ -499,6 +499,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
     userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
     attachments = HaloAttachmentsFromZendeskUploadsSerializer(source="uploads", required=False)
+    tickettype_id = serializers.IntegerField(default=settings.HALO_DEFAULT_TICKET_TYPE_ID)
     # The dont_do_rules field is a Halo API thing
     # Set it to False to ensure rules are applied
     dont_do_rules = serializers.BooleanField(default=False)

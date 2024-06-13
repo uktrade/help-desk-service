@@ -157,3 +157,4 @@ env
 /layer.zip
 /email_router/.aws-sam/build.toml
 /email_router/.aws-sam/sync.toml
+nohup.out

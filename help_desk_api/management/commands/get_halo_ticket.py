@@ -37,7 +37,7 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(f"Tickets/{options['ticketid']}")
+        ticket = halo_client.get(f"Tickets/{options['ticketid']}?includedetails=true")
 
         if options["output"]:
             output_path = options["output"].with_name(

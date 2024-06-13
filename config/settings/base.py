@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
 import environ
+from dbt_copilot_python.database import database_url_from_env
 from django_log_formatter_asim import ASIMFormatter
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -32,9 +34,6 @@ SECRET_KEY = env("SECRET_KEY")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
-# Server secrets
-VCAP_SERVICES = env.json("VCAP_SERVICES", {})
-
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -50,7 +49,6 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "multiselectfield",
     "drf_spectacular",
-    "elasticapm.contrib.django",
 ]
 
 SERVICE_APPS = [
@@ -97,23 +95,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-if "postgres" in VCAP_SERVICES:
-    DATABASE_URL = VCAP_SERVICES["postgres"][0]["credentials"]["uri"]
-else:
-    DATABASE_URL = os.getenv("DATABASE_URL")
+try:
+    DATABASE_URL = database_url_from_env("DATABASE_CREDENTIALS")
+except KeyError:
+    DATABASE_URL = env.str("DATABASE_URL")
 
-DATABASES = {"default": env.db()}
+DATABASES = {"default": dj_database_url.config(default=DATABASE_URL)}
 
 # Redis
-if "redis" in VCAP_SERVICES:
-    credentials = VCAP_SERVICES["redis"][0]["credentials"]
-    REDIS_URL = "rediss://:{}@{}:{}/0?ssl_cert_reqs=required".format(
-        credentials["password"],
-        credentials["host"],
-        credentials["port"],
-    )
-else:
-    REDIS_URL = os.environ.get("REDIS_URL", "")
+REDIS_URL = env("REDIS_URL")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -183,6 +173,7 @@ SPECTACULAR_SETTINGS = {
 AUTH_USER_MODEL = "user.User"
 
 HALO_SUBDOMAIN = env("HALO_SUBDOMAIN")
+HALO_DEFAULT_TICKET_TYPE_ID = env.int("HALO_DEFAULT_TICKET_TYPE_ID", 36)
 
 USER_DATA_CACHE = "userdata"
 TICKET_DATA_CACHE = "ticketdata"
@@ -240,14 +231,6 @@ if SET_HSTS_HEADERS:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_SSL_REDIRECT = True
-
-ELASTIC_APM = {
-    "SERVICE_NAME": "help-desk-service",
-    "SECRET_TOKEN": env.str("ELASTIC_APM_SECRET_TOKEN"),
-    "SERVER_URL": "https://apm.elk.uktrade.digital",
-    "ENVIRONMENT": APP_ENV,
-    "SERVER_TIMEOUT": env.str("ELASTIC_APM_SERVER_TIMEOUT"),
-}
 
 LOGGING = {
     "version": 1,
