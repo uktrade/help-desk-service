@@ -1,0 +1,62 @@
+Return-Path: <some.body@example.com>
+Received: from mail-lj1-f169.google.com (mail-lj1-f169.google.com [209.85.208.169])
+ by inbound-smtp.eu-west-2.amazonaws.com with SMTP id 3ti1pikdc216j1usnurqiv54i1os1de3ll7cpsg1
+ for test@support.businessandtrade.gov.uk;
+ Fri, 01 Mar 2024 15:58:59 +0000 (UTC)
+X-SES-Spam-Verdict: PASS
+X-SES-Virus-Verdict: PASS
+Received-SPF: pass (spfCheck: domain of digital.trade.gov.uk designates 209.85.208.169 as permitted sender) client-ip=209.85.208.169; envelope-from=some.body@example.com; helo=mail-lj1-f169.google.com;
+Authentication-Results: amazonses.com;
+ spf=pass (spfCheck: domain of digital.trade.gov.uk designates 209.85.208.169 as permitted sender) client-ip=209.85.208.169; envelope-from=some.body@example.com; helo=mail-lj1-f169.google.com;
+ dkim=pass header.i=@digital-trade-gov-uk.20230601.gappssmtp.com;
+ dmarc=pass header.from=digital.trade.gov.uk;
+X-SES-RECEIPT: AEFBQUFBQUFBQUFJNHRFb015UHhGTksxQkp3aXlRTDNmYnZBcEtzd2paNWNlcnhYK0xTVm5hZ2hrc3RFejNmalo0NXhjdmJqSk5rcVNLWHJkcGdlck9WSnkwb3NaeTluYjZEUjhYYU8weUd5aTJ3bmxiSGZIUUlYakx5Y2xwSmtlVmd1UUIzbDBINE5RSnh5S2xzbFVUT25jRFpTa3JkTzFCWFdkNzI2WkF5RXlvb0NJb0Q0aXFaTmVPMmFtK05JbUxrK0FJMVgzTlg5Y051UDVPK0gzdEM3R0FlZkhMTk5YT3kxMzdMbVN0Z29Fc2QvN1pxVEp4THZ5MmhpczRXR2x0ekpVa2R6ZWRXWWlyVzMra05SWUtGeVp2UEZsVTdiVDU3SEoySXlETjBUSERMSUhSczdrWjc5ZXQvblhMYUIrd1J3dUltczl1SGs9
+X-SES-DKIM-SIGNATURE: a=rsa-sha256; q=dns/txt; b=Zau34iOQc3qVcn/Dp+bCMKFULmFEP3rKbz5gGdqEjzWOfCyidvApHkJ4sh+oFrIo2EjeN8aCEHc3jeGJzuxOs7jkaDzLl6O5t2yPR1zz+mnHCNOkURNPs4o1RBJEIl0Ir5t0qEP9pBXtN+ePH6At0l8NdVH7oCJ1Z0umk9+BI1M=; c=relaxed/simple; s=pgxy5mtxzx6eoyytua4nvvg26jbuf6lj; d=amazonses.com; t=1709308739; v=1; bh=kzNR5udgo45YmKYm1FWZ+RZo3BJhH4d79OPcsob2t38=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;
+Received: by mail-lj1-f169.google.com with SMTP id 38308e7fff4ca-2d27184197cso28903821fa.1
+        for <test@support.businessandtrade.gov.uk>; Fri, 01 Mar 2024 07:58:59 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=digital-trade-gov-uk.20230601.gappssmtp.com; s=20230601; t=1709308738; x=1709913538; darn=support.businessandtrade.gov.uk;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=rb9lyf+BQyxisn5aI6hRZ1x/VNYb8g+Xumwa5SH7BrM=;
+        b=GjB3jkuHfmDGZZPNqCjSksgFlr2Fcg4n+Xi/1LRuChcp1WjUgpKzAqCvuW+DyyBoBp
+         1nmdE+ca3En9eYhcrgJ7C7UuZTa7iQQVDLjroZpnYCqu5jnBRuxctUmyOvw9cs6+AQir
+         Q2iCkrdnqCxsxLu6B8sapd8Q81a9ZxsVeqSpapZOfubNdoeNeyLm7gvo4kD0Avw5TYV2
+         YjtQgB0reQC+8A1u4l9yvQLiAf6uasup2FB+12h4uoLwtn3AH0kl9m97xy/0KhehNBWL
+         sPji7/+Du5Y++JkreKsfbjSjH78xQwOxSUZWfh+6Q39Q0OXcBvgAQXmc6vp6cxXL9Xs0
+         CfWQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1709308738; x=1709913538;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=rb9lyf+BQyxisn5aI6hRZ1x/VNYb8g+Xumwa5SH7BrM=;
+        b=udKFFqT/Bwe8L/Zn7SWZqN7tr9Svn4o38LLt4BNQuCx7Az/m3/tUrCPA04BtLG0ttx
+         ZfW0RtQVpDeCev9x0LcVKSx3RToKm4amsjk1Zhv4F+k0Tou8/dczZcRwlnctHO2Q6wm/
+         I4zXTiNcWmcx2+J73/nIixuPKQRM0fe4NNXPWnegizUX+VPFqslHbtbeBKAFJo0jG0a3
+         qhpxyPBBgp12VFuoQjWGX/3qBk3UoslY0hmUJvJzNkrjaQ1VrVxSmReiiKZ08KgkSNs8
+         UQ1kCCPmHRS/BBQBpazS6pwy9qtspj6Wl2Mz3NieXsSvgNcWb3fZZQpXUb+Nlj/kgn2f
+         qucA==
+X-Gm-Message-State: AOJu0YwGgbzju32wqhXUx+fvH7Ihs9iQNQJXwEKedSF0NKwuk8PJdqY7
+	qGeGPFRkAo6wRSfccK0kclnpJArvI5k7pdsiV2GYON9r0Ki6cdxjZJf+s42Y8zKtqcx222Hh0o/
+	Ik0CWmCpX4j52qMUeXEhVIhh+jlswLgO/OU1H6kyZP9HP72IaUJ0kynMwWE0WAEFwsrZFPTjR3h
+	fOhvbmiaPaPYLXsc9T4XtqrPXCGiYLwOf3MVekpqIrpBst/Dzy/Z4=
+X-Google-Smtp-Source: AGHT+IEmErYSX3O8WVeQprwKz3/Zh/19iOfI/cYuVXLqr4Ug2zZMpURWpCVs2YJYOuwrQaFLQVlnoGQ5TGzEymju0sM=
+X-Received: by 2002:a05:651c:b0a:b0:2d2:4487:55c6 with SMTP id
+ b10-20020a05651c0b0a00b002d2448755c6mr2148519ljr.21.1709308737831; Fri, 01
+ Mar 2024 07:58:57 -0800 (PST)
+MIME-Version: 1.0
+From: "Some Body" <some.body@example.com>
+Date: Fri, 1 Mar 2024 15:58:47 +0000
+Message-ID: <CAO5FF6bizsLr_ct1MBQ9HDBmd5Sei8yH_mGv9gQmoJKAb7NUjw@mail.gmail.com>
+Subject: Test plain text email [IN-000123]
+To: test@support.businessandtrade.gov.uk
+Content-Type: text/plain; charset="UTF-8"
+
+Test first paragraph.
+
+Test second paragraph.
+
+Test paragraph 3.
+
+-- 
+Sig
