@@ -73,6 +73,12 @@ class TestParsedEmail:
 
         assert attachment["filename"] == f"attachment-{expected_datetime}.dat"
 
+    def test_is_reply_to_ticket(self, parsed_reply_to_ticket_email):
+        assert parsed_reply_to_ticket_email.reply_to_ticket_id == "123"
+
+    def test_is_not_reply_to_ticket(self, parsed_email):
+        assert parsed_email.reply_to_ticket_id is None
+
 
 class TestNameAndEmail:
     def test_get_sender_name_without_email_address(self, parsed_outlook_email):

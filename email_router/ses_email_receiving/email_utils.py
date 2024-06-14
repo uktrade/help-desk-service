@@ -1,4 +1,5 @@
 import mimetypes
+import re
 from datetime import datetime
 from email import policy
 from email.message import EmailMessage
@@ -17,6 +18,7 @@ class ParsedEmail:
     FALLBACK_DISPLAY_NAME = "unknown"
 
     message: EmailMessage
+    ticket_id_matcher: str = r"\[IN-0*(\d+)]"
 
     def __init__(self, raw_bytes):
         # Parse the email from raw bytes
@@ -87,6 +89,12 @@ class ParsedEmail:
             Also, we could supply a default, maybe?
         """
         return self.message.get("To")
+
+    @property
+    def reply_to_ticket_id(self):
+        if search_result := re.search(self.ticket_id_matcher, self.subject):
+            return search_result.group(1)
+        return None
 
 
 class APIClient:
