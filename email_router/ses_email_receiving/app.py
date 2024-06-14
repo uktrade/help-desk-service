@@ -70,7 +70,7 @@ def lambda_handler(event: SQSEvent, context):
             )
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
-        api_client.create_ticket_from_message(parsed_email)
+        api_client.create_or_update_ticket_from_message(parsed_email)
         emails.append(parsed_email.subject)
 
     output_filename = f"lambda-output/incoming-{iso_utcnow}"

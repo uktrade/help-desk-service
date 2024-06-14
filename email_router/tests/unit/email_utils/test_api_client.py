@@ -204,7 +204,7 @@ class TestAPIClient:
 
     @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.create_ticket")
     @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.upload_attachments")
-    def test_create_ticket_from_message_preforms_uploads_and_creates_tickets(
+    def test_create_ticket_from_message_performs_uploads_and_creates_tickets(
         self, mock_upload_attachments: MagicMock, mock_create_ticket: MagicMock, parsed_email
     ):
         mock_upload_attachments.return_value = [123, 321]
@@ -213,7 +213,41 @@ class TestAPIClient:
         zendesk_token = "test123"
         api_client = APIClient(zendesk_email, zendesk_token)
 
-        api_client.create_ticket_from_message(parsed_email)
+        api_client.create_or_update_ticket_from_message(parsed_email)
 
         mock_upload_attachments.assert_called_once()
         mock_create_ticket.assert_called_once()
+
+    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.create_ticket")
+    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.update_ticket")
+    def test_update_ticket_from_message_does_not_create_ticket(
+        self,
+        _mock_update_ticket: MagicMock,
+        mock_create_ticket: MagicMock,
+        parsed_reply_to_ticket_email,
+    ):
+        mock_create_ticket.return_value = {}
+        zendesk_email = "test@example.com"  # /PS-IGNORE
+        zendesk_token = "test123"
+        api_client = APIClient(zendesk_email, zendesk_token)
+
+        api_client.create_or_update_ticket_from_message(parsed_reply_to_ticket_email)
+
+        mock_create_ticket.assert_not_called()
+
+    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.create_ticket")
+    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.update_ticket")
+    def test_update_ticket_from_message_adds_comment_to_ticket(
+        self,
+        mock_update_ticket: MagicMock,
+        _mock_create_ticket: MagicMock,
+        parsed_reply_to_ticket_email,
+    ):
+        mock_update_ticket.return_value = {}
+        zendesk_email = "test@example.com"  # /PS-IGNORE
+        zendesk_token = "test123"
+        api_client = APIClient(zendesk_email, zendesk_token)
+
+        api_client.create_or_update_ticket_from_message(parsed_reply_to_ticket_email)
+
+        mock_update_ticket.assert_called_once()

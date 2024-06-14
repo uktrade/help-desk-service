@@ -103,9 +103,12 @@ class APIClient:
         # Zenpy requires a subdomain, but this will be overridden by ZENPY_FORCE_NETLOC  /PS-IGNORE
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
-    def create_ticket_from_message(self, message: ParsedEmail):
+    def create_or_update_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
-        zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
+        if ticket_id := message.reply_to_ticket_id:
+            zendesk_response = self.update_ticket(ticket_id, message, upload_tokens)
+        else:
+            zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
         return zendesk_response
 
     def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
@@ -147,4 +150,24 @@ class APIClient:
         )
 
         ticket_audit = self.client.tickets.create(zenpy_ticket)
+        return ticket_audit
+
+    def update_ticket(self, message: ParsedEmail, upload_tokens=None, ticket_id=None):
+        description = message.payload
+
+        zenpy_user = User(
+            email=message.sender_email,
+            name=message.sender_name,
+        )
+        zenpy_comment = Comment(
+            html_body=description,
+            uploads=upload_tokens,
+        )
+        zenpy_ticket = Ticket(
+            id=ticket_id,
+            comment=zenpy_comment,
+            requester=zenpy_user,
+        )
+
+        ticket_audit = self.client.tickets.update(zenpy_ticket)
         return ticket_audit
