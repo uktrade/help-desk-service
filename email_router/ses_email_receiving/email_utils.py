@@ -106,7 +106,7 @@ class APIClient:
     def create_or_update_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
         if ticket_id := message.reply_to_ticket_id:
-            zendesk_response = self.update_ticket(ticket_id, message, upload_tokens)
+            zendesk_response = self.update_ticket(message, upload_tokens, ticket_id)
         else:
             zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
         return zendesk_response
