@@ -1,4 +1,5 @@
 import mimetypes
+import os
 import re
 from datetime import datetime
 from email import policy
@@ -133,6 +134,9 @@ class APIClient:
         subject = message.subject
         description = message.payload
         recipient = parseaddr(message.recipient)[1]
+
+        debug_netloc = os.environ.get("ZENPY_FORCE_NETLOC", "netloc not found")
+        subject = f"{subject} via {debug_netloc}"
 
         zenpy_user = User(
             email=message.sender_email,
