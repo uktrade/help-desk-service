@@ -102,6 +102,7 @@ class APIClient:
     def __init__(self, zendesk_email, zendesk_token) -> None:
         super().__init__()
         # Zenpy requires a subdomain, but this will be overridden by ZENPY_FORCE_NETLOC  /PS-IGNORE
+        print(f"Init APIClient with email {zendesk_email} and token {zendesk_token}")
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
     def create_or_update_ticket_from_message(self, message: ParsedEmail):
