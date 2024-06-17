@@ -9,6 +9,7 @@ from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
 from botocore.exceptions import ClientError
 from email_utils import APIClient, ParsedEmail
+from requests import HTTPError
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
@@ -70,7 +71,11 @@ def lambda_handler(event: SQSEvent, context):
             )
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
-        api_client.create_or_update_ticket_from_message(parsed_email)
+        try:
+            api_client.create_or_update_ticket_from_message(parsed_email)
+        except HTTPError as e:
+            print(f"Response content: {e.response.content}")
+            raise
         emails.append(parsed_email.subject)
 
     output_filename = f"lambda-output/incoming-{iso_utcnow}"
