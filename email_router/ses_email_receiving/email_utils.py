@@ -137,6 +137,7 @@ class APIClient:
 
         debug_netloc = os.environ.get("ZENPY_FORCE_NETLOC", "netloc not found")
         subject = f"{subject} via {debug_netloc}"
+        print(f"Posting with subject {subject}")
 
         zenpy_user = User(
             email=message.sender_email,
