@@ -152,12 +152,12 @@ class HaloManager:
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
-        logger.info(f"HaloManager.update_ticket zendesk_request: {zendesk_request}")
+        logger.warning(f"HaloManager.update_ticket zendesk_request: {zendesk_request}")
         if zendesk_request is None:
             zendesk_request = {}
         halo_payload = ZendeskToHaloUpdateTicketSerializer(zendesk_request)
         updated_ticket = self.client.post(path="Tickets", payload=[halo_payload.data])
-        logger.info(f"HaloManager.update_ticket updated_ticket: {updated_ticket}")
+        logger.warning(f"HaloManager.update_ticket updated_ticket: {updated_ticket}")
         if updated_ticket is None:
             message = f"Could not update ticket with id {zendesk_request['id']}"
             logger.error(message)
@@ -180,11 +180,11 @@ class HaloManager:
         return updated_ticket
 
     def add_comment(self, zendesk_request: dict = None):
-        logger.info(f"HaloManager.add_comment zendesk_request: {zendesk_request}")
+        logger.warning(f"HaloManager.add_comment zendesk_request: {zendesk_request}")
         if zendesk_request is None:
             zendesk_request = {}
         ticket_data = zendesk_request.get("ticket", {})
-        logger.info(f"HaloManager.add_comment ticket_data: {zendesk_request}")
+        logger.warning(f"HaloManager.add_comment ticket_data: {zendesk_request}")
         serializer = ZendeskToHaloCreateCommentSerializer()
         halo_equivalent = serializer.to_representation(ticket_data)
 
