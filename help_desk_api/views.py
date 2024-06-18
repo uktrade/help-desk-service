@@ -1,3 +1,4 @@
+import logging
 from http import HTTPStatus
 
 import sentry_sdk
@@ -21,6 +22,8 @@ from help_desk_api.serializers import (
     HaloToZendeskUploadSerializer,
     HaloToZendeskUserSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class HaloBaseView(UserPassesTestMixin, APIView):
@@ -210,6 +213,7 @@ class SingleTicketView(HaloBaseView):
                 "Ticket ID is required for HTTP PUT request",
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        logger.info(f"SingleTicketView.put with ticket ID {ticket_id}: {request.data}")
         ticket_data = request.data.get("ticket", {})
         comment_data = ticket_data.get("comment", {})
         comment_body = comment_data.get("body", None)
