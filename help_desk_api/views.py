@@ -216,10 +216,13 @@ class SingleTicketView(HaloBaseView):
         logger.info(f"SingleTicketView.put with ticket ID {ticket_id}: {request.data}")
         ticket_data = request.data.get("ticket", {})
         comment_data = ticket_data.get("comment", {})
-        comment_body = comment_data.get("body", None)
+        comment_body = comment_data.get("body", comment_data.get("html_body", None))
         if comment_body is not None:
             # Halo adds comments differently to Zendesk
             halo_response = self.halo_manager.add_comment(request.data)
+            logger.warning(
+                f"SingleTicketView.put with ticket ID {ticket_id} Halo response: {halo_response}"
+            )
             serializer = HaloToZendeskTicketCommentSerializer(halo_response)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
