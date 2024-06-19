@@ -147,6 +147,7 @@ class APIClient:
         zenpy_comment = Comment(
             html_body=description,
             uploads=upload_tokens,
+            public=True,
         )
         zenpy_ticket = Ticket(
             subject=subject,
@@ -168,6 +169,7 @@ class APIClient:
         zenpy_comment = Comment(
             html_body=description,
             uploads=upload_tokens,
+            public=True,
         )
         zenpy_ticket = Ticket(
             id=ticket_id,
