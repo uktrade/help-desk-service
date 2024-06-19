@@ -65,6 +65,7 @@ class TestAPIClient:
         expected_comment_kwargs = {
             "html_body": parsed_email_sans_attachments.payload,
             "uploads": None,
+            "public": True,
         }
 
         api_client.create_ticket(parsed_email_sans_attachments)
@@ -90,7 +91,7 @@ class TestAPIClient:
         zendesk_token = "test123"
         api_client = APIClient(zendesk_email, zendesk_token)
         expected_ticket_kwargs = {
-            "subject": parsed_email_sans_attachments.subject,
+            "subject": f"{parsed_email_sans_attachments.subject} via netloc not found",
             "comment": mock_comment.return_value,
             "requester": mock_user.return_value,
             "recipient": parseaddr(parsed_email_sans_attachments.recipient)[1],
