@@ -187,6 +187,7 @@ class HaloManager:
         logger.warning(f"HaloManager.add_comment ticket_data: {zendesk_request}")
         serializer = ZendeskToHaloCreateCommentSerializer()
         halo_equivalent = serializer.to_representation(ticket_data)
+        logger.warning(f"HaloManager.add_comment halo_equivalent: {halo_equivalent}")
 
         halo_response = self.client.post("Actions", payload=[halo_equivalent])
         return halo_response
