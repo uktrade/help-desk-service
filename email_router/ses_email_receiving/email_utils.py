@@ -161,6 +161,7 @@ class APIClient:
 
     def update_ticket(self, message: ParsedEmail, upload_tokens=None, ticket_id=None):
         description = message.payload
+        recipient = parseaddr(message.recipient)[1]
 
         zenpy_user = User(
             email=message.sender_email,
@@ -175,6 +176,7 @@ class APIClient:
             id=ticket_id,
             comment=zenpy_comment,
             requester=zenpy_user,
+            recipient=recipient,
         )
 
         ticket_audit = self.client.tickets.update(zenpy_ticket)
