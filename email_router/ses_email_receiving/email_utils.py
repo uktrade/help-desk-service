@@ -1,4 +1,6 @@
 import mimetypes
+import os
+import re
 from datetime import datetime
 from email import policy
 from email.message import EmailMessage
@@ -17,6 +19,7 @@ class ParsedEmail:
     FALLBACK_DISPLAY_NAME = "unknown"
 
     message: EmailMessage
+    ticket_id_matcher: str = r"\[IN-0*(\d+)]"
 
     def __init__(self, raw_bytes):
         # Parse the email from raw bytes
@@ -88,16 +91,26 @@ class ParsedEmail:
         """
         return self.message.get("To")
 
+    @property
+    def reply_to_ticket_id(self):
+        if search_result := re.search(self.ticket_id_matcher, self.subject):
+            return search_result.group(1)
+        return None
+
 
 class APIClient:
     def __init__(self, zendesk_email, zendesk_token) -> None:
         super().__init__()
         # Zenpy requires a subdomain, but this will be overridden by ZENPY_FORCE_NETLOC  /PS-IGNORE
+        print(f"Init APIClient with email {zendesk_email} and token {zendesk_token}")
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
-    def create_ticket_from_message(self, message: ParsedEmail):
+    def create_or_update_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
-        zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
+        if ticket_id := message.reply_to_ticket_id:
+            zendesk_response = self.update_ticket(message, upload_tokens, ticket_id)
+        else:
+            zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
         return zendesk_response
 
     def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
@@ -123,6 +136,10 @@ class APIClient:
         description = message.payload
         recipient = parseaddr(message.recipient)[1]
 
+        debug_netloc = os.environ.get("ZENPY_FORCE_NETLOC", "netloc not found")
+        subject = f"{subject} via {debug_netloc}"
+        print(f"Posting with subject {subject}")
+
         zenpy_user = User(
             email=message.sender_email,
             name=message.sender_name,
@@ -130,6 +147,7 @@ class APIClient:
         zenpy_comment = Comment(
             html_body=description,
             uploads=upload_tokens,
+            public=True,
         )
         zenpy_ticket = Ticket(
             subject=subject,
@@ -139,4 +157,27 @@ class APIClient:
         )
 
         ticket_audit = self.client.tickets.create(zenpy_ticket)
+        return ticket_audit
+
+    def update_ticket(self, message: ParsedEmail, upload_tokens=None, ticket_id=None):
+        description = message.payload
+        recipient = parseaddr(message.recipient)[1]
+
+        zenpy_user = User(
+            email=message.sender_email,
+            name=message.sender_name,
+        )
+        zenpy_comment = Comment(
+            html_body=description,
+            uploads=upload_tokens,
+            public=True,
+        )
+        zenpy_ticket = Ticket(
+            id=ticket_id,
+            comment=zenpy_comment,
+            requester=zenpy_user,
+            recipient=recipient,
+        )
+
+        ticket_audit = self.client.tickets.update(zenpy_ticket)
         return ticket_audit

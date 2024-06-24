@@ -40,7 +40,7 @@ class HaloTicketIDFromZendeskField(serializers.IntegerField):
 class HaloNoteFromZendeskField(serializers.CharField):
     def get_attribute(self, instance):
         comment_data = instance.get("comment", {})
-        body = comment_data.get("body", None)
+        body = comment_data.get("body", comment_data.get("html_body", None))
         body_html = markdown.markdown(body)
         return body_html
 
@@ -61,21 +61,6 @@ class HaloOutcomeFromZendeskField(serializers.CharField):
             return None
         is_public = comment_data.get("public", False)
         return "Public Note" if is_public else self.default
-
-
-class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
-    """
-    Zendesk Comments Serializer
-    """
-
-    ticket_id = HaloTicketIDFromZendeskField()
-    note_html = HaloNoteFromZendeskField()
-    hiddenfromuser = HaloHiddenFromUserFromZendeskField()
-    outcome = HaloOutcomeFromZendeskField(default="Private Note")
-
-    def to_representation(self, data):
-        # This override is just here as a place to add a breakpoint
-        return super().to_representation(data)
 
 
 class ZendeskToHaloUpdateCommentSerializer(serializers.Serializer):
@@ -335,16 +320,6 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
             "id": data.get("id", ""),
         }
         return super().to_representation(zendesk_data)
-
-
-class ZendeskCommentToHaloField(serializers.Field):
-    serializers = [ZendeskToHaloCreateCommentSerializer]
-
-    def get_attribute(self, instance):
-        return instance.get("comment", None)
-
-    def to_representation(self, value):
-        return value
 
 
 class HaloSummaryFromZendeskField(serializers.CharField):
@@ -811,3 +786,31 @@ class HaloToZendeskUploadSerializer(serializers.Serializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         return {"upload": representation}
+
+
+class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
+    """
+    Zendesk Comments Serializer
+    """
+
+    ticket_id = HaloTicketIDFromZendeskField()
+    note_html = HaloNoteFromZendeskField()
+    hiddenfromuser = HaloHiddenFromUserFromZendeskField()
+    outcome = HaloOutcomeFromZendeskField(default="Private Note")
+    emailfrom = HaloUserEmailFromZendeskRequesterField(required=False)
+
+    def to_representation(self, data):
+        representation = super().to_representation(data)
+        if representation.get("emailfrom", None) is None:
+            representation.pop("emailfrom")
+        return representation
+
+
+class ZendeskCommentToHaloField(serializers.Field):
+    serializers = [ZendeskToHaloCreateCommentSerializer]
+
+    def get_attribute(self, instance):
+        return instance.get("comment", None)
+
+    def to_representation(self, value):
+        return value
