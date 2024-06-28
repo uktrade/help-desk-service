@@ -8,6 +8,7 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import parseaddr
 
+import requests
 from markdown import markdown
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Comment, Ticket, User
@@ -196,3 +197,50 @@ class MicroserviceAPIClient(BaseAPIClient):
 
         ticket_audit = self.client.tickets.update(zenpy_ticket)
         return ticket_audit
+
+
+class HaloClientNotFoundException(Exception):
+    pass
+
+
+class HaloAPIClient(BaseAPIClient):
+    halo_token = None
+
+    def __init__(self, halo_subdomain, halo_client_id, halo_client_secret) -> None:
+        super().__init__()
+        self.halo_token = self.__authenticate(
+            halo_subdomain=halo_subdomain,
+            halo_client_id=halo_client_id,
+            halo_client_secret=halo_client_secret,
+        )
+
+    def __authenticate(self, halo_subdomain, halo_client_id, halo_client_secret):
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": halo_client_id,
+            "client_secret": halo_client_secret,
+            "scope": "all",
+        }
+        response = requests.post(
+            f"https://{halo_subdomain}.haloitsm.com/auth/token",  # /PS-IGNORE
+            data=data,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+            },
+        )
+        if response.status_code != 200:
+            message = f"{response.status_code} response from Halo auth endpoint"  # /PS-IGNORE
+            raise HaloClientNotFoundException(message)
+
+        response_data = response.json()
+        return response_data["access_token"]
+
+    def upload_attachment(self, payload, target_name, content_type):
+        pass
+
+    def create_ticket(self, message, upload_tokens):
+        pass
+
+    def update_ticket(self, message, upload_tokens, ticket_id):
+        pass
