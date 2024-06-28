@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import re
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from email import policy
 from email.message import EmailMessage
@@ -98,7 +99,29 @@ class ParsedEmail:
         return None
 
 
-class APIClient:
+class BaseAPIClient(metaclass=ABCMeta):
+    @abstractmethod
+    def create_or_update_ticket_from_message(self, message):
+        pass
+
+    @abstractmethod
+    def upload_attachment(self, payload, target_name, content_type):
+        pass
+
+    @abstractmethod
+    def upload_attachments(self, attachments):
+        pass
+
+    @abstractmethod
+    def create_ticket(self, message, upload_tokens):
+        pass
+
+    @abstractmethod
+    def update_ticket(self, message, upload_tokens, ticket_id):
+        pass
+
+
+class MicroserviceAPIClient(BaseAPIClient):
     def __init__(self, zendesk_email, zendesk_token) -> None:
         super().__init__()
         # Zenpy requires a subdomain, but this will be overridden by ZENPY_FORCE_NETLOC  /PS-IGNORE

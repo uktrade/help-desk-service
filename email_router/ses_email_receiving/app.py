@@ -8,10 +8,12 @@ import boto3
 from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
 from botocore.exceptions import ClientError
-from email_utils import APIClient, ParsedEmail
+from email_utils import MicroserviceAPIClient, ParsedEmail
 from requests import HTTPError
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
+
+USE_MICROSERVICE_DEFAULT = True
 
 
 @event_source(data_class=SQSEvent)
@@ -26,7 +28,7 @@ def lambda_handler(event: SQSEvent, context):
     s3 = boto3.client("s3")
     raw_records = event.raw_event.get("Records", [])
     first_record = raw_records[0] if raw_records else {}
-    record_body = json.loads(first_record.get("body", {}))
+    record_body = json.loads(first_record.get("body", "{}"))
     record_type = record_body.get("Event", None)
     if record_type == "s3:TestEvent":  # /PS-IGNORE
         bucket_name = "dbt-help-desk-incoming-mail"
@@ -37,10 +39,14 @@ def lambda_handler(event: SQSEvent, context):
         )
         return
 
-    api_client = APIClient(
-        zendesk_email=parameters["ZENDESK_EMAIL"],
-        zendesk_token=parameters["ZENDESK_TOKEN"],
-    )
+    use_microservice = os.environ.get("USE_MICROSERVICE", USE_MICROSERVICE_DEFAULT)
+    if use_microservice:
+        api_client = MicroserviceAPIClient(
+            zendesk_email=parameters["ZENDESK_EMAIL"],
+            zendesk_token=parameters["ZENDESK_TOKEN"],
+        )
+    else:
+        pass
 
     emails = []
     s3_events = []
@@ -62,7 +68,7 @@ def lambda_handler(event: SQSEvent, context):
         bucket_name = s3_event.bucket_name
         object_key = unquote_plus(s3_event.object_key)
         try:
-            email_content = get_email_from_bucket(bucket_name, object_key)
+            email_content = get_email_from_bucket(s3, bucket_name, object_key)
         except ClientError:
             # This happens if access is denied, e.g. if the object has been deleted
             # If we ignore it, the queue message will then be discarded
@@ -78,12 +84,20 @@ def lambda_handler(event: SQSEvent, context):
             raise
         emails.append(parsed_email.subject)
 
-    output_filename = f"lambda-output/incoming-{iso_utcnow}"
-
     status = {
         "statusCode": 200,
     }
 
+    save_debug_data_to_s3(
+        s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
+    )
+    return status
+
+
+def save_debug_data_to_s3(
+    s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
+):
+    output_filename = f"lambda-output/incoming-{iso_utcnow}"
     logged_output = {
         "status": status,
         "session_token": aws_session_token,
@@ -95,8 +109,6 @@ def lambda_handler(event: SQSEvent, context):
         "s3_events": s3_events,
         "unexpected_events": unexpected_events,
     }
-
-    s3 = boto3.client("s3")
     if not bucket_name:
         bucket_name = "dbt-help-desk-incoming-mail"
     s3.put_object(
@@ -104,11 +116,9 @@ def lambda_handler(event: SQSEvent, context):
         Key=output_filename,
         Body=json.dumps(logged_output, indent=4),
     )
-    return status
 
 
-def get_email_from_bucket(bucket_name, object_key):
-    s3 = boto3.client("s3")
+def get_email_from_bucket(s3, bucket_name, object_key):
     response = s3.get_object(Bucket=bucket_name, Key=object_key)
     content = response["Body"]
     return content
