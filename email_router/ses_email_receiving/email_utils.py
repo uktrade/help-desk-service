@@ -100,16 +100,28 @@ class ParsedEmail:
 
 
 class BaseAPIClient(metaclass=ABCMeta):
-    @abstractmethod
-    def create_or_update_ticket_from_message(self, message):
-        pass
+    def create_or_update_ticket_from_message(self, message: ParsedEmail):
+        upload_tokens = self.upload_attachments(message.attachments)
+        if ticket_id := message.reply_to_ticket_id:
+            response = self.update_ticket(message, upload_tokens, ticket_id)
+        else:
+            response = self.create_ticket(message, upload_tokens=upload_tokens)
+        return response
+
+    def upload_attachments(self, attachments):
+        upload_tokens = []
+        for attachment in attachments:
+            payload = attachment["payload"]
+            filename = attachment["filename"]
+            content_type = attachment["content_type"]
+            upload = self.upload_attachment(
+                payload=payload, target_name=filename, content_type=content_type
+            )
+            upload_tokens.append(upload.token)
+        return upload_tokens
 
     @abstractmethod
     def upload_attachment(self, payload, target_name, content_type):
-        pass
-
-    @abstractmethod
-    def upload_attachments(self, attachments):
         pass
 
     @abstractmethod
@@ -128,31 +140,11 @@ class MicroserviceAPIClient(BaseAPIClient):
         print(f"Init APIClient with email {zendesk_email} and token {zendesk_token}")
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
-    def create_or_update_ticket_from_message(self, message: ParsedEmail):
-        upload_tokens = self.upload_attachments(message.attachments)
-        if ticket_id := message.reply_to_ticket_id:
-            zendesk_response = self.update_ticket(message, upload_tokens, ticket_id)
-        else:
-            zendesk_response = self.create_ticket(message, upload_tokens=upload_tokens)
-        return zendesk_response
-
     def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
         upload = self.client.attachments.upload(
             payload, target_name=target_name, content_type=content_type
         )
         return upload
-
-    def upload_attachments(self, attachments):
-        upload_tokens = []
-        for attachment in attachments:
-            payload = attachment["payload"]
-            filename = attachment["filename"]
-            content_type = attachment["content_type"]
-            upload = self.upload_attachment(
-                payload=payload, target_name=filename, content_type=content_type
-            )
-            upload_tokens.append(upload.token)
-        return upload_tokens
 
     def create_ticket(self, message: ParsedEmail, upload_tokens=None):
         subject = message.subject
