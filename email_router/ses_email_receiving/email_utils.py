@@ -1,3 +1,5 @@
+import base64
+import json
 import mimetypes
 import os
 import re
@@ -7,9 +9,11 @@ from email import policy
 from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import parseaddr
+from http import HTTPStatus
 
 import requests
 from markdown import markdown
+from requests import HTTPError, Response
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Comment, Ticket, User
 
@@ -208,13 +212,13 @@ class HaloAPIClient(BaseAPIClient):
 
     def __init__(self, halo_subdomain, halo_client_id, halo_client_secret) -> None:
         super().__init__()
+        self.halo_subdomain = halo_subdomain
         self.halo_token = self.__authenticate(
-            halo_subdomain=halo_subdomain,
             halo_client_id=halo_client_id,
             halo_client_secret=halo_client_secret,
         )
 
-    def __authenticate(self, halo_subdomain, halo_client_id, halo_client_secret):
+    def __authenticate(self, halo_client_id, halo_client_secret):
         data = {
             "grant_type": "client_credentials",
             "client_id": halo_client_id,
@@ -222,7 +226,7 @@ class HaloAPIClient(BaseAPIClient):
             "scope": "all",
         }
         response = requests.post(
-            f"https://{halo_subdomain}.haloitsm.com/auth/token",  # /PS-IGNORE
+            f"https://{self.halo_subdomain}.haloitsm.com/auth/token",  # /PS-IGNORE
             data=data,
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -236,11 +240,68 @@ class HaloAPIClient(BaseAPIClient):
         response_data = response.json()
         return response_data["access_token"]
 
+    class Upload:
+
+        def __init__(self, token=None):
+            super().__init__()
+            if token is None:
+                raise ValueError("Upload must have a token")
+            self.token = token
+
     def upload_attachment(self, payload, target_name, content_type):
-        pass
+        file_content_base64 = base64.b64encode(payload).decode("ascii")  # /PS-IGNORE
+        base64_payload = f"data:{content_type};base64,{file_content_base64}"  # noqa: E231,E702
+        halo_attachment_payload = [
+            {
+                "filename": target_name,
+                "isimage": content_type.startswith("image"),
+                "data_base64": base64_payload,  # /PS-IGNORE
+            }
+        ]
+        response: Response = requests.post(
+            f"https://{self.halo_subdomain}.haloitsm.com/api/Attachment",
+            data=json.dumps(halo_attachment_payload),
+            headers={
+                "Authorization": f"Bearer {self.halo_token}",
+                "Content-Type": "application/json",
+            },
+        )
+
+        if response.status_code != HTTPStatus.CREATED:
+            raise HTTPError(f"{response.status_code} response for attachmnent upload")
+        response_content = response.json()
+        return HaloAPIClient.Upload(token=response_content["id"])
 
     def create_ticket(self, message, upload_tokens):
-        pass
+        request_data = self.halo_request_data_from_message(message)
+        response = requests.post(
+            f"https://{self.halo_subdomain}.haloitsm.com/api/Tickets",  # /PS-IGNORE
+            data=request_data,
+            headers={
+                "Authorization": f"Bearer {self.halo_token}",
+                "Content-Type": "application/json",
+            },
+        )
+        if response.status_code != HTTPStatus.CREATED:
+            raise HTTPError(f"{response.status_code} response for attachmnent upload")
+        return response.json()
 
     def update_ticket(self, message, upload_tokens, ticket_id):
         pass
+
+    def halo_request_data_from_message(self, message: ParsedEmail, upload_tokens=None):
+        request_data = {
+            "summary": message.subject,
+            "details_html": message.payload,
+            "users_name": message.sender_name,
+            "reportedby": message.sender_email,
+            "tickettype_id": 36,
+            "dont_do_rules": False,
+            "customfields": [{"name": "CFEmailToAddress", "value": message.recipient}],
+        }
+        if upload_tokens is not None:
+            attachments = [{"id": upload_token} for upload_token in upload_tokens]
+            request_data["attachments"] = attachments
+        return [
+            request_data,
+        ]

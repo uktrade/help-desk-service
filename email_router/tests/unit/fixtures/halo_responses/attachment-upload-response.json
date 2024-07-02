@@ -1,0 +1,22 @@
+{
+    "third_party_id": "",
+    "content_type": "text/plain",
+    "id": 2967,
+    "filename": "short-text.txt",
+    "datecreated": "2024-07-02T08:31:38.7600102Z",
+    "note": "",
+    "filesize": 20,
+    "type": 0,
+    "unique_id": 0,
+    "desc": "short-text.txt",
+    "isimage": false,
+    "data": "Tm93IGlzIHRoZSB3aW50ZXLigKY=",
+    "ticket_id": 0,
+    "action_id": 0,
+    "user_id": -1,
+    "agent_id": 3,
+    "guid": "35216eb1-da89-4e87-9fdd-03172beaf229",
+    "showforusers": false,
+    "showonchild": false,
+    "showonrelated": false
+}

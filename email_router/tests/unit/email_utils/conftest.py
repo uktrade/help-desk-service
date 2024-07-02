@@ -1,5 +1,14 @@
+import json  # noqa: F401 - flake8 is complaining about imports used within fixtures
+from http import HTTPStatus  # noqa: F401
+from unittest import mock  # noqa: F401
+from unittest.mock import Mock  # noqa: F401
+
 import pytest
-from email_router.ses_email_receiving.email_utils import ParsedEmail
+from email_router.ses_email_receiving.email_utils import (  # noqa: F401
+    HaloAPIClient,
+    ParsedEmail,
+)
+from requests import Response  # noqa: F401
 
 
 @pytest.fixture()
@@ -43,6 +52,17 @@ def email_sans_attachments_bytes():
 @pytest.fixture()
 def parsed_email_sans_attachments(email_sans_attachments_bytes):
     return ParsedEmail(raw_bytes=email_sans_attachments_bytes)
+
+
+@pytest.fixture()
+def email_single_attachment_bytes():
+    with open("email_router/tests/unit/fixtures/emails/inline-attachment-only.txt", "rb") as file:
+        yield file
+
+
+@pytest.fixture()
+def parsed_email_single_attachment(email_single_attachment_bytes):
+    return ParsedEmail(raw_bytes=email_single_attachment_bytes)
 
 
 @pytest.fixture()

@@ -8,7 +8,7 @@ import boto3
 from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
 from botocore.exceptions import ClientError
-from email_utils import MicroserviceAPIClient, ParsedEmail
+from email_utils import HaloAPIClient, MicroserviceAPIClient, ParsedEmail
 from requests import HTTPError
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
@@ -46,7 +46,10 @@ def lambda_handler(event: SQSEvent, context):
             zendesk_token=parameters["ZENDESK_TOKEN"],
         )
     else:
-        pass
+        api_client = HaloAPIClient(
+            halo_client_id=parameters["HALO_CLIENT_ID"],
+            halo_client_secret=parameters["HALO_CLIENT_TOKEN"],
+        )
 
     emails = []
     s3_events = []
