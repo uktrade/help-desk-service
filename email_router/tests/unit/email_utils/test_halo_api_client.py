@@ -215,13 +215,14 @@ class TestHaloAPIClientTicketRequestData:
 class TestHaloAPIClientCreateTicket:
 
     def test_halo_client_posts_message_as_ticket(
-        self, mock_post: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        mock_post: MagicMock,
+        halo_create_ticket_response,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
         halo_subdomain = halo_api_client.halo_subdomain
-        expected_ticket_id = 1234
-        mock_post.return_value = {
-            "id": expected_ticket_id,
-        }
+        mock_post.return_value = halo_create_ticket_response
         expected_url = f"https://{halo_subdomain}.haloitsm.com/api/Tickets"
         expected_ticket_data = halo_api_client.halo_request_data_from_message(
             parsed_plain_text_email
@@ -312,7 +313,49 @@ class TestHaloAPIClientTicketAttachments:
     "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate"
 )
 class TestHaloAPIClientUpdateTicket:
-    pass
+    @mock.patch("email_router.ses_email_receiving.email_utils.HaloAPIClient.update_ticket")
+    def test_reply_to_ticket_delegates_to_update_ticket(
+        self,
+        mock_update_ticket: MagicMock,
+        _mock_authenticate: MagicMock,
+        _mock_post: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_reply_to_ticket_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        halo_api_client.create_or_update_ticket_from_message(parsed_reply_to_ticket_email)
+
+        mock_update_ticket.assert_called_once()
+
+    def test_update_ticket_makes_correct_halo_request(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_reply_to_ticket_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        halo_subdomain = halo_api_client.halo_subdomain
+        expected_url = f"https://{halo_subdomain}.haloitsm.com/api/Tickets"
+        expected_ticket_id = parsed_reply_to_ticket_email.reply_to_ticket_id
+        expected_ticket_data = halo_api_client.halo_request_data_from_message(
+            parsed_reply_to_ticket_email, upload_tokens=[], ticket_id=expected_ticket_id
+        )
+        expected_headers = {
+            "Authorization": f"Bearer {halo_api_client.halo_token}",
+            "Content-Type": "application/json",
+        }
+        expected_kwargs = {
+            "data": expected_ticket_data,
+            "headers": expected_headers,
+        }
+
+        halo_api_client.update_ticket(
+            parsed_reply_to_ticket_email, [], parsed_reply_to_ticket_email.reply_to_ticket_id
+        )
+
+        mock_post.assert_called_once_with(expected_url, **expected_kwargs)
 
     # @skip("TODO")
     # @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")

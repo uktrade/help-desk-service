@@ -268,12 +268,18 @@ class HaloAPIClient(BaseAPIClient):
         )
 
         if response.status_code != HTTPStatus.CREATED:
-            raise HTTPError(f"{response.status_code} response for attachmnent upload")
+            raise HTTPError(f"{response.status_code} response for attachment upload")
         response_content = response.json()
         return HaloAPIClient.Upload(token=response_content["id"])
 
     def create_ticket(self, message, upload_tokens):
-        request_data = self.halo_request_data_from_message(message)
+        request_data = self.halo_request_data_from_message(message, upload_tokens=upload_tokens)
+        response = self.post_halo_ticket(request_data)
+        if response.status_code != HTTPStatus.CREATED:
+            raise HTTPError(f"{response.status_code} response for create ticket")
+        return response.json()
+
+    def post_halo_ticket(self, request_data):
         response = requests.post(
             f"https://{self.halo_subdomain}.haloitsm.com/api/Tickets",  # /PS-IGNORE
             data=request_data,
@@ -282,14 +288,20 @@ class HaloAPIClient(BaseAPIClient):
                 "Content-Type": "application/json",
             },
         )
-        if response.status_code != HTTPStatus.CREATED:
-            raise HTTPError(f"{response.status_code} response for attachmnent upload")
-        return response.json()
+        return response
 
     def update_ticket(self, message, upload_tokens, ticket_id):
-        pass
+        request_data = self.halo_request_data_from_message(
+            message, upload_tokens=upload_tokens, ticket_id=ticket_id
+        )
+        response = self.post_halo_ticket(request_data)
+        if response.status_code != HTTPStatus.CREATED:
+            raise HTTPError(f"{response.status_code} response for update ticket")
+        return response.json()
 
-    def halo_request_data_from_message(self, message: ParsedEmail, upload_tokens=None):
+    def halo_request_data_from_message(
+        self, message: ParsedEmail, upload_tokens=None, ticket_id=None
+    ):
         request_data = {
             "summary": message.subject,
             "details_html": message.payload,
@@ -299,9 +311,11 @@ class HaloAPIClient(BaseAPIClient):
             "dont_do_rules": False,
             "customfields": [{"name": "CFEmailToAddress", "value": message.recipient}],
         }
-        if upload_tokens is not None:
+        if upload_tokens:
             attachments = [{"id": upload_token} for upload_token in upload_tokens]
             request_data["attachments"] = attachments
+        if ticket_id is not None:
+            request_data["id"] = ticket_id
         return [
             request_data,
         ]
