@@ -1,26 +1,20 @@
 import json
-import logging
 import os
 from datetime import datetime
 from json import JSONDecodeError
 from urllib.parse import unquote_plus
 
 import boto3
+from aws_lambda_powertools.logging.logger import Logger
 from aws_lambda_powertools.utilities.data_classes import S3Event, event_source
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQSRecord
+from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
 from email_utils import HaloAPIClient, MicroserviceAPIClient, ParsedEmail
 from requests import HTTPError
 
-default_log_args = {
-    "level": logging.DEBUG if os.environ.get("DEBUG", False) else logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    # "datefmt": "%d-%b-%y %H:%M",
-    "force": True,
-}
-
-logging.basicConfig(**default_log_args)
-logger = logging.getLogger("Email-Lambda")
+logger: Logger = Logger()
+logger.setLevel("DEBUG" if os.environ.get("DEBUG", False) else "INFO")
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
@@ -28,7 +22,7 @@ USE_MICROSERVICE_DEFAULT = True
 
 
 @event_source(data_class=SQSEvent)
-def lambda_handler(event: SQSEvent, context):
+def lambda_handler(event: SQSEvent, context: LambdaContext):
     """
     Note: values written to the S3 bucket are for logging and debugging purposes
     and that code will be removed when the function is deemed stable.
@@ -36,7 +30,7 @@ def lambda_handler(event: SQSEvent, context):
     iso_utcnow = get_iso_utcnow()
     parameters = get_parameters()
 
-    logger.info(f"Lambda invocation at {iso_utcnow}")
+    logger.info("Lambda invocation")
 
     s3 = boto3.client("s3")
     record_type = get_raw_record_type(event)
@@ -77,7 +71,13 @@ def lambda_handler(event: SQSEvent, context):
         except ClientError:
             # This happens if access is denied, e.g. if the object has been deleted
             # If we ignore it, the queue message will then be discarded
-            logger.warning(f"ClientError retrieving S3 object {bucket_name}:{object_key}")
+            logger.warning(
+                "ClientError retrieving S3 object",
+                extra={
+                    "bucket_name": bucket_name,
+                    "object_key": object_key,
+                },
+            )
             unexpected_events.append(
                 {"problem": "ClientError", "event": event.raw_event}  # /PS-IGNORE
             )
@@ -87,10 +87,18 @@ def lambda_handler(event: SQSEvent, context):
             logger.info("Creating or updating ticket")
             api_client.create_or_update_ticket_from_message(parsed_email)
         except HTTPError as e:
-            logger.error(f"HTTPError: Response content: {e.response.content}")
+            logger.error(
+                "HTTPError in lambda_handler", extra={"response_content": e.response.content}
+            )
             raise
         except AttributeError:
-            logger.warning(f"Attribute Error for email f{object_key}")
+            logger.warning(
+                "AttributeError for email",
+                extra={
+                    "bucket_name": bucket_name,
+                    "object_key": object_key,
+                },
+            )
         emails.append(parsed_email.subject)
 
     status = {
@@ -176,5 +184,5 @@ def get_parameters():
     ]:
         parameter = ssm_client.get_parameter(Name=name, WithDecryption=True)
         parameters[name] = parameter["Parameter"]["Value"]  # /PS-IGNORE
-    logger.debug(f"get_parameters: {parameters}")
+    logger.debug("get_parameters", extra={"parameters": parameters})
     return parameters

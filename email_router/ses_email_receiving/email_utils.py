@@ -1,6 +1,5 @@
 import base64
 import json
-import logging
 import mimetypes
 import os
 import re
@@ -13,12 +12,14 @@ from email.utils import parseaddr
 from http import HTTPStatus
 
 import requests
+from aws_lambda_powertools.logging.logger import Logger
 from markdown import markdown
 from requests import HTTPError, Response
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Comment, Ticket, User
 
-logger = logging.getLogger("Email-Lambda")
+logger: Logger = Logger()
+logger.setLevel("DEBUG" if os.environ.get("DEBUG", False) else "INFO")
 
 
 class ParsedEmail:
@@ -111,13 +112,16 @@ class BaseAPIClient(metaclass=ABCMeta):
     def create_or_update_ticket_from_message(self, message: ParsedEmail):
         upload_tokens = self.upload_attachments(message.attachments)
         if ticket_id := message.reply_to_ticket_id:
-            logger.info(f"Updating ticket {ticket_id}")
+            logger.info("Updating ticket", extra={"ticket_id": ticket_id})
             response = self.update_ticket(message, upload_tokens, ticket_id)
         else:
             logger.info(
-                f"Creating ticket {message.subject} "
-                f"from {message.sender_email} "
-                f"to {message.recipient}"
+                f"Creating ticket {message.subject} ",
+                extra={
+                    "subject": message.subject,
+                    "from": message.sender_email,
+                    "to": message.recipient,
+                },
             )
             response = self.create_ticket(message, upload_tokens=upload_tokens)
         return response
@@ -157,7 +161,13 @@ class MicroserviceAPIClient(BaseAPIClient):
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
     def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
-        logger.info(f"Uploading attachment {target_name} of type {content_type}")
+        logger.info(
+            "Uploading attachment",
+            extra={
+                "attachment_filename": target_name,
+                "content_type": content_type,
+            },
+        )
         upload = self.client.attachments.upload(
             payload, target_name=target_name, content_type=content_type
         )
@@ -170,7 +180,7 @@ class MicroserviceAPIClient(BaseAPIClient):
 
         debug_netloc = os.environ.get("ZENPY_FORCE_NETLOC", "netloc not found")
         subject = f"{subject} via {debug_netloc}"
-        logger.info(f"Creating ticket with subject {subject}")
+        logger.info("Creating ticket", extra={"subject": subject})
 
         zenpy_user = User(
             email=message.sender_email,
@@ -192,7 +202,7 @@ class MicroserviceAPIClient(BaseAPIClient):
         return ticket_audit
 
     def update_ticket(self, message: ParsedEmail, upload_tokens=None, ticket_id=None):
-        logger.info(f"Updating ticket with ID {ticket_id}")
+        logger.info("Updating ticket", extra={"ticket_id": ticket_id})
         description = message.payload
         recipient = parseaddr(message.recipient)[1]
 
@@ -226,9 +236,12 @@ class HaloAPIClient(BaseAPIClient):
     def __init__(self, halo_subdomain, halo_client_id, halo_client_secret) -> None:
         super().__init__()
         logger.debug(
-            f"Init HaloAPIClient for {halo_subdomain} "
-            f"with ID {halo_client_id} "
-            f"and secret {halo_client_secret}"
+            "Init HaloAPIClient",
+            extra={
+                "halo_subdomain": halo_subdomain,
+                "halo_client_id": halo_client_id,
+                "halo_client_secret": halo_client_secret,
+            },
         )
         self.halo_subdomain = halo_subdomain
         self.halo_token = self.__authenticate(
@@ -253,7 +266,12 @@ class HaloAPIClient(BaseAPIClient):
         )
         if response.status_code != 200:
             error_message = f"{response.status_code} response from Halo auth endpoint"  # /PS-IGNORE
-            logger.error(f"Halo authentication error: {error_message}")
+            logger.error(
+                "Halo authentication error",
+                extra={
+                    "status_code": response.status_code,
+                },
+            )
             raise HaloClientNotFoundException(error_message)
 
         response_data = response.json()
@@ -269,7 +287,13 @@ class HaloAPIClient(BaseAPIClient):
             self.token = token
 
     def upload_attachment(self, payload, target_name, content_type):
-        logger.info(f"Uploading attachment {target_name} of type {content_type}")
+        logger.info(
+            "Uploading attachment",
+            extra={
+                "attachment_filename": target_name,
+                "content_type": content_type,
+            },
+        )
         file_content_base64 = base64.b64encode(payload).decode("ascii")  # /PS-IGNORE
         base64_payload = f"data:{content_type};base64,{file_content_base64}"  # noqa: E231,E702
         halo_attachment_payload = [
@@ -296,7 +320,7 @@ class HaloAPIClient(BaseAPIClient):
         return HaloAPIClient.Upload(token=response_content["id"])
 
     def create_ticket(self, message, upload_tokens):
-        logger.info(f"Creating ticket with subject {message.subject}")
+        logger.info("Creating ticket", extra={"subject": message.subject})
         request_data = self.halo_request_data_from_message(message, upload_tokens=upload_tokens)
         response = self.post_halo_ticket(request_data)
         if response.status_code != HTTPStatus.CREATED:
@@ -321,6 +345,7 @@ class HaloAPIClient(BaseAPIClient):
         return response
 
     def update_ticket(self, message, upload_tokens, ticket_id):
+        logger.info("Updating ticket", extra={"ticket_id": ticket_id})
         request_data = self.halo_request_data_from_message(
             message, upload_tokens=upload_tokens, ticket_id=ticket_id
         )
