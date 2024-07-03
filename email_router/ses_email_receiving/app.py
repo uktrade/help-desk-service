@@ -105,7 +105,7 @@ def get_configured_api_client(parameters):
         api_client = HaloAPIClient(
             halo_subdomain=parameters["HALO_SUBDOMAIN"],
             halo_client_id=parameters["HALO_CLIENT_ID"],
-            halo_client_secret=parameters["HALO_CLIENT_TOKEN"],
+            halo_client_secret=parameters["HALO_CLIENT_SECRET"],
         )
     return api_client
 
