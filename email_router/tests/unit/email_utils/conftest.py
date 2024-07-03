@@ -74,3 +74,84 @@ def plain_text_email_bytes():
 @pytest.fixture()
 def parsed_plain_text_email(plain_text_email_bytes):
     return ParsedEmail(raw_bytes=plain_text_email_bytes)
+
+
+@pytest.fixture()
+def google_email_without_body_bytes():
+    with open(
+        "email_router/tests/unit/fixtures/emails/google-dmarc-email-without-body.txt", "rb"
+    ) as file:
+        yield file
+
+
+@pytest.fixture()
+def google_email_without_body(google_email_without_body_bytes):
+    return ParsedEmail(raw_bytes=google_email_without_body_bytes)
+
+
+@pytest.fixture()
+def halo_api_client():
+    halo_subdomain = "foo"
+    halo_client_id = "abcdef"  # /PS-IGNORE
+    halo_client_secret = "123456"
+    with mock.patch(
+        "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate"
+    ) as mock_authenticate:
+        mock_authenticate.return_value = "abc123"
+        client = HaloAPIClient(
+            halo_subdomain=halo_subdomain,
+            halo_client_id=halo_client_id,
+            halo_client_secret=halo_client_secret,
+        )
+    return client
+
+
+@pytest.fixture()
+def halo_create_ticket_data():
+    return [
+        {
+            "summary": "Test Halo ticket creation",  # /PS-IGNORE
+            "details": "<p>Test ticket creation</p>",
+            "users_name": "Test User",  # /PS-IGNORE
+            "reportedby": "test.user@example.com",  # /PS-IGNORE
+            "tickettype_id": 36,
+            "dont_do_rules": False,
+            "customfields": [
+                {"name": "CFEmailToAddress", "value": "zeta@example.com"}  # /PS-IGNORE
+            ],  # /PS-IGNORE
+        }
+    ]
+
+
+@pytest.fixture()
+def halo_upload_response_content():
+    with open(
+        "email_router/tests/unit/fixtures/halo_responses/attachment-upload-response.json", "r"
+    ) as fp:
+        content = json.load(fp)
+    return content
+
+
+@pytest.fixture()
+def halo_upload_response(halo_upload_response_content):
+    response = Mock(spec=Response)
+    response.json.return_value = halo_upload_response_content
+    response.status_code = HTTPStatus.CREATED
+    return response
+
+
+@pytest.fixture()
+def halo_create_ticket_response_content():
+    with open(
+        "email_router/tests/unit/fixtures/halo_responses/create-ticket-response.json", "r"
+    ) as fp:
+        content = json.load(fp)
+    return content
+
+
+@pytest.fixture()
+def halo_create_ticket_response(halo_create_ticket_response_content):
+    response = Mock(spec=Response)
+    response.json.return_value = halo_create_ticket_response_content
+    response.status_code = HTTPStatus.CREATED
+    return response
