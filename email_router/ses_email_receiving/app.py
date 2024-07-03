@@ -26,10 +26,7 @@ def lambda_handler(event: SQSEvent, context):
     parameters = get_parameters()
 
     s3 = boto3.client("s3")
-    raw_records = event.raw_event.get("Records", [])
-    first_record = raw_records[0] if raw_records else {}
-    record_body = json.loads(first_record.get("body", "{}"))
-    record_type = record_body.get("Event", None)
+    record_type = get_raw_record_type(event)
     if record_type == "s3:TestEvent":  # /PS-IGNORE
         bucket_name = "dbt-help-desk-incoming-mail"
         s3.put_object(
@@ -39,17 +36,7 @@ def lambda_handler(event: SQSEvent, context):
         )
         return
 
-    use_microservice = os.environ.get("USE_MICROSERVICE", USE_MICROSERVICE_DEFAULT)
-    if use_microservice:
-        api_client = MicroserviceAPIClient(
-            zendesk_email=parameters["ZENDESK_EMAIL"],
-            zendesk_token=parameters["ZENDESK_TOKEN"],
-        )
-    else:
-        api_client = HaloAPIClient(
-            halo_client_id=parameters["HALO_CLIENT_ID"],
-            halo_client_secret=parameters["HALO_CLIENT_TOKEN"],
-        )
+    api_client = get_configured_api_client(parameters)
 
     emails = []
     s3_events = []
@@ -83,8 +70,10 @@ def lambda_handler(event: SQSEvent, context):
         try:
             api_client.create_or_update_ticket_from_message(parsed_email)
         except HTTPError as e:
-            print(f"Response content: {e.response.content}")
+            print(f"HTTPError: Response content: {e.response.content}")
             raise
+        except AttributeError:
+            print(f"Attribute Error for email f{object_key}")
         emails.append(parsed_email.subject)
 
     status = {
@@ -95,6 +84,29 @@ def lambda_handler(event: SQSEvent, context):
         s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
     )
     return status
+
+
+def get_raw_record_type(event):
+    raw_records = event.raw_event.get("Records", [])
+    first_record = raw_records[0] if raw_records else {}
+    record_body = json.loads(first_record.get("body", "{}"))
+    record_type = record_body.get("Event", None)
+    return record_type
+
+
+def get_configured_api_client(parameters):
+    use_microservice = os.environ.get("USE_MICROSERVICE", USE_MICROSERVICE_DEFAULT)
+    if use_microservice:
+        api_client = MicroserviceAPIClient(
+            zendesk_email=parameters["ZENDESK_EMAIL"],
+            zendesk_token=parameters["ZENDESK_TOKEN"],
+        )
+    else:
+        api_client = HaloAPIClient(
+            halo_client_id=parameters["HALO_CLIENT_ID"],
+            halo_client_secret=parameters["HALO_CLIENT_TOKEN"],
+        )
+    return api_client
 
 
 def save_debug_data_to_s3(
