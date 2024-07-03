@@ -501,3 +501,10 @@ flake8
 F401 - flake8
 AWS
 Email Router
+levelname)s] %
+Email-Lambda
+S3 TestEvent
+JSONDecodeError
+Using Microservice API
+Using Halo API
+Upload

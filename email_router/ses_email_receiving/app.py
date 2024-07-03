@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime
 from json import JSONDecodeError
@@ -10,6 +11,16 @@ from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSEvent, SQS
 from botocore.exceptions import ClientError
 from email_utils import HaloAPIClient, MicroserviceAPIClient, ParsedEmail
 from requests import HTTPError
+
+default_log_args = {
+    "level": logging.DEBUG if os.environ.get("DEBUG", False) else logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    # "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+
+logging.basicConfig(**default_log_args)
+logger = logging.getLogger("Email-Lambda")
 
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
@@ -25,9 +36,12 @@ def lambda_handler(event: SQSEvent, context):
     iso_utcnow = get_iso_utcnow()
     parameters = get_parameters()
 
+    logger.info(f"Lambda invocation at {iso_utcnow}")
+
     s3 = boto3.client("s3")
     record_type = get_raw_record_type(event)
     if record_type == "s3:TestEvent":  # /PS-IGNORE
+        logger.warning("S3 TestEvent: discarding")
         bucket_name = "dbt-help-desk-incoming-mail"
         s3.put_object(
             Bucket=bucket_name,
@@ -48,6 +62,7 @@ def lambda_handler(event: SQSEvent, context):
             s3_event: S3Event = record.decoded_nested_s3_event
         except JSONDecodeError:
             # This can happen with things like SQS test events sent at initialisation  /PS-IGNORE
+            logger.warning("S3Event JSONDecodeError")
             unexpected_events.append(
                 {"problem": "JSONDecodeError", "event": event.raw_event}  # /PS-IGNORE
             )
@@ -62,18 +77,20 @@ def lambda_handler(event: SQSEvent, context):
         except ClientError:
             # This happens if access is denied, e.g. if the object has been deleted
             # If we ignore it, the queue message will then be discarded
+            logger.warning(f"ClientError retrieving S3 object {bucket_name}:{object_key}")
             unexpected_events.append(
                 {"problem": "ClientError", "event": event.raw_event}  # /PS-IGNORE
             )
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
         try:
+            logger.info("Creating or updating ticket")
             api_client.create_or_update_ticket_from_message(parsed_email)
         except HTTPError as e:
-            print(f"HTTPError: Response content: {e.response.content}")
+            logger.error(f"HTTPError: Response content: {e.response.content}")
             raise
         except AttributeError:
-            print(f"Attribute Error for email f{object_key}")
+            logger.warning(f"Attribute Error for email f{object_key}")
         emails.append(parsed_email.subject)
 
     status = {
@@ -97,11 +114,13 @@ def get_raw_record_type(event):
 def get_configured_api_client(parameters):
     use_microservice = os.environ.get("USE_MICROSERVICE", USE_MICROSERVICE_DEFAULT)
     if use_microservice:
+        logger.info("Using Microservice API (Zendesk compatible)")
         api_client = MicroserviceAPIClient(
             zendesk_email=parameters["ZENDESK_EMAIL"],
             zendesk_token=parameters["ZENDESK_TOKEN"],
         )
     else:
+        logger.info("Using Halo API")
         api_client = HaloAPIClient(
             halo_subdomain=parameters["HALO_SUBDOMAIN"],
             halo_client_id=parameters["HALO_CLIENT_ID"],
@@ -147,7 +166,15 @@ def get_iso_utcnow():
 def get_parameters():
     ssm_client = boto3.client("ssm")
     parameters = {}
-    for name in ["ZENDESK_EMAIL", "ZENDESK_TOKEN", "HELP_DESK_API_URL"]:
+    for name in [
+        "ZENDESK_EMAIL",
+        "ZENDESK_TOKEN",
+        "HELP_DESK_API_URL",
+        "HALO_SUBDOMAIN",
+        "HALO_CLIENT_ID",
+        "HALO_CLIENT_SECRET",
+    ]:
         parameter = ssm_client.get_parameter(Name=name, WithDecryption=True)
         parameters[name] = parameter["Parameter"]["Value"]  # /PS-IGNORE
+    logger.debug(f"get_parameters: {parameters}")
     return parameters
