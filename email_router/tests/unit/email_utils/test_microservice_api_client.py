@@ -6,7 +6,7 @@ from email_router.ses_email_receiving.email_utils import MicroserviceAPIClient
 from zenpy.lib.api_objects import Upload
 
 
-class TestAPIClient:
+class TestMicroserviceAPIClient:
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
     def test_api_client_creates_zenpy_client(self, mock_zenpy: MagicMock):
         zendesk_email = "test@example.com"  # /PS-IGNORE
