@@ -511,3 +511,7 @@ Upload
 ClientError
 AttributeError
 Email Update
+api/Actions
+TestTemp
+parsed_plain_text_email
+assert result

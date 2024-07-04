@@ -385,7 +385,7 @@ class HaloAPIClient(BaseAPIClient):
         return response_data
 
     def post_halo_ticket_action(self, request_data):
-        if "ticket_id" not in request_data:
+        if "ticket_id" not in request_data[0]:
             message = "Halo Action requires ticket_id"
             logger.error(
                 message,
