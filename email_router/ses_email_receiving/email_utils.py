@@ -332,7 +332,7 @@ class HaloAPIClient(BaseAPIClient):
     def post_halo_ticket(self, request_data):
         response = requests.post(
             f"https://{self.halo_subdomain}.haloitsm.com/api/Tickets",  # /PS-IGNORE
-            data=request_data,
+            data=json.dumps(request_data),
             headers={
                 "Authorization": f"Bearer {self.halo_token}",
                 "Content-Type": "application/json",
