@@ -110,8 +110,9 @@ class ParsedEmail:
 
 class BaseAPIClient(metaclass=ABCMeta):
     def create_or_update_ticket_from_message(self, message: ParsedEmail):
-        upload_tokens = self.upload_attachments(message.attachments)
-        if ticket_id := message.reply_to_ticket_id:
+        ticket_id = message.reply_to_ticket_id
+        upload_tokens = self.upload_attachments(message.attachments, ticket_id=ticket_id)
+        if ticket_id:
             logger.info("Updating ticket", extra={"ticket_id": ticket_id})
             response = self.update_ticket(message, upload_tokens, ticket_id)
         else:
@@ -126,20 +127,23 @@ class BaseAPIClient(metaclass=ABCMeta):
             response = self.create_ticket(message, upload_tokens=upload_tokens)
         return response
 
-    def upload_attachments(self, attachments):
+    def upload_attachments(self, attachments, ticket_id=None):
         upload_tokens = []
         for attachment in attachments:
             payload = attachment["payload"]
             filename = attachment["filename"]
             content_type = attachment["content_type"]
             upload = self.upload_attachment(
-                payload=payload, target_name=filename, content_type=content_type
+                payload=payload,
+                target_name=filename,
+                content_type=content_type,
+                ticket_id=ticket_id,
             )
             upload_tokens.append(upload.token)
         return upload_tokens
 
     @abstractmethod
-    def upload_attachment(self, payload, target_name, content_type):
+    def upload_attachment(self, payload, target_name, content_type, ticket_id=None):
         pass
 
     @abstractmethod
@@ -160,7 +164,9 @@ class MicroserviceAPIClient(BaseAPIClient):
         )
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
-    def upload_attachment(self, payload, target_name, content_type="application/octet-stream"):
+    def upload_attachment(
+        self, payload, target_name, content_type="application/octet-stream", ticket_id=None
+    ):
         logger.info(
             "Uploading attachment",
             extra={
@@ -286,12 +292,13 @@ class HaloAPIClient(BaseAPIClient):
                 raise ValueError("Upload must have a token")
             self.token = token
 
-    def upload_attachment(self, payload, target_name, content_type):
+    def upload_attachment(self, payload, target_name, content_type, ticket_id=None):
         logger.info(
             "Uploading attachment",
             extra={
                 "attachment_filename": target_name,
                 "content_type": content_type,
+                "ticket_id": ticket_id,
             },
         )
         file_content_base64 = base64.b64encode(payload).decode("ascii")  # /PS-IGNORE
@@ -303,6 +310,8 @@ class HaloAPIClient(BaseAPIClient):
                 "data_base64": base64_payload,  # /PS-IGNORE
             }
         ]
+        if ticket_id is not None:
+            halo_attachment_payload[0]["ticket_id"] = ticket_id
         response: Response = requests.post(
             f"https://{self.halo_subdomain}.haloitsm.com/api/Attachment",
             data=json.dumps(halo_attachment_payload),
@@ -321,7 +330,7 @@ class HaloAPIClient(BaseAPIClient):
 
     def create_ticket(self, message, upload_tokens):
         logger.info("Creating ticket", extra={"subject": message.subject})
-        request_data = self.halo_request_data_from_message(message, upload_tokens=upload_tokens)
+        request_data = self.halo_ticket_data_from_message(message, upload_tokens=upload_tokens)
         response = self.post_halo_ticket(request_data)
         if response.status_code != HTTPStatus.CREATED:
             error_message = f"{response.status_code} response for create ticket"
@@ -345,18 +354,61 @@ class HaloAPIClient(BaseAPIClient):
         return response
 
     def update_ticket(self, message, upload_tokens, ticket_id):
-        logger.info("Updating ticket", extra={"ticket_id": ticket_id})
-        request_data = self.halo_request_data_from_message(
-            message, upload_tokens=upload_tokens, ticket_id=ticket_id
+        logger.info(
+            "Updating ticket",
+            extra={
+                "ticket_id": ticket_id,
+                "upload_tokens": upload_tokens,
+            },
         )
-        response = self.post_halo_ticket(request_data)
+        request_data = self.halo_action_data_from_message(message, ticket_id=ticket_id)
+        logger.info(
+            "Update prepared",
+            extra={
+                "ticket_id": ticket_id,
+                "request_data": request_data,
+            },
+        )
+        response = self.post_halo_ticket_action(request_data)
         if response.status_code != HTTPStatus.CREATED:
             error_message = f"{response.status_code} response for update ticket"
             logger.error(error_message)
             raise HTTPError(error_message)
-        return response.json()
+        response_data = response.json()
+        logger.info(
+            "Update response",
+            extra={
+                "ticket_id": ticket_id,
+                "response_data": response_data,
+            },
+        )
+        return response_data
 
-    def halo_request_data_from_message(
+    def post_halo_ticket_action(self, request_data):
+        if "ticket_id" not in request_data:
+            message = "Halo Action requires ticket_id"
+            logger.error(
+                message,
+                extra={
+                    "request_data": request_data,
+                },
+            )
+            raise ValueError(message)
+        response = requests.post(
+            f"https://{self.halo_subdomain}.haloitsm.com/api/Actions",  # /PS-IGNORE
+            data=json.dumps(request_data),
+            headers={
+                "Authorization": f"Bearer {self.halo_token}",
+                "Content-Type": "application/json",
+            },
+        )
+        if response.status_code != HTTPStatus.CREATED:
+            error_message = f"{response.status_code} response for post ticket"
+            logger.error(error_message)
+            raise HTTPError(error_message)
+        return response
+
+    def halo_ticket_data_from_message(
         self, message: ParsedEmail, upload_tokens=None, ticket_id=None
     ):
         request_data = {
@@ -373,6 +425,35 @@ class HaloAPIClient(BaseAPIClient):
             request_data["attachments"] = attachments
         if ticket_id is not None:
             request_data["id"] = ticket_id
+        logger.debug(
+            "Ticket data from message",
+            extra={
+                "request_data": request_data,
+            },
+        )
         return [
             request_data,
         ]
+
+    def halo_action_data_from_message(self, message: ParsedEmail, ticket_id=None):
+        request_data = {
+            "ticket_id": ticket_id,
+            "note_html": message.payload,
+            "hiddenfromuser": False,
+            "outcome": "Email Update",
+            "emailfrom": message.sender_email,
+            "who": message.sender_name,
+            "customfields": [
+                {
+                    "name": "CFEmailToAddress",
+                    "value": message.recipient,
+                }
+            ],
+        }
+        logger.debug(
+            "Action data from message",
+            extra={
+                "request_data": request_data,
+            },
+        )
+        return [request_data]

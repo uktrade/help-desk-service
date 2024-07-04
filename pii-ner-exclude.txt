@@ -510,3 +510,4 @@ Using Halo API
 Upload
 ClientError
 AttributeError
+Email Update
