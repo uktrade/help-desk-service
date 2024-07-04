@@ -29,7 +29,7 @@ class ParsedEmail:
     FALLBACK_DISPLAY_NAME = "unknown"
 
     message: EmailMessage
-    ticket_id_matcher: str = r"\[IN-0*(\d+)]"
+    ticket_id_matcher: str = r"\[[[A-Z]{2}-0*(\d+)]"
 
     def __init__(self, raw_bytes):
         # Parse the email from raw bytes
