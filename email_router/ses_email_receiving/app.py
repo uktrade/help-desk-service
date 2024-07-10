@@ -52,8 +52,6 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
     api_client = get_configured_api_client(parameters)
 
     emails = []
-    s3_events = []
-    unexpected_events = []
     bucket_name = ""
     record: SQSRecord
     for record in event.records:
@@ -61,13 +59,18 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
             s3_event: S3Event = record.decoded_nested_s3_event
         except JSONDecodeError:
             # This can happen with things like SQS test events sent at initialisation  /PS-IGNORE
-            logger.warning("S3Event JSONDecodeError")
-            unexpected_events.append(
-                {"problem": "JSONDecodeError", "event": event.raw_event}  # /PS-IGNORE
+            logger.warning(
+                "S3Event JSONDecodeError",
+                extra={
+                    "raw_event": event.raw_event,
+                },
             )
             continue
-        s3_events.append(
-            {"bucket_name": s3_event.bucket_name, "object_key": unquote_plus(s3_event.object_key)}
+        logger.debug(
+            "Event decoded",
+            extra={
+                "raw_event": event.raw_event,
+            },
         )
         bucket_name = s3_event.bucket_name
         object_key = unquote_plus(s3_event.object_key)
@@ -82,9 +85,6 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
                     "bucket_name": bucket_name,
                     "object_key": object_key,
                 },
-            )
-            unexpected_events.append(
-                {"problem": "ClientError", "event": event.raw_event}  # /PS-IGNORE
             )
             continue
         parsed_email = ParsedEmail(raw_bytes=email_content)
@@ -108,10 +108,12 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
 
     status = STATUS_OK
 
-    save_debug_data_to_s3(
-        s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
-    )
+    save_debug_data_to_s3(s3, bucket_name, emails, event, iso_utcnow, parameters, status)
     return status
+
+
+def remove_email_from_bucket(s3, bucket_name, object_key, destination_bucket):
+    logger.log("Removing mail from bucket")
 
 
 def get_raw_record_type(event):
@@ -140,9 +142,7 @@ def get_configured_api_client(parameters):
     return api_client
 
 
-def save_debug_data_to_s3(
-    s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
-):
+def save_debug_data_to_s3(s3, bucket_name, emails, event, iso_utcnow, parameters, status):
     output_filename = f"lambda-output/incoming-{iso_utcnow}"
     logged_output = {
         "status": status,
@@ -152,8 +152,6 @@ def save_debug_data_to_s3(
         "emails": [str(email) for email in emails],
         "parameters": parameters,
         "event": event.raw_event,
-        "s3_events": s3_events,
-        "unexpected_events": unexpected_events,
     }
     if not bucket_name:
         bucket_name = "dbt-help-desk-incoming-mail"
@@ -165,8 +163,12 @@ def save_debug_data_to_s3(
 
 
 def get_email_from_bucket(s3, bucket_name, object_key):
+    logger.info(
+        "Getting mail from bucket", extra={"bucket_name": bucket_name, "object_key": object_key}
+    )
     response = s3.get_object(Bucket=bucket_name, Key=object_key)
     content = response["Body"]
+    logger.debug("Got mail from bucket", extra={"mail_content": content})
     return content
 
 
