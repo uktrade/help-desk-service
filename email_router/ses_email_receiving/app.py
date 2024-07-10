@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from http import HTTPStatus
 from json import JSONDecodeError
 from urllib.parse import unquote_plus
 
@@ -19,6 +20,10 @@ logger.setLevel("DEBUG" if os.environ.get("DEBUG", False) else "INFO")
 aws_session_token = os.environ.get("AWS_SESSION_TOKEN")  # /PS-IGNORE
 
 USE_MICROSERVICE_DEFAULT = True
+
+STATUS_OK = {
+    "statusCode": HTTPStatus.OK,
+}
 
 
 @event_source(data_class=SQSEvent)
@@ -42,7 +47,7 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
             Key=f"tempdebug/event-{iso_utcnow}",
             Body=json.dumps(event.raw_event, indent=4),
         )
-        return
+        return STATUS_OK
 
     api_client = get_configured_api_client(parameters)
 
@@ -101,9 +106,7 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
             )
         emails.append(parsed_email.subject)
 
-    status = {
-        "statusCode": 200,
-    }
+    status = STATUS_OK
 
     save_debug_data_to_s3(
         s3, bucket_name, emails, event, iso_utcnow, parameters, s3_events, status, unexpected_events
