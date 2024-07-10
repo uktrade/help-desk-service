@@ -77,6 +77,17 @@ def parsed_plain_text_email(plain_text_email_bytes):
 
 
 @pytest.fixture()
+def two_attachments_email_bytes():
+    with open("email_router/tests/unit/fixtures/emails/two-attachments-email.txt", "rb") as file:
+        yield file
+
+
+@pytest.fixture()
+def parsed_two_attachments_email(two_attachments_email_bytes):
+    return ParsedEmail(raw_bytes=two_attachments_email_bytes)
+
+
+@pytest.fixture()
 def google_email_without_body_bytes():
     with open(
         "email_router/tests/unit/fixtures/emails/google-dmarc-email-without-body.txt", "rb"
@@ -154,4 +165,65 @@ def halo_create_ticket_response(halo_create_ticket_response_content):
     response = Mock(spec=Response)
     response.json.return_value = halo_create_ticket_response_content
     response.status_code = HTTPStatus.CREATED
+    return response
+
+
+raw_halo_user_search_result = {
+    "record_count": 1,
+    "users": [
+        {
+            "id": 38,
+            "name": "Some BodyFromAPI",
+            "site_id": 18.0,
+            "site_id_int": 18,
+            "site_name": "UK Trade",
+            "client_name": "Test Business Name",  # /PS-IGNORE
+            "firstname": "Some",  # /PS-IGNORE
+            "surname": "Body",
+            "initials": "SB",
+            "emailaddress": "some.bodyfromapi@example.com",  # /PS-IGNORE
+            "sitephonenumber": "",
+            "telpref": 0,
+            "inactive": False,
+            "colour": "#2bd3c6",
+            "isimportantcontact": False,
+            "other5": "380271314777",
+            "neversendemails": False,
+            "priority_id": 0,
+            "linked_agent_id": 13,
+            "isserviceaccount": False,
+            "isimportantcontact2": False,
+            "connectwiseid": 0,
+            "autotaskid": -1,
+            "messagegroup_id": -1,
+            "sitetimezone": "",
+            "use": "user",
+            "client_id": 12,
+            "overridepdftemplatequote": -1,
+        }
+    ],
+}
+
+
+def make_raw_halo_user_search_response(halo_user_search_result):
+    response = Response()
+    response.url = "https://example.com/test"
+    response.encoding = "UTF-8"
+    response._content = bytes(json.dumps(halo_user_search_result), "utf-8")
+    response.headers = {"Content-Type": "application/json"}
+    response.status_code = HTTPStatus.OK
+    return response
+
+
+raw_halo_user_search_response = make_raw_halo_user_search_response(raw_halo_user_search_result)
+
+
+@pytest.fixture()
+def halo_user_search_result():
+    return raw_halo_user_search_result
+
+
+@pytest.fixture()
+def halo_user_search_response(halo_user_search_result):
+    response = make_raw_halo_user_search_response(halo_user_search_result)
     return response

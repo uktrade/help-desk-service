@@ -2,7 +2,10 @@ from email.utils import parseaddr
 from unittest import mock
 from unittest.mock import MagicMock, call
 
-from email_router.ses_email_receiving.email_utils import MicroserviceAPIClient
+from email_router.ses_email_receiving.email_utils import (
+    MicroserviceAPIClient,
+    ParsedEmail,
+)
 from zenpy.lib.api_objects import Upload
 
 
@@ -149,20 +152,15 @@ class TestMicroserviceAPIClient:
         )
 
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
-    def test_upload_attachments_makes_zenpy_uploads(self, mock_zenpy: MagicMock):
+    def test_upload_attachments_makes_zenpy_uploads(
+        self, mock_zenpy: MagicMock, parsed_two_attachments_email: ParsedEmail
+    ):
         mock_zenpy_client = MagicMock()
         mock_zenpy.return_value = mock_zenpy_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
         api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
-        uploads = [
-            {"payload": "text one", "filename": "textfile.txt", "content_type": "text/plain"},
-            {
-                "payload": b"binary one",
-                "filename": "binaryfile.bin",
-                "content_type": "application/octet-stream",
-            },
-        ]
+        uploads = list(parsed_two_attachments_email.attachments)
         expected_upload_tokens = [123, 321]
         upload_objects = [Upload(token=token) for token in expected_upload_tokens]
         mock_zenpy_client.attachments.upload.side_effect = upload_objects
@@ -175,31 +173,25 @@ class TestMicroserviceAPIClient:
             for upload in uploads
         ]
 
-        api_client.upload_attachments(uploads)
+        api_client.upload_attachments(parsed_two_attachments_email)
 
         assert mock_zenpy_client.attachments.upload.call_count == len(expected_calls)
         mock_zenpy_client.attachments.upload.assert_has_calls(expected_calls)
 
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
-    def test_upload_attachments_returns_upload_tokens(self, mock_zenpy: MagicMock):
+    def test_upload_attachments_returns_upload_tokens(
+        self, mock_zenpy: MagicMock, parsed_two_attachments_email: ParsedEmail
+    ):
         mock_zenpy_client = MagicMock()
         mock_zenpy.return_value = mock_zenpy_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
         api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
-        uploads = [
-            {"payload": "text one", "filename": "textfile.txt", "content_type": "text/plain"},
-            {
-                "payload": b"binary one",
-                "filename": "binaryfile.bin",
-                "content_type": "application/octet-stream",
-            },
-        ]
         expected_upload_tokens = [123, 321]
         upload_objects = [Upload(token=token) for token in expected_upload_tokens]
         mock_zenpy_client.attachments.upload.side_effect = upload_objects
 
-        upload_tokens = api_client.upload_attachments(uploads)
+        upload_tokens = api_client.upload_attachments(parsed_two_attachments_email)
 
         assert upload_tokens == expected_upload_tokens
 

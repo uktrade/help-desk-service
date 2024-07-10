@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from email_router.ses_email_receiving.email_utils import HaloAPIClient, ParsedEmail
+from email_router.tests.unit.email_utils.conftest import raw_halo_user_search_response
 from requests import Response
 
 
@@ -78,21 +79,35 @@ class TestHaloAPIClientAuthentication:
 
 
 @mock.patch(
+    "email_router.ses_email_receiving.email_utils.requests.get",
+    return_value=raw_halo_user_search_response,
+)
+@mock.patch(
     "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate",
     return_value="123abc",
 )
 class TestHaloAPIClientTicketRequestData:
     def test_halo_request_data_from_message_is_in_list(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        halo_request_data = halo_api_client.halo_ticket_data_from_message(parsed_plain_text_email)
+        halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
+            parsed_plain_text_email
+        )
 
         assert isinstance(halo_request_data, list)
 
     def test_halo_request_data_from_message_is_dict(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -100,9 +115,13 @@ class TestHaloAPIClientTicketRequestData:
         assert isinstance(halo_request_data, dict)
 
     def test_halo_request_data_from_message_has_summary(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -111,9 +130,13 @@ class TestHaloAPIClientTicketRequestData:
         assert summary == parsed_plain_text_email.subject
 
     def test_halo_request_data_from_message_has_details(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -122,31 +145,43 @@ class TestHaloAPIClientTicketRequestData:
         assert details == parsed_plain_text_email.payload
 
     def test_halo_request_data_from_message_has_users_name(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
 
         users_name = halo_request_data.get("users_name")
-        assert users_name == parsed_plain_text_email.sender_name
+        assert users_name == "Some BodyFromAPI"
 
     def test_halo_request_data_from_message_has_reportedby(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
 
         reportedby = halo_request_data.get("reportedby")
-        assert reportedby == parsed_plain_text_email.sender_email
+        assert reportedby == "some.bodyfromapi@example.com"  # /PS-IGNORE
 
     def test_halo_request_data_from_message_has_tickettype_id(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -154,10 +189,29 @@ class TestHaloAPIClientTicketRequestData:
         tickettype_id = halo_request_data.get("tickettype_id")
         assert tickettype_id == 36
 
-    def test_halo_request_data_from_message_has_dont_do_rules(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+    def test_halo_request_data_from_message_has_user_id(
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
+            parsed_plain_text_email
+        )
+        halo_request_data = wrapped_halo_request_data[0]
+
+        user_id = halo_request_data.get("user_id")
+        assert user_id == 38
+
+    def test_halo_request_data_from_message_has_dont_do_rules(
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
+    ):
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -166,9 +220,13 @@ class TestHaloAPIClientTicketRequestData:
         assert dont_do_rules is False
 
     def test_halo_request_data_from_message_has_no_attachments_if_not_present(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -176,12 +234,16 @@ class TestHaloAPIClientTicketRequestData:
         assert "attachments" not in halo_request_data
 
     def test_halo_request_data_from_message_has_attachments_if_present(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
         upload_tokens = [1, 2, 3]
         expected_attachments = [{"id": upload_token} for upload_token in upload_tokens]
 
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email, upload_tokens=upload_tokens
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -190,9 +252,13 @@ class TestHaloAPIClientTicketRequestData:
         assert halo_request_data["attachments"] == expected_attachments
 
     def test_halo_request_data_from_message_has_to_address_in_custom_field(
-        self, _mock_authenticate: MagicMock, parsed_plain_text_email, halo_api_client
+        self,
+        _mock_authenticate: MagicMock,
+        _mock_get: MagicMock,
+        parsed_plain_text_email,
+        halo_api_client,
     ):
-        wrapped_halo_request_data = halo_api_client.halo_ticket_data_from_message(
+        wrapped_halo_request_data = halo_api_client.halo_ticket_creation_data_from_message(
             parsed_plain_text_email
         )
         halo_request_data = wrapped_halo_request_data[0]
@@ -211,12 +277,17 @@ class TestHaloAPIClientTicketRequestData:
         assert custom_field_value == parsed_plain_text_email.recipient
 
 
+@mock.patch(
+    "email_router.ses_email_receiving.email_utils.requests.get",
+    return_value=raw_halo_user_search_response,
+)
 @mock.patch("email_router.ses_email_receiving.email_utils.requests.post")
 class TestHaloAPIClientCreateTicket:
 
     def test_halo_client_posts_message_as_ticket(
         self,
         mock_post: MagicMock,
+        _mock_get: MagicMock,
         halo_create_ticket_response,
         parsed_plain_text_email,
         halo_api_client,
@@ -225,7 +296,7 @@ class TestHaloAPIClientCreateTicket:
         mock_post.return_value = halo_create_ticket_response
         expected_url = f"https://{halo_subdomain}.haloitsm.com/api/Tickets"
         expected_ticket_data = json.dumps(
-            halo_api_client.halo_ticket_data_from_message(parsed_plain_text_email)
+            halo_api_client.halo_ticket_creation_data_from_message(parsed_plain_text_email)
         )
         expected_headers = {
             "Authorization": f"Bearer {halo_api_client.halo_token}",
@@ -241,6 +312,10 @@ class TestHaloAPIClientCreateTicket:
         mock_post.assert_called_once_with(expected_url, **expected_kwargs)
 
 
+@mock.patch(
+    "email_router.ses_email_receiving.email_utils.requests.get",
+    return_value=raw_halo_user_search_response,
+)
 @mock.patch("email_router.ses_email_receiving.email_utils.requests.post")
 @mock.patch(
     "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate",
@@ -253,6 +328,7 @@ class TestHaloAPIClientTicketAttachments:
         mock_upload_attachment: MagicMock,
         _mock_authenticate: MagicMock,
         mock_post: MagicMock,
+        _mock_get: MagicMock,
         parsed_email_single_attachment: ParsedEmail,
         halo_create_ticket_response,
         halo_api_client,
@@ -276,6 +352,7 @@ class TestHaloAPIClientTicketAttachments:
         _mock_create_ticket: MagicMock,
         _mock_authenticate: MagicMock,
         mock_post: MagicMock,
+        _mock_get: MagicMock,
         halo_upload_response,
         parsed_email_single_attachment: ParsedEmail,
         halo_api_client: HaloAPIClient,
@@ -307,10 +384,43 @@ class TestHaloAPIClientTicketAttachments:
             expected_url, data=expected_post_data, headers=expected_headers
         )
 
+    @mock.patch("email_router.ses_email_receiving.email_utils.HaloAPIClient.upload_attachment")
+    def test_upload_attachment_called_with_sender_email_address(
+        self,
+        mock_upload_attachment: MagicMock,
+        _mock_authenticate: MagicMock,
+        _mock_post: MagicMock,
+        _mock_get: MagicMock,
+        parsed_email_single_attachment: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        attachment = next(parsed_email_single_attachment.attachments)
+        payload = attachment["payload"]
+        filename = attachment["filename"]
+        content_type = attachment["content_type"]
+        ticket_id = parsed_email_single_attachment.reply_to_ticket_id
+        from_address = parsed_email_single_attachment.sender_email
+        expected_kwargs = {
+            "payload": payload,
+            "target_name": filename,
+            "content_type": content_type,
+            "ticket_id": ticket_id,
+            "from_address": from_address,
+        }
 
+        halo_api_client.upload_attachments(parsed_email_single_attachment)
+
+        mock_upload_attachment.assert_called_once_with(**expected_kwargs)
+
+
+@mock.patch(
+    "email_router.ses_email_receiving.email_utils.requests.get",
+    return_value=raw_halo_user_search_response,
+)
 @mock.patch("email_router.ses_email_receiving.email_utils.requests.post")
 @mock.patch(
-    "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate"
+    "email_router.ses_email_receiving.email_utils.HaloAPIClient._HaloAPIClient__authenticate",
+    return_value="abc123",
 )
 class TestHaloAPIClientUpdateTicket:
     @mock.patch("email_router.ses_email_receiving.email_utils.HaloAPIClient.update_ticket")
@@ -319,6 +429,7 @@ class TestHaloAPIClientUpdateTicket:
         mock_update_ticket: MagicMock,
         _mock_authenticate: MagicMock,
         _mock_post: MagicMock,
+        _mock_get: MagicMock,
         halo_create_ticket_response: Response,
         parsed_reply_to_ticket_email: ParsedEmail,
         halo_api_client: HaloAPIClient,
@@ -331,6 +442,7 @@ class TestHaloAPIClientUpdateTicket:
         self,
         _mock_authenticate: MagicMock,
         mock_post: MagicMock,
+        _mock_get: MagicMock,
         halo_create_ticket_response: Response,
         parsed_reply_to_ticket_email: ParsedEmail,
         halo_api_client: HaloAPIClient,
@@ -340,7 +452,7 @@ class TestHaloAPIClientUpdateTicket:
         expected_url = f"https://{halo_subdomain}.haloitsm.com/api/Actions"
         expected_ticket_id = parsed_reply_to_ticket_email.reply_to_ticket_id
         expected_ticket_data = json.dumps(
-            halo_api_client.halo_action_data_from_message(
+            halo_api_client.halo_ticket_action_data_from_message(
                 parsed_reply_to_ticket_email, ticket_id=expected_ticket_id
             )
         )
@@ -358,3 +470,80 @@ class TestHaloAPIClientUpdateTicket:
         )
 
         mock_post.assert_called_once_with(expected_url, **expected_kwargs)
+
+    def test_update_ticket_has_user_name_as_who(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        _mock_get: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_reply_to_ticket_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        expected_ticket_id = parsed_reply_to_ticket_email.reply_to_ticket_id
+
+        action_data = halo_api_client.halo_ticket_action_data_from_message(
+            parsed_reply_to_ticket_email, ticket_id=expected_ticket_id
+        )
+
+        assert "who" in action_data[0]
+        assert action_data[0]["who"] == "Some BodyFromAPI"
+
+    def test_update_ticket_has_user_email_as_emailfrom(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        _mock_get: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_reply_to_ticket_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        expected_ticket_id = parsed_reply_to_ticket_email.reply_to_ticket_id
+
+        action_data = halo_api_client.halo_ticket_action_data_from_message(
+            parsed_reply_to_ticket_email, ticket_id=expected_ticket_id
+        )
+
+        assert "emailfrom" in action_data[0]
+        assert action_data[0]["emailfrom"] == "some.bodyfromapi@example.com"  # /PS-IGNORE
+
+    def test_update_ticket_has_user_id(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        _mock_get: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_reply_to_ticket_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        expected_ticket_id = parsed_reply_to_ticket_email.reply_to_ticket_id
+
+        action_data = halo_api_client.halo_ticket_action_data_from_message(
+            parsed_reply_to_ticket_email, ticket_id=expected_ticket_id
+        )
+
+        assert "user_id" in action_data[0]
+        assert action_data[0]["user_id"] == 38
+
+
+@mock.patch("email_router.ses_email_receiving.email_utils.requests.get")
+class TestHaloAPIClientGetUser:
+    def test_get_halo_user_searches_for_sender_email(
+        self,
+        mock_get: MagicMock,
+        parsed_plain_text_email: ParsedEmail,
+        halo_user_search_response: MagicMock,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_get.return_value = halo_user_search_response
+        expected_url_search_term = parsed_plain_text_email.sender_email
+
+        halo_api_client.get_halo_user(parsed_plain_text_email.sender_email)
+
+        mock_get.assert_called_once()
+        request_params = mock_get.call_args.kwargs["params"]
+        assert "search" in request_params
+        assert request_params["search"] == expected_url_search_term
