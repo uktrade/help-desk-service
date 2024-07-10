@@ -111,7 +111,7 @@ class ParsedEmail:
 class BaseAPIClient(metaclass=ABCMeta):
     def create_or_update_ticket_from_message(self, message: ParsedEmail):
         ticket_id = message.reply_to_ticket_id
-        upload_tokens = self.upload_attachments(message.attachments, ticket_id=ticket_id)
+        upload_tokens = self.upload_attachments(message, ticket_id=ticket_id)
         if ticket_id:
             logger.info("Updating ticket", extra={"ticket_id": ticket_id})
             response = self.update_ticket(message, upload_tokens, ticket_id)
@@ -127,9 +127,10 @@ class BaseAPIClient(metaclass=ABCMeta):
             response = self.create_ticket(message, upload_tokens=upload_tokens)
         return response
 
-    def upload_attachments(self, attachments, ticket_id=None):
+    def upload_attachments(self, message: ParsedEmail, ticket_id=None):
+        from_address = message.sender_email
         upload_tokens = []
-        for attachment in attachments:
+        for attachment in message.attachments:
             payload = attachment["payload"]
             filename = attachment["filename"]
             content_type = attachment["content_type"]
@@ -138,12 +139,13 @@ class BaseAPIClient(metaclass=ABCMeta):
                 target_name=filename,
                 content_type=content_type,
                 ticket_id=ticket_id,
+                from_address=from_address,
             )
             upload_tokens.append(upload.token)
         return upload_tokens
 
     @abstractmethod
-    def upload_attachment(self, payload, target_name, content_type, ticket_id=None):
+    def upload_attachment(self, payload, target_name, content_type, ticket_id=None, **kwargs):
         pass
 
     @abstractmethod
@@ -165,7 +167,12 @@ class MicroserviceAPIClient(BaseAPIClient):
         self.client = Zenpy(subdomain="staging-uktrade", email=zendesk_email, token=zendesk_token)
 
     def upload_attachment(
-        self, payload, target_name, content_type="application/octet-stream", ticket_id=None
+        self,
+        payload,
+        target_name,
+        content_type="application/octet-stream",
+        ticket_id=None,
+        **kwargs,
     ):
         logger.info(
             "Uploading attachment",
@@ -238,6 +245,35 @@ class HaloClientNotFoundException(Exception):
 
 class HaloAPIClient(BaseAPIClient):
     halo_token = None
+    _halo_user: [dict, None] = None
+
+    def get_halo_user(self, search_term):
+        if self._halo_user is None:
+            self._halo_user = {}
+            path = "Users"
+            params = {"search": search_term}
+            logger.debug(f"Making Halo GET: {path}, params={params}")
+            response = requests.get(
+                f"https://{self.halo_subdomain}.haloitsm.com/api/{path}",
+                params=params,
+                headers={
+                    "Authorization": f"Bearer {self.halo_token}",
+                },
+            )
+            if response.status_code == HTTPStatus.OK:
+                logger.debug(f"Completed Halo GET: {response.url}")
+                search_results = response.json()
+                record_count = search_results["record_count"]
+                logger.info(f"Halo user search result count: {record_count}")
+                if record_count > 0:
+                    self._halo_user = search_results["users"][0]
+                    logger.debug(
+                        f"Found Halo user {self._halo_user['id']} "  # /PS-IGNORE
+                        f"named {self._halo_user['name']}"
+                    )
+            else:
+                logger.warning(f"Get Halo User error: Response status {response.status_code}")
+        return self._halo_user
 
     def __init__(self, halo_subdomain, halo_client_id, halo_client_secret) -> None:
         super().__init__()
@@ -254,6 +290,7 @@ class HaloAPIClient(BaseAPIClient):
             halo_client_id=halo_client_id,
             halo_client_secret=halo_client_secret,
         )
+        self._halo_user = None
 
     def __authenticate(self, halo_client_id, halo_client_secret):
         data = {
@@ -292,7 +329,9 @@ class HaloAPIClient(BaseAPIClient):
                 raise ValueError("Upload must have a token")
             self.token = token
 
-    def upload_attachment(self, payload, target_name, content_type, ticket_id=None):
+    def upload_attachment(
+        self, payload, target_name, content_type, ticket_id=None, from_address=None
+    ):
         logger.info(
             "Uploading attachment",
             extra={
@@ -330,7 +369,9 @@ class HaloAPIClient(BaseAPIClient):
 
     def create_ticket(self, message, upload_tokens):
         logger.info("Creating ticket", extra={"subject": message.subject})
-        request_data = self.halo_ticket_data_from_message(message, upload_tokens=upload_tokens)
+        request_data = self.halo_ticket_creation_data_from_message(
+            message, upload_tokens=upload_tokens
+        )
         response = self.post_halo_ticket(request_data)
         if response.status_code != HTTPStatus.CREATED:
             error_message = f"{response.status_code} response for create ticket"
@@ -361,7 +402,7 @@ class HaloAPIClient(BaseAPIClient):
                 "upload_tokens": upload_tokens,
             },
         )
-        request_data = self.halo_action_data_from_message(message, ticket_id=ticket_id)
+        request_data = self.halo_ticket_action_data_from_message(message, ticket_id=ticket_id)
         logger.info(
             "Update prepared",
             extra={
@@ -408,7 +449,7 @@ class HaloAPIClient(BaseAPIClient):
             raise HTTPError(error_message)
         return response
 
-    def halo_ticket_data_from_message(
+    def halo_ticket_creation_data_from_message(
         self, message: ParsedEmail, upload_tokens=None, ticket_id=None
     ):
         request_data = {
@@ -420,6 +461,12 @@ class HaloAPIClient(BaseAPIClient):
             "dont_do_rules": False,
             "customfields": [{"name": "CFEmailToAddress", "value": message.recipient}],
         }
+        halo_user = self.get_halo_user(search_term=message.sender_email)
+        if halo_user:
+            # add the relevant user details to the ticket
+            request_data["users_name"] = halo_user["name"]
+            request_data["reportedby"] = halo_user["emailaddress"]
+            request_data["user_id"] = halo_user["id"]
         if upload_tokens:
             attachments = [{"id": upload_token} for upload_token in upload_tokens]
             request_data["attachments"] = attachments
@@ -435,7 +482,7 @@ class HaloAPIClient(BaseAPIClient):
             request_data,
         ]
 
-    def halo_action_data_from_message(self, message: ParsedEmail, ticket_id=None):
+    def halo_ticket_action_data_from_message(self, message: ParsedEmail, ticket_id=None):
         request_data = {
             "ticket_id": ticket_id,
             "note_html": message.payload,
@@ -450,6 +497,12 @@ class HaloAPIClient(BaseAPIClient):
                 }
             ],
         }
+        halo_user = self.get_halo_user(search_term=message.sender_email)
+        if halo_user:
+            # add the relevant user details to the ticket
+            request_data["who"] = halo_user["name"]
+            request_data["emailfrom"] = halo_user["emailaddress"]
+            request_data["user_id"] = halo_user["id"]
         logger.debug(
             "Action data from message",
             extra={
