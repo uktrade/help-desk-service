@@ -10,7 +10,7 @@ from requests import Response
 
 @pytest.fixture(scope="function")
 def email_bytes():
-    fixture_path = Path(__file__).parent / "fixtures/emails/two-jpeg-attachments.email.txt"
+    fixture_path = Path(__file__).parent / "fixtures/emails/two-attachments-email.txt"
     with open(fixture_path, "rb") as file:
         yield file
 
