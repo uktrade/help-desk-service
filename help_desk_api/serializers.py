@@ -299,7 +299,7 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
 
     id = serializers.SerializerMethodField(method_name="halo_id_to_zendesk_id")
     name = serializers.CharField()
-    email = serializers.EmailField()
+    email = serializers.EmailField(source="emailaddress")
 
     @extend_schema_field(
         {
@@ -314,12 +314,7 @@ class HaloToZendeskUserSerializer(serializers.Serializer):
         return data
 
     def to_representation(self, data):
-        zendesk_data = {
-            "email": data.get("emailaddress", ""),
-            "name": data.get("name", ""),
-            "id": data.get("id", ""),
-        }
-        return super().to_representation(zendesk_data)
+        return super().to_representation(data)
 
 
 class HaloSummaryFromZendeskField(serializers.CharField):
