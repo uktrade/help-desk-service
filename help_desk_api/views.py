@@ -95,12 +95,15 @@ class UserView(HaloBaseView):
         try:
             halo_response = self.halo_manager.create_user(request.data)
             serializer = HaloToZendeskUserSerializer(halo_response)
+            response_status = status.HTTP_201_CREATED
             if "id" in request.data:
-                # If "id" exists in payload that means we are updating user
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                # There is no "id" in payload, so we create a User
-                return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
+                # If "id" exists in request payload that means we are updating user
+                response_status = status.HTTP_200_OK
+            return Response(
+                {"user": serializer.data},
+                status=response_status,
+                content_type="application/json",
+            )
         except ZendeskException as error:
             sentry_sdk.capture_exception(error)
             return Response(
