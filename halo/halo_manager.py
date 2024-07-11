@@ -91,9 +91,22 @@ class HaloManager:
         if zendesk_request is None:
             zendesk_request = {}
         user_data = zendesk_request.get("user", {})
+        user_email = user_data.get("email", None)
+        if user_email:
+            # Search for an existing Halo user
+            existing_user = self.search_for_existing_user(search_term=user_email)
+            if existing_user:
+                return existing_user
         halo_user = ZendeskToHaloCreateUserSerializer(user_data)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
+
+    def search_for_existing_user(self, search_term):
+        existing_user = None
+        search_results = self.search_for_user(search_term=search_term)
+        if search_results["record_count"] > 0:
+            existing_user = search_results["users"][0]
+        return existing_user
 
     def create_agent(self, zendesk_request: dict = None) -> dict:
         """
