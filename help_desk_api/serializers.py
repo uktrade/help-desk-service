@@ -800,7 +800,12 @@ class ZendeskToHaloCreateCommentSerializer(serializers.Serializer):
     emailfrom = HaloUserEmailFromZendeskRequesterField(required=False)
 
     def to_representation(self, data):
+        recipient = data.pop("recipient", None)
         representation = super().to_representation(data)
+        if recipient:
+            if "customfields" not in representation:
+                representation["customfields"] = []
+            representation["customfields"].append({"name": "CFEmailToAddress", "value": recipient})
         if representation.get("emailfrom", None) is None:
             representation.pop("emailfrom")
         return representation
