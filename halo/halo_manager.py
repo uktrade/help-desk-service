@@ -53,6 +53,10 @@ class HaloManager:
         halo_response = self.client.get(path=f"Users/{user_id}")
         return halo_response
 
+    def search_for_user(self, search_term):
+        halo_response = self.client.get(path="Users", params={"search": search_term})
+        return halo_response
+
     def get_users(self):
         halo_response = self.client.get(path="Users/")
         return halo_response
