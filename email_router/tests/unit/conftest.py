@@ -10,7 +10,14 @@ from requests import Response
 
 @pytest.fixture(scope="function")
 def email_bytes():
-    fixture_path = Path(__file__).parent / "fixtures/emails/two-jpeg-attachments.email.txt"
+    fixture_path = Path(__file__).parent / "fixtures/emails/two-attachments-email.txt"
+    with open(fixture_path, "rb") as file:
+        yield file
+
+
+@pytest.fixture(scope="function")
+def reply_to_ticket_email_bytes():
+    fixture_path = Path(__file__).parent / "fixtures/emails/plain-text-reply-to-ticket-email.txt"
     with open(fixture_path, "rb") as file:
         yield file
 
@@ -23,6 +30,11 @@ def email_message(email_bytes):
 @pytest.fixture(scope="function")
 def parsed_email(email_bytes):
     return ParsedEmail(raw_bytes=email_bytes)
+
+
+@pytest.fixture(scope="function")
+def parsed_reply_to_ticket_email(reply_to_ticket_email_bytes):
+    return ParsedEmail(raw_bytes=reply_to_ticket_email_bytes)
 
 
 @pytest.fixture(scope="session")

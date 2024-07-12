@@ -5,7 +5,9 @@ from http import HTTPStatus
 import pytest
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
+from django.test import RequestFactory
 from django.urls import reverse
+from requests import Response
 
 from help_desk_api.models import HelpDeskCreds
 
@@ -476,6 +478,23 @@ def zendesk_user_create_or_update_request_body():
 
 
 @pytest.fixture()
+def zendesk_create_user_request(
+    halo_creds_only,
+    zendesk_authorization_header,
+    zendesk_user_create_or_update_request_body,
+    rf: RequestFactory,
+):
+    zendesk_create_user_request = rf.post(
+        reverse("api:create_user"),
+        data=zendesk_user_create_or_update_request_body,
+        content_type="application/json",
+        HTTP_AUTHORIZATION=zendesk_authorization_header,
+    )
+    zendesk_create_user_request.help_desk_creds = halo_creds_only
+    return zendesk_create_user_request
+
+
+@pytest.fixture()
 def halo_get_tickets_request(rf, halo_creds_only, zendesk_authorization_header):
     url = reverse("api:tickets")
     request = rf.get(
@@ -566,3 +585,91 @@ def halo_upload_response(halo_upload_response_data):
     response = HttpResponse(bytes(response_json, "utf-8"))
     response.status_code = HTTPStatus.CREATED
     return response
+
+
+# Halo user stuff
+
+raw_halo_user_search_result = {
+    "record_count": 1,
+    "users": [
+        {
+            "id": 38,
+            "name": "Some BodyFromAPI",
+            "site_id": 18.0,
+            "site_id_int": 18,
+            "site_name": "UK Trade",
+            "client_name": "Test Business Name",  # /PS-IGNORE
+            "firstname": "Some",  # /PS-IGNORE
+            "surname": "Body",
+            "initials": "SB",
+            "emailaddress": "some.bodyfromapi@example.com",  # /PS-IGNORE
+            "sitephonenumber": "",
+            "telpref": 0,
+            "inactive": False,
+            "colour": "#2bd3c6",
+            "isimportantcontact": False,
+            "other5": "380271314777",
+            "neversendemails": False,
+            "priority_id": 0,
+            "linked_agent_id": 13,
+            "isserviceaccount": False,
+            "isimportantcontact2": False,
+            "connectwiseid": 0,
+            "autotaskid": -1,
+            "messagegroup_id": -1,
+            "sitetimezone": "",
+            "use": "user",
+            "client_id": 12,
+            "overridepdftemplatequote": -1,
+        }
+    ],
+}
+
+
+def make_json_response(content):
+    response = Response()
+    response.url = "https://example.com/test"
+    response.encoding = "UTF-8"
+    response._content = bytes(json.dumps(content), "utf-8")
+    response.headers = {"Content-Type": "application/json"}
+    response.status_code = HTTPStatus.OK
+    return response
+
+
+raw_halo_user_search_response = make_json_response(raw_halo_user_search_result)
+
+
+@pytest.fixture()
+def halo_user_search_result():
+    return raw_halo_user_search_result
+
+
+@pytest.fixture()
+def halo_user_search_response(halo_user_search_result):
+    response = make_json_response(halo_user_search_result)
+    return response
+
+
+@pytest.fixture(scope="session")
+def halo_user():
+    with open("tests/other_services/directory_forms_api/fixtures/halo-user.json", "r") as fp:
+        user = json.load(fp)
+    return user
+
+
+@pytest.fixture()
+def halo_user_response(halo_user):
+    return make_json_response(halo_user)
+
+
+raw_halo_user_search_no_results = {"record_count": 0, "users": []}
+
+
+@pytest.fixture()
+def halo_user_search_no_results():
+    return raw_halo_user_search_no_results
+
+
+@pytest.fixture()
+def halo_user_search_no_results_response():
+    return make_json_response(raw_halo_user_search_no_results)
