@@ -3186,7 +3186,7 @@ halo_mappings_by_zendesk_id = {
             "uk_and_overseas_customs_ess_dep_testing__shipping_with_royal_mail": 2153,
             "uk_and_overseas_customs_ess_dep_testing__zero_rating_for_uk_vat": 2154,
         },
-        zendesk_id=17235216453277,
+        zendesk_id=18514185417245,
         zendesk_title="New DEP Test",
     ),
 }

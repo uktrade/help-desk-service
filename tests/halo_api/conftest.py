@@ -108,6 +108,24 @@ def public_ticket_comment():
 
 
 @pytest.fixture()
+def comment_via_email_router_reply():
+    return {
+        "ticket": {
+            "id": "8884",
+            "comment": {
+                "html_body": '<div dir="ltr">Reply again</div>',
+                "uploads": [],
+                "public": True,
+            },
+            "requester": {
+                "email": "some.body@example.com",  # /PS-IGNORE
+                "name": "Body, Some",
+            },
+        }
+    }
+
+
+@pytest.fixture()
 def zendesk_add_private_comment_request_body():
     return {
         "ticket": {

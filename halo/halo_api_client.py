@@ -65,7 +65,7 @@ class HaloAPIClient:
     def get(self, path, params=None):
         if params is None:
             params = {}
-        logger.error(f"Halo GET: https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
+        logger.info(f"Making Halo GET: {path}, params={params}")
         response = requests.get(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             params=params,
@@ -73,7 +73,7 @@ class HaloAPIClient:
                 "Authorization": f"Bearer {self.access_token}",
             },
         )
-        logger.error("Completed Halo GET")
+        logger.info(f"Completed Halo GET: {response.url}")
         # TODO error handling
         if response.status_code != 200:
             logger.error(f"{response.status_code} response from get endpoint")

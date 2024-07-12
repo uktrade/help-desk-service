@@ -431,6 +431,55 @@ class TestZendeskToHaloTicketCommentSerialization:
         assert "note_html" in halo_equivalent
         assert halo_equivalent["note_html"] == expected_note
 
+    def test_serialized_representation_has_html_note(self, comment_via_email_router_reply):
+        expected_note = markdown.markdown(
+            comment_via_email_router_reply["ticket"]["comment"]["html_body"]
+        )
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(comment_via_email_router_reply["ticket"])
+
+        assert "note_html" in halo_equivalent
+        assert halo_equivalent["note_html"] == expected_note
+
+    def test_serialized_representation_has_no_emailfrom_field_if_not_relevant(
+        self, private_ticket_comment
+    ):
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(private_ticket_comment["ticket"])
+
+        assert "emailfrom" not in halo_equivalent
+
+    def test_serialized_representation_has_emailfrom_field_if_relevant(
+        self, comment_via_email_router_reply
+    ):
+        expected_emailfrom = comment_via_email_router_reply["ticket"]["requester"]["email"]
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(comment_via_email_router_reply["ticket"])
+
+        assert "emailfrom" in halo_equivalent
+        assert halo_equivalent["emailfrom"] == expected_emailfrom
+
+    def test_comment_via_email_is_visible_to_user(self, comment_via_email_router_reply):
+        expected_hiddenfromuser = False
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(comment_via_email_router_reply["ticket"])
+
+        assert "hiddenfromuser" in halo_equivalent
+        assert halo_equivalent["hiddenfromuser"] is expected_hiddenfromuser
+
+    def test_comment_via_email_is_public_note(self, comment_via_email_router_reply):
+        expected_outcome = "Public Note"
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(comment_via_email_router_reply["ticket"])
+
+        assert "outcome" in halo_equivalent
+        assert halo_equivalent["outcome"] == expected_outcome
+
     def test_serialized_representation_has_hiddenfromuser(self, private_ticket_comment):
         is_public = private_ticket_comment["ticket"]["comment"]["public"]
         expected_hiddenfromuser = not is_public
@@ -451,6 +500,15 @@ class TestZendeskToHaloTicketCommentSerialization:
         assert halo_equivalent["outcome"] == expected_outcome
 
     def test_serialized_representation_has_public_outcome(self, public_ticket_comment):
+        expected_outcome = "Public Note"
+        serializer = ZendeskToHaloCreateCommentSerializer()
+
+        halo_equivalent = serializer.to_representation(public_ticket_comment["ticket"])
+
+        assert "outcome" in halo_equivalent
+        assert halo_equivalent["outcome"] == expected_outcome
+
+    def test_serialized_representation_has_requester_email(self, public_ticket_comment):
         expected_outcome = "Public Note"
         serializer = ZendeskToHaloCreateCommentSerializer()
 

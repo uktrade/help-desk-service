@@ -490,3 +490,33 @@ Zendesk API URL
 StreamHandler
 NotAuthenticated
 ZENPY_FORCE_NETLOC
+self.halo_token
+f"https://{halo_subdomain}.haloitsm.com
+@skip("TODO
+MagicMock
+api_client.create_ticket(parsed_email_sans_attachments
+api_client.create_or_update_ticket_from_message(parsed_email
+parsed_reply_to_ticket_email
+flake8
+F401 - flake8
+AWS
+Email Router
+levelname)s] %
+Email-Lambda
+S3 TestEvent
+JSONDecodeError
+Using Microservice API
+Using Halo API
+Upload
+ClientError
+AttributeError
+Email Update
+api/Actions
+TestTemp
+parsed_plain_text_email
+assert result
+Parameter Store
+-1
+dontackemails2
+the Zendesk API's
+POST User

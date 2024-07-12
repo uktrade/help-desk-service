@@ -26,16 +26,20 @@ class TestDFAPIUserSerialisation:
 
 
 class TestDFAPIHaloManagerCreateUser:
+    @mock.patch("halo.halo_api_client.HaloAPIClient.get")
     @mock.patch("halo.halo_api_client.HaloAPIClient.post")
     @mock.patch("halo.halo_manager.HaloAPIClient._HaloAPIClient__authenticate")  # /PS-IGNORE
     def test_user_creation_api_call_receives_correct_data(
         self,
         mock_halo_authenticate: MagicMock,
         mock_halo_api_client_post: MagicMock,
+        mock_halo_api_client_get: MagicMock,
         client_id,
         client_secret,
         ess_user_request_json,
+        halo_user_search_no_results,
     ):
+        mock_halo_api_client_get.return_value = halo_user_search_no_results
         mock_halo_authenticate.return_value = "mock-token"
         serializer = serializers.ZendeskToHaloCreateUserSerializer()
         expected_request_data = serializer.to_representation(

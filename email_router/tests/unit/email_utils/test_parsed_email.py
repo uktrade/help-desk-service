@@ -3,6 +3,7 @@ from email.message import EmailMessage
 from unittest import mock
 from unittest.mock import MagicMock
 
+import pytest
 from email_router.ses_email_receiving.email_utils import ParsedEmail
 
 
@@ -73,6 +74,12 @@ class TestParsedEmail:
 
         assert attachment["filename"] == f"attachment-{expected_datetime}.dat"
 
+    def test_is_reply_to_ticket(self, parsed_reply_to_ticket_email):
+        assert parsed_reply_to_ticket_email.reply_to_ticket_id == "123"
+
+    def test_is_not_reply_to_ticket(self, parsed_email):
+        assert parsed_email.reply_to_ticket_id is None
+
 
 class TestNameAndEmail:
     def test_get_sender_name_without_email_address(self, parsed_outlook_email):
@@ -95,3 +102,16 @@ class TestNameAndEmail:
         sender_name = simple_mailbox_from_email.sender_name
 
         assert sender_name == expected_sender_name
+
+
+class TestEmailWithoutBody:
+    """
+    Google sent an email without a body; something to do with DMARC verification.
+    Make sure we handle such things correctly, in case it does it again.
+    """  # /PS-IGNORE
+
+    def test_email_without_body_raises_attribute_error_when_body_accessed(
+        self, google_email_without_body: ParsedEmail
+    ):
+        with pytest.raises(AttributeError):
+            _payload = google_email_without_body.payload  # noqa: F841

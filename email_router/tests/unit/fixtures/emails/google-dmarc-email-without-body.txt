@@ -1,0 +1,75 @@
+Return-Path: <noreply-dmarc-support@google.com>
+Received: from mail-qv1-f74.google.com (mail-qv1-f74.google.com [209.85.219.74])
+ by inbound-smtp.eu-west-2.amazonaws.com with SMTP id 2qq36sb8drquqju6omlfh1i037s595c3ln6kus81
+ for support.test@example.com;
+ Tue, 25 Jun 2024 10:07:20 +0000 (UTC)
+X-SES-Spam-Verdict: PASS
+X-SES-Virus-Verdict: PASS
+Received-SPF: pass (spfCheck: domain of google.com designates 209.85.219.74 as permitted sender) client-ip=209.85.219.74; envelope-from=noreply-dmarc-support@google.com; helo=mail-qv1-f74.google.com;
+Authentication-Results: amazonses.com;
+ spf=pass (spfCheck: domain of google.com designates 209.85.219.74 as permitted sender) client-ip=209.85.219.74; envelope-from=noreply-dmarc-support@google.com; helo=mail-qv1-f74.google.com;
+ dkim=pass header.i=@google.com;
+ dmarc=pass header.from=google.com;
+X-SES-RECEIPT: AEFBQUFBQUFBQUFMOUdzdUc5Wk1SZXpFTjhQb2J4M2Y1ZHc5YUszVFZVbWh6WmlkQUo3d1VIOEVvVCtLYmhMaE0yOXpJUDB1Umt6UXBKU3o3WGhvYnQwMTNONUJlRXJ0OHhUQklEb24rTHVkczU5dXhublRvZ29YeWpObG5meXUwWHlkL2E5OWx2c3lFQnRVbitRYlBBdzBtUlEzSWV4THB0ZVhXZzNOaWpIMW1aY21FakpuRDRuQlBpRXR6VW12TzdvWG9xYkRYNHA5OUtpT0hBcHpSU056NThpY0xoR3dzclpuUHVZekV3Z2JCWGVQOWw1NEtqb2JYa3kyMDRpenhpbnk2UmVzeWx1aHFVWE52dEdjK3BFQWcxL2dHSkl5NFF4cHRjWEcyQlB6d1hJWFp5R2NvZSsySDRIclhYY0ZGYWtVOEIwcDF0SHc9
+X-SES-DKIM-SIGNATURE: a=rsa-sha256; q=dns/txt; b=Il/Pk6VjAqgucfv1ZRkgsweDeoQJ8C5sEPXPfGsI0N8MOBDaTQKiaKZhUJVCViu1I7DtJZJiQpBl3lDkJsPcXB0+6C+hYbj+z4P6KkwqUBFt5H4zDlchuthFTReJ0v4Tzq0QoGb6fHVBm7IYVIJPbX/RE/XJ2Fb4WXDsAcwqwu8=; c=relaxed/simple; s=pgxy5mtxzx6eoyytua4nvvg26jbuf6lj; d=amazonses.com; t=1719310041; v=1; bh=hJkE8CA5VT8TCdgdyjUVtvaGJCvgmRg6Fr+UFS6tI80=; h=From:To:Cc:Bcc:Subject:Date:Message-ID:MIME-Version:Content-Type:X-SES-RECEIPT;
+Received: by mail-qv1-f74.google.com with SMTP id 6a1803df08f44-6b556580617so40958316d6.0
+        for <support.test@example.com>; Tue, 25 Jun 2024 03:07:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1719310039; x=1719914839; darn=support.businessandtrade.gov.uk;
+        h=content-transfer-encoding:content-disposition:to:from:subject
+         :message-id:date:mime-version:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=hJkE8CA5VT8TCdgdyjUVtvaGJCvgmRg6Fr+UFS6tI80=;
+        b=lgYl2UYgWbFbd+Rd7YA2rdNmfL70DVZ2PKV2U6WQ8iCp2Gtz300PwNNSyFNLfYwKjc
+         52rYh12jCT6kpeQ5Tf/bavpyxyFjrhb8NAL4lE63jvE+x12UFHe3loFrZfSyg0uNzhqm
+         d9RLO6OH0JkiAiHfpRMbQaPhLtixg+NY4cGo7l9nGLcmuvB2X0Ao+pdnz3aZgFwPbISP
+         IG/we5+ooBMORRJtBTOLf9tTMbvyXB/stn7xDfAOV5luFKSSh2YAGkSKbRVy7iYU2SxQ
+         TWYa9Gt4anV3DL5yERZRHNH0LT8D8WgPFWfD7Gm3j9A/r+VB2DvCb0E3J/gMu+yBSv+T
+         3MOA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1719310039; x=1719914839;
+        h=content-transfer-encoding:content-disposition:to:from:subject
+         :message-id:date:mime-version:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=hJkE8CA5VT8TCdgdyjUVtvaGJCvgmRg6Fr+UFS6tI80=;
+        b=OvndNBKJD0yOmTNesLKImyUP2ZJ9a6UkHklBLZ38lLFsflzCp04CX9girJLATpg17J
+         hZJj4s/+lX60pwmu9OKFUy7QVKA14SxmEffoAGC5V/CdCQP8bUxaTuyyAdeC5Q4ErF/X
+         J5oqFHQuenYWPuASfGFE/G1D1adwycJ9eScvQCV3pBncIhWGUaI48NxDqnBuJGAnhazJ
+         NFGCfhGJRfNMdzP+FYlBsSQ3vjHWYWw/yR18eayigzwBMeXNADn1IqP8QeaAUGaUr3nr
+         bHvwldX8HAFNTguSarM537mgb+l2cSt4H0q9AVvAwcgSFY4XKSRx1wurfCQ37FAj92AY
+         GZiw==
+X-Gm-Message-State: AOJu0Yw0aUYqZ+3CF/55DuUFRJEUjnnT+zeiemvu/2K/pEZHwgyksrL7
+	+Q9IWIZZKkS+k2DHD7F4blfnaEVjtpyGLH/63t0EhMHy7ISoidGSykM0lyxQR5GWjvw=
+X-Google-Smtp-Source: AGHT+IEhlVpG0IBOt3vmrLnc8sFt9Hlbl8mMvlsU+Up1h5rkBh5RjjzYd04wdCWz1j8NNZYthUPl3Uwsdg/TCA==
+MIME-Version: 1.0
+X-Received: by 2002:a0c:8d04:0:b0:6b2:da3d:999f with SMTP id
+ 6a1803df08f44-6b540a912damr59427246d6.41.1719310039480; Tue, 25 Jun 2024
+ 03:07:19 -0700 (PDT)
+Date: Mon, 24 Jun 2024 16:59:59 -0700
+Message-ID: <2535720083257694595@google.com>
+Subject: Report domain: support.businessandtrade.gov.uk Submitter: google.com
+ Report-ID: 2535720083257694595
+From: noreply-dmarc-support@google.com
+To: support.test@example.com
+Content-Type: application/zip; 
+	name="google.com!support.businessandtrade.gov.uk!1719187200!1719273599.zip"
+Content-Disposition: attachment; 
+	filename="google.com!support.businessandtrade.gov.uk!1719187200!1719273599.zip"
+Content-Transfer-Encoding: base64
+
+UEsDBAoAAAAIAOpJ2ViqnFEpgAIAALsSAABEAAAAZ29vZ2xlLmNvbSFzdXBwb3J0LmJ1c2luZXNz
+YW5kdHJhZGUuZ292LnVrITE3MTkxODcyMDAhMTcxOTI3MzU5OS54bWztWMuSojAU3c9XWO4lgqIy
+RadnNV8ws6YCXDAKSToJKP31c2ke0q/pGmfLCjw593VujmUZPl7LYlGDNlyKh6XrrJcLEIlMucgf
+lr9//VwdlotH+i3MANKYJWf6bbEINSipbVSCZSmzrMUQlTqPBCuB5lLmBTiJLEMygh0HSsYLKiRm
+KJpVWjKdrEyl2nQ/pmEdr4+5Ws2iRArLEhtxkUl6tFaZ74T0oc4tlDDChLmAJt52t/MPa8z1Pr5L
+3I/BU+r5G3/vrdeHjefvd8HWD/yQ3I47Oo4KkWYi74dBKIacC+ru3cA9tPEh6ZDhHET6curtN34Q
+YCtiSEZeZxurTTUNlSx40kSqigtujjA2IlEdQYfh48pwAcYwkeKgKaAatVOdsUTH64JYeuYl1SHp
+XnrQqOwFa58dpOhTxbAvizlDonrUvIbNgKvE0j1q1T47RLxmCtWN99EouIBE6mEqLS+jbkZWOoGI
+K+ptHG8bOJ57cFwPC48HAzWRlbDUDUn3MsB9PahZUaHS6XDQyseNkoZbvPF4E9smp8iE1+qkmDFI
+GCXr1chohhe0FSIbS5KPa+Jqh8lCngLqknH02xh2BNyZjjIty69XOiX32d/lDFllj5EGUxX2VubN
+CPfcod40bd5el/7DRBkoILFSU3mJZVM31j5d/Riez3l93tan/ZGfUBvDOEo3UEf9pi1+0i8r2bMU
+Bkz3NXFvdyq/Nn5pr8/XHcimsRXbirrOvd0prrJdcfqyu8neb81BtbqAsSvP+Y82J3cKfflmky15
+sMy/usf93D2b2T2ze2b3/M0969k9s3tm99znnmD+4TabZzbPfeY5zOaZzTOb58UxIbn9D/UHUEsB
+AgoACgAAAAgA6knZWKqcUSmAAgAAuxIAAEQAAAAAAAAAAAAAAAAAAAAAAGdvb2dsZS5jb20hc3Vw
+cG9ydC5idXNpbmVzc2FuZHRyYWRlLmdvdi51ayExNzE5MTg3MjAwITE3MTkyNzM1OTkueG1sUEsF
+BgAAAAABAAEAcgAAAOICAAAAAA==
