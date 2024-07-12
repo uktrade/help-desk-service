@@ -35,7 +35,14 @@ class TestGetOrCreateUser:
 
         manager.create_user(zendesk_user_create_or_update_request_body)
 
-        mock_get.assert_called_once_with(path="Users", params={"search": expected_search_term})
+        mock_get.assert_called_once_with(
+            path="Users",
+            params={
+                "search": expected_search_term,
+                "order": "id",
+                "orderdesc": 1,
+            },
+        )
 
     def test_halo_manager_creates_user_if_no_existing_user(
         self,
