@@ -462,7 +462,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     """
 
     summary = HaloSummaryFromZendeskField()
-    details = HaloDetailsFromZendeskField()
+    details_html = HaloDetailsFromZendeskField()
     tags = HaloTagsFromZendeskField(required=False)
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
@@ -487,7 +487,7 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
         ticket = deepcopy(data)
         halo_payload = {
             "summary": ticket.pop("subject", None),
-            "details": ticket.pop("description", None),
+            "details_html": ticket.pop("description", None),
             "tags": ticket.pop("tags", []),
         }
         # find unsupported Zendesk fields

@@ -21,8 +21,8 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
 
         halo_equivalent = serializer.data
 
-        assert "details" in halo_equivalent
-        assert halo_equivalent["details"] == expected_details
+        assert "details_html" in halo_equivalent
+        assert halo_equivalent["details_html"] == expected_details
 
     def test_requester_name_is_user_name(self, datahub_frontend_support_ticket):
         expected_user_name = datahub_frontend_support_ticket["ticket"]["requester"]["name"]
