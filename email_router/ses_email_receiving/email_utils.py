@@ -457,6 +457,8 @@ class HaloAPIClient(BaseAPIClient):
             "details_html": message.payload,
             "users_name": message.sender_name,
             "reportedby": message.sender_email,
+            "user_email": message.sender_email,
+            "outcome": "First User Email",
             "tickettype_id": 36,
             "dont_do_rules": False,
             "customfields": [{"name": "CFEmailToAddress", "value": message.recipient}],
@@ -466,7 +468,9 @@ class HaloAPIClient(BaseAPIClient):
             # add the relevant user details to the ticket
             request_data["users_name"] = halo_user["name"]
             request_data["reportedby"] = halo_user["emailaddress"]
+            request_data["user_email"] = halo_user["emailaddress"]
             request_data["user_id"] = halo_user["id"]
+            request_data["user"] = halo_user
         if upload_tokens:
             attachments = [{"id": upload_token} for upload_token in upload_tokens]
             request_data["attachments"] = attachments
