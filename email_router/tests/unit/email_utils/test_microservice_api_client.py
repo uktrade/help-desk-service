@@ -2,11 +2,14 @@ from email.utils import parseaddr
 from unittest import mock
 from unittest.mock import MagicMock, call
 
-from email_router.ses_email_receiving.email_utils import APIClient
+from email_router.ses_email_receiving.email_utils import (
+    MicroserviceAPIClient,
+    ParsedEmail,
+)
 from zenpy.lib.api_objects import Upload
 
 
-class TestAPIClient:
+class TestMicroserviceAPIClient:
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
     def test_api_client_creates_zenpy_client(self, mock_zenpy: MagicMock):
         zendesk_email = "test@example.com"  # /PS-IGNORE
@@ -17,7 +20,7 @@ class TestAPIClient:
             "token": zendesk_token,
         }
 
-        APIClient(zendesk_email, zendesk_token)
+        MicroserviceAPIClient(zendesk_email, zendesk_token)
 
         mock_zenpy.assert_called_once_with(**expected_kwargs)
 
@@ -35,7 +38,7 @@ class TestAPIClient:
         mock_zenpy.return_value = mock_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_user_email = parsed_email_sans_attachments.sender_email
         expected_user_name = parsed_email_sans_attachments.sender_name
         expected_user_kwargs = {"email": expected_user_email, "name": expected_user_name}
@@ -61,10 +64,11 @@ class TestAPIClient:
         mock_user.return_value = MagicMock()
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_comment_kwargs = {
             "html_body": parsed_email_sans_attachments.payload,
             "uploads": None,
+            "public": True,
         }
 
         api_client.create_ticket(parsed_email_sans_attachments)
@@ -88,9 +92,9 @@ class TestAPIClient:
         mock_user.return_value = MagicMock()
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_ticket_kwargs = {
-            "subject": parsed_email_sans_attachments.subject,
+            "subject": f"{parsed_email_sans_attachments.subject} via netloc not found",
             "comment": mock_comment.return_value,
             "requester": mock_user.return_value,
             "recipient": parseaddr(parsed_email_sans_attachments.recipient)[1],
@@ -119,7 +123,7 @@ class TestAPIClient:
         mock_ticket.return_value = MagicMock()
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_ticket_create_arg = mock_ticket.return_value
 
         api_client.create_ticket(parsed_email_sans_attachments)
@@ -132,7 +136,7 @@ class TestAPIClient:
         mock_zenpy.return_value = mock_zenpy_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_payload = "test"
         expected_filename = "test.txt"
         expected_content_type = "text/plain"
@@ -148,20 +152,15 @@ class TestAPIClient:
         )
 
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
-    def test_upload_attachments_makes_zenpy_uploads(self, mock_zenpy: MagicMock):
+    def test_upload_attachments_makes_zenpy_uploads(
+        self, mock_zenpy: MagicMock, parsed_two_attachments_email: ParsedEmail
+    ):
         mock_zenpy_client = MagicMock()
         mock_zenpy.return_value = mock_zenpy_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
-        uploads = [
-            {"payload": "text one", "filename": "textfile.txt", "content_type": "text/plain"},
-            {
-                "payload": b"binary one",
-                "filename": "binaryfile.bin",
-                "content_type": "application/octet-stream",
-            },
-        ]
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
+        uploads = list(parsed_two_attachments_email.attachments)
         expected_upload_tokens = [123, 321]
         upload_objects = [Upload(token=token) for token in expected_upload_tokens]
         mock_zenpy_client.attachments.upload.side_effect = upload_objects
@@ -174,46 +173,76 @@ class TestAPIClient:
             for upload in uploads
         ]
 
-        api_client.upload_attachments(uploads)
+        api_client.upload_attachments(parsed_two_attachments_email)
 
         assert mock_zenpy_client.attachments.upload.call_count == len(expected_calls)
         mock_zenpy_client.attachments.upload.assert_has_calls(expected_calls)
 
     @mock.patch("email_router.ses_email_receiving.email_utils.Zenpy")
-    def test_upload_attachments_returns_upload_tokens(self, mock_zenpy: MagicMock):
+    def test_upload_attachments_returns_upload_tokens(
+        self, mock_zenpy: MagicMock, parsed_two_attachments_email: ParsedEmail
+    ):
         mock_zenpy_client = MagicMock()
         mock_zenpy.return_value = mock_zenpy_client
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
-        uploads = [
-            {"payload": "text one", "filename": "textfile.txt", "content_type": "text/plain"},
-            {
-                "payload": b"binary one",
-                "filename": "binaryfile.bin",
-                "content_type": "application/octet-stream",
-            },
-        ]
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
         expected_upload_tokens = [123, 321]
         upload_objects = [Upload(token=token) for token in expected_upload_tokens]
         mock_zenpy_client.attachments.upload.side_effect = upload_objects
 
-        upload_tokens = api_client.upload_attachments(uploads)
+        upload_tokens = api_client.upload_attachments(parsed_two_attachments_email)
 
         assert upload_tokens == expected_upload_tokens
 
-    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.create_ticket")
-    @mock.patch("email_router.ses_email_receiving.email_utils.APIClient.upload_attachments")
-    def test_create_ticket_from_message_preforms_uploads_and_creates_tickets(
+    @mock.patch("email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.create_ticket")
+    @mock.patch(
+        "email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.upload_attachments"
+    )
+    def test_create_ticket_from_message_performs_uploads_and_creates_tickets(
         self, mock_upload_attachments: MagicMock, mock_create_ticket: MagicMock, parsed_email
     ):
         mock_upload_attachments.return_value = [123, 321]
         mock_create_ticket.return_value = {}
         zendesk_email = "test@example.com"  # /PS-IGNORE
         zendesk_token = "test123"
-        api_client = APIClient(zendesk_email, zendesk_token)
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
 
-        api_client.create_ticket_from_message(parsed_email)
+        api_client.create_or_update_ticket_from_message(parsed_email)
 
         mock_upload_attachments.assert_called_once()
         mock_create_ticket.assert_called_once()
+
+    @mock.patch("email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.create_ticket")
+    @mock.patch("email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.update_ticket")
+    def test_update_ticket_from_message_does_not_create_ticket(
+        self,
+        _mock_update_ticket: MagicMock,
+        mock_create_ticket: MagicMock,
+        parsed_reply_to_ticket_email,
+    ):
+        mock_create_ticket.return_value = {}
+        zendesk_email = "test@example.com"  # /PS-IGNORE
+        zendesk_token = "test123"
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
+
+        api_client.create_or_update_ticket_from_message(parsed_reply_to_ticket_email)
+
+        mock_create_ticket.assert_not_called()
+
+    @mock.patch("email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.create_ticket")
+    @mock.patch("email_router.ses_email_receiving.email_utils.MicroserviceAPIClient.update_ticket")
+    def test_update_ticket_from_message_adds_comment_to_ticket(
+        self,
+        mock_update_ticket: MagicMock,
+        _mock_create_ticket: MagicMock,
+        parsed_reply_to_ticket_email,
+    ):
+        mock_update_ticket.return_value = {}
+        zendesk_email = "test@example.com"  # /PS-IGNORE
+        zendesk_token = "test123"
+        api_client = MicroserviceAPIClient(zendesk_email, zendesk_token)
+
+        api_client.create_or_update_ticket_from_message(parsed_reply_to_ticket_email)
+
+        mock_update_ticket.assert_called_once()

@@ -53,6 +53,17 @@ class HaloManager:
         halo_response = self.client.get(path=f"Users/{user_id}")
         return halo_response
 
+    def search_for_user(self, search_term):
+        halo_response = self.client.get(
+            path="Users",
+            params={
+                "search": search_term,
+                "order": "id",
+                "orderdesc": 1,
+            },
+        )
+        return halo_response
+
     def get_users(self):
         halo_response = self.client.get(path="Users/")
         return halo_response
@@ -87,9 +98,23 @@ class HaloManager:
         if zendesk_request is None:
             zendesk_request = {}
         user_data = zendesk_request.get("user", {})
+        user_email = user_data.get("email", None)
+        user_id = user_data.get("id", None)
+        if user_id is None and user_email:
+            # Search for an existing Halo user
+            existing_user = self.search_for_existing_user(search_term=user_email)
+            if existing_user:
+                return existing_user
         halo_user = ZendeskToHaloCreateUserSerializer(user_data)
         halo_response = self.client.post(path="Users", payload=[halo_user.data])
         return halo_response
+
+    def search_for_existing_user(self, search_term):
+        existing_user = None
+        search_results = self.search_for_user(search_term=search_term)
+        if search_results["record_count"] > 0:
+            existing_user = search_results["users"][0]
+        return existing_user
 
     def create_agent(self, zendesk_request: dict = None) -> dict:
         """
@@ -152,10 +177,12 @@ class HaloManager:
         :raises:
             HelpDeskTicketNotFoundException: If no ticket is found.
         """
+        logger.warning(f"HaloManager.update_ticket zendesk_request: {zendesk_request}")
         if zendesk_request is None:
             zendesk_request = {}
         halo_payload = ZendeskToHaloUpdateTicketSerializer(zendesk_request)
         updated_ticket = self.client.post(path="Tickets", payload=[halo_payload.data])
+        logger.warning(f"HaloManager.update_ticket updated_ticket: {updated_ticket}")
         if updated_ticket is None:
             message = f"Could not update ticket with id {zendesk_request['id']}"
             logger.error(message)
@@ -178,11 +205,14 @@ class HaloManager:
         return updated_ticket
 
     def add_comment(self, zendesk_request: dict = None):
+        logger.warning(f"HaloManager.add_comment zendesk_request: {zendesk_request}")
         if zendesk_request is None:
             zendesk_request = {}
         ticket_data = zendesk_request.get("ticket", {})
+        logger.warning(f"HaloManager.add_comment ticket_data: {zendesk_request}")
         serializer = ZendeskToHaloCreateCommentSerializer()
         halo_equivalent = serializer.to_representation(ticket_data)
+        logger.warning(f"HaloManager.add_comment halo_equivalent: {halo_equivalent}")
 
         halo_response = self.client.post("Actions", payload=[halo_equivalent])
         return halo_response

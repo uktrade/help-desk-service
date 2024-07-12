@@ -100,11 +100,19 @@ class TestUserViews:
             halo_manager.get_user(123)
         assert excinfo.typename == "HaloClientNotFoundException"
 
-    @patch("requests.post")
-    def test_post_user_success(self, mock_post, access_token):
+    @patch("halo.halo_api_client.requests.post")
+    @patch("halo.halo_api_client.requests.get")
+    def test_post_user_success(
+        self,
+        mock_get: MagicMock,
+        mock_post: MagicMock,
+        access_token,
+        halo_user_search_no_results_response,
+    ):
         """
         POST User Success
         """
+        mock_get.return_value = halo_user_search_no_results_response
         mock_ticket_post = {"id": 123, "name": "dummy name", "email": "test@test.com"}  # /PS-IGNORE
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
@@ -128,11 +136,19 @@ class TestUserViews:
         assert isinstance(user, dict)
         assert user["id"] == 123
 
-    @patch("requests.post")
-    def test_post_user_failure(self, mock_post, access_token):
+    @patch("halo.halo_api_client.requests.post")
+    @patch("halo.halo_api_client.requests.get")
+    def test_post_user_failure(
+        self,
+        mock_get: MagicMock,
+        mock_post: MagicMock,
+        access_token,
+        halo_user_search_no_results_response,
+    ):
         """
         POST User Failure
         """
+        mock_get.return_value = halo_user_search_no_results_response
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
@@ -155,11 +171,19 @@ class TestUserViews:
             halo_manager.create_user(request_data)
         assert excinfo.typename == "HaloClientBadRequestException"
 
-    @patch("requests.post")
-    def test_update_user_success(self, mock_post, access_token):
+    @patch("halo.halo_api_client.requests.post")
+    @patch("halo.halo_api_client.requests.get")
+    def test_update_user_success(
+        self,
+        mock_get: MagicMock,
+        mock_post: MagicMock,
+        access_token,
+        halo_user_search_no_results_response,
+    ):
         """
         Update User Success
         """
+        mock_get.return_value = halo_user_search_no_results_response
         mock_ticket_post = {
             "id": 1,
             "name": "test",
@@ -183,11 +207,19 @@ class TestUserViews:
         assert user["name"] == "test"
         assert user["emailaddress"] == "test@example.com"  # /PS-IGNORE
 
-    @patch("requests.post")
-    def test_update_ticket_failure(self, mock_post, access_token):
+    @patch("halo.halo_api_client.requests.post")
+    @patch("halo.halo_api_client.requests.get")
+    def test_update_user_failure(
+        self,
+        mock_get: MagicMock,
+        mock_post: MagicMock,
+        access_token,
+        halo_user_search_no_results_response,
+    ):
         """
-        POST Ticket Failure
+        POST User update Failure
         """
+        mock_get.return_value = halo_user_search_no_results_response
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200

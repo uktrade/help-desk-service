@@ -1,3 +1,4 @@
+import logging
 from http import HTTPStatus
 
 import sentry_sdk
@@ -21,6 +22,8 @@ from help_desk_api.serializers import (
     HaloToZendeskUploadSerializer,
     HaloToZendeskUserSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class HaloBaseView(UserPassesTestMixin, APIView):
@@ -92,12 +95,15 @@ class UserView(HaloBaseView):
         try:
             halo_response = self.halo_manager.create_user(request.data)
             serializer = HaloToZendeskUserSerializer(halo_response)
+            response_status = status.HTTP_201_CREATED
             if "id" in request.data:
-                # If "id" exists in payload that means we are updating user
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                # There is no "id" in payload, so we create a User
-                return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
+                # If "id" exists in request payload that means we are updating user
+                response_status = status.HTTP_200_OK
+            return Response(
+                {"user": serializer.data},
+                status=response_status,
+                content_type="application/json",
+            )
         except ZendeskException as error:
             sentry_sdk.capture_exception(error)
             return Response(
@@ -210,12 +216,16 @@ class SingleTicketView(HaloBaseView):
                 "Ticket ID is required for HTTP PUT request",
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        logger.info(f"SingleTicketView.put with ticket ID {ticket_id}: {request.data}")
         ticket_data = request.data.get("ticket", {})
         comment_data = ticket_data.get("comment", {})
-        comment_body = comment_data.get("body", None)
+        comment_body = comment_data.get("body", comment_data.get("html_body", None))
         if comment_body is not None:
             # Halo adds comments differently to Zendesk
             halo_response = self.halo_manager.add_comment(request.data)
+            logger.warning(
+                f"SingleTicketView.put with ticket ID {ticket_id} Halo response: {halo_response}"
+            )
             serializer = HaloToZendeskTicketCommentSerializer(halo_response)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
