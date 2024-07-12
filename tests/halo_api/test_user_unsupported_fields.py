@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from halo.halo_manager import HaloManager
@@ -38,11 +38,19 @@ class TestUnsupportedFields:
             halo_manager.update_user(user_data)
         assert excinfo.typename == "ZendeskFieldsNotSupportedException"
 
-    @patch("requests.post")
-    def test_create_user_failure(self, mock_post, access_token):
+    @patch("halo.halo_api_client.requests.post")
+    @patch("halo.halo_api_client.requests.get")
+    def test_create_user_failure(
+        self,
+        mock_get: MagicMock,
+        mock_post: MagicMock,
+        access_token,
+        halo_user_search_no_results_response,
+    ):
         """
         Unsuccessful User create with unsupported field
         """
+        mock_get.return_value = halo_user_search_no_results_response
         fake_responses = [mock_post, mock_post]
         fake_responses[0].return_value.json.return_value = access_token
         fake_responses[0].return_value.status_code = 200
