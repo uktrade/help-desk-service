@@ -54,7 +54,14 @@ class HaloManager:
         return halo_response
 
     def search_for_user(self, search_term):
-        halo_response = self.client.get(path="Users", params={"search": search_term})
+        halo_response = self.client.get(
+            path="Users",
+            params={
+                "search": search_term,
+                "order": "id",
+                "orderdesc": 1,
+            },
+        )
         return halo_response
 
     def get_users(self):
@@ -92,7 +99,8 @@ class HaloManager:
             zendesk_request = {}
         user_data = zendesk_request.get("user", {})
         user_email = user_data.get("email", None)
-        if user_email:
+        user_id = user_data.get("id", None)
+        if user_id is None and user_email:
             # Search for an existing Halo user
             existing_user = self.search_for_existing_user(search_term=user_email)
             if existing_user:
