@@ -71,6 +71,13 @@ class HelpDeskCreds(models.Model):
         default=HelpDeskChoices.ZENDESK,
     )
 
+    # Note allows us to track which service a given set of creds is for
+    note = models.CharField(
+        max_length=255,
+        default="",
+        blank=True,
+    )
+
     last_modified = models.DateTimeField(auto_now=True)
 
     def clean_fields(self, exclude=None):
