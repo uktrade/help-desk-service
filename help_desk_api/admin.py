@@ -13,6 +13,7 @@ class HelpDeskCredsAdmin(admin.ModelAdmin):
         "zendesk_email",
         "zendesk_subdomain",
         "help_desk",
+        "note",
     ]
 
     def get_form(self, request, obj=None, **kwargs):

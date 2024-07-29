@@ -127,7 +127,7 @@ class ZendeskAPIProxyMiddleware:
             sentry_sdk.capture_exception(exp)
             request_body = request.body
 
-        logger.warning(f"Help Desk Service request received, body: {request_body}")
+        logger.info(f"Help Desk Service request received, body: {request_body}")
 
         try:
             help_desk_creds, token = self.get_authentication_values(request)
@@ -137,17 +137,19 @@ class ZendeskAPIProxyMiddleware:
         except NotAuthenticated:
             return self.get_response(request)
 
-        logger.info(f"HelpDeskCreds: {help_desk_creds.pk}")
-        logger.info(f"zendesk_email: {help_desk_creds.zendesk_email}")
-
-        logger.warning("check_password passed")
+        logger.info(
+            f"HelpDeskCreds: {help_desk_creds.pk} "
+            f"for zendesk_email: {help_desk_creds.zendesk_email}"
+        )
 
         zendesk_response = None
         django_response = None
 
         supported_endpoint = method_supported(request.path, request.method.upper())
 
-        logger.warning(f"Supported endpoint: {'true' if supported_endpoint else 'false'}")
+        logger.info(
+            f"Supported endpoint {request.path}: {'true' if supported_endpoint else 'false'}"
+        )
 
         if HelpDeskCreds.HelpDeskChoices.ZENDESK in help_desk_creds.help_desk:
             logger.info("Making Zendesk request")
@@ -210,17 +212,24 @@ class ZendeskAPIProxyMiddleware:
         # Get out of proxy logic if there's an issue with the token
         # get_zenpy_request_vars raises NotAuthenticated
         # if no Authorization header found
+        logger.debug("Zenpy vars from request")
         token, email = get_zenpy_request_vars(request)
+        logger.debug(f"Get HelpDeskCreds for {email}")
         help_desk_creds_for_email = HelpDeskCreds.objects.filter(zendesk_email=email)
         if not help_desk_creds_for_email:
             raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
+        logger.debug("Search HelpDeskCreds for matching set")
         matching_help_desk_creds = None
         for help_desk_creds in help_desk_creds_for_email:
+            logger.debug("Call check_password")
             if check_password(token, help_desk_creds.zendesk_token):
+                logger.debug("Found matching credentials")
                 matching_help_desk_creds = help_desk_creds
                 break
         if matching_help_desk_creds is None:
+            logger.debug("Failed to find matching credentials")
             raise AuthenticationFailed(detail=f"Credentials not valid for {email}")
+        logger.debug("Return matching credentials")
         return matching_help_desk_creds, token
 
     def cache_request_data(

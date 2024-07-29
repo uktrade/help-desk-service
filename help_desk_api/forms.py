@@ -21,6 +21,7 @@ class HelpDeskCredsChangeForm(forms.ModelForm):
             "halo_client_id",
             "halo_client_secret",
             "help_desk",
+            "note",
         )
 
     def __init__(self, *args, **kwargs):
@@ -40,6 +41,7 @@ class HelpDeskCredsCreationForm(forms.ModelForm):
             "halo_client_id",
             "halo_client_secret",
             "help_desk",
+            "note",
         )
 
     def save(self, commit=True):
