@@ -2,7 +2,7 @@ default_language_version:
     python: python3.11
 repos:
 -   repo: https://github.com/uktrade/pii-secret-check-hooks
-    rev: 0.0.0.35
+    rev: 0.0.0.36
     hooks:
     -   id: pii_secret_filename
         files: ''
@@ -33,7 +33,7 @@ repos:
     - id: black
       language_version: python3.11
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.1.0
     hooks:
     - id: flake8
 -   repo: https://github.com/PyCQA/isort
