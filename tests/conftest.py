@@ -176,6 +176,31 @@ def new_zendesk_ticket_with_comment():
     }
 
 
+@pytest.fixture()
+def new_zendesk_ticket_with_unknown_field():
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
+        "comment": {
+            "body": "Long load of text here",
+        },
+        "subject": "Request for new dataset on Data Workspace",  # /PS-IGNORE
+        "tags": [
+            "request-for-data",
+            "another-tag",
+        ],
+        "recipient": "someone@example.gov.uk",  # /PS-IGNORE
+        "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
+        "custom_fields": [
+            {"id": 31281329, "value": "data_workspace"},
+        ],
+        "unknown_field_1234": "abc",
+    }
+
+
 @pytest.fixture(scope="session")
 def new_zendesk_ticket_with_uploads():
     """
