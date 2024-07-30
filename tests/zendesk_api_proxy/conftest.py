@@ -82,6 +82,20 @@ def zendesk_create_ticket_request(
 
 
 @pytest.fixture()
+def zendesk_create_ticket_request_with_unknown_field(
+    zendesk_authorization_header, new_zendesk_ticket_with_unknown_field, rf: RequestFactory
+):
+    url = reverse("api:tickets")
+    request = rf.post(
+        url,
+        data=new_zendesk_ticket_with_unknown_field,
+        content_type="application/json",
+        headers={"Authorization": zendesk_authorization_header},
+    )
+    return request
+
+
+@pytest.fixture()
 def zendesk_create_ticket_response_body():
     # Heavily cut down
     return {

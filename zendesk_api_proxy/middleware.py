@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import sys
+from http import HTTPStatus
 
 import requests
 import sentry_sdk
@@ -10,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse
 from django.urls import ResolverMatch, resolve
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
 from rest_framework.views import APIView
@@ -158,19 +159,41 @@ class ZendeskAPIProxyMiddleware:
             )
 
         if HelpDeskCreds.HelpDeskChoices.HALO in help_desk_creds.help_desk:
-            logger.info("Making Halo request")  # /PS-IGNORE
-            # Need to pass Zendesk ticket ID, if any
-            zendesk_response_json = self.get_json_response(zendesk_response, {})
-            zendesk_ticket = zendesk_response_json.get("ticket", {})
-            zendesk_ticket_id = zendesk_ticket.get("id", None)
-            setattr(request, "zendesk_ticket_id", zendesk_ticket_id)
             try:
-                django_response = self.make_halo_request(
-                    help_desk_creds, request, supported_endpoint
-                )
-            except ZendeskFieldsNotSupportedException as exp:
+                """
+                We wrap this in try-catch so we can prevent any Halo errors
+                getting back to the requester when dual-running, as only
+                Zendesk errors should be returned to them.
+                The whole idea of dual-running is that if
+                Zendesk succeeds but Halo fails, Zendesk wins.
+                """
+                logger.info("Making Halo request")  # /PS-IGNORE
+                # Need to pass Zendesk ticket ID, if any
+                zendesk_response_json = self.get_json_response(zendesk_response, {})
+                zendesk_ticket = zendesk_response_json.get("ticket", {})
+                zendesk_ticket_id = zendesk_ticket.get("id", None)
+                setattr(request, "zendesk_ticket_id", zendesk_ticket_id)
+                try:
+                    django_response = self.make_halo_request(
+                        help_desk_creds, request, supported_endpoint
+                    )
+                except ZendeskFieldsNotSupportedException as exp:
+                    sentry_sdk.capture_exception(exp)
+                    django_response = JsonResponse(
+                        {"error": f"Incorrect payload: {exp}"}, status=HTTPStatus.BAD_REQUEST
+                    )
+            except Exception as exp:
+                """
+                We catch Exception as this needs to be as broad as possible,
+                to prevent Halo errors getting back when Zendesk is enabled.
+                """
                 sentry_sdk.capture_exception(exp)
-                django_response = HttpResponseBadRequest(f"Incorrect payload: {exp}", status=400)
+                django_response = JsonResponse(
+                    {
+                        "error": str(exp),
+                    },
+                    status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
         # If this is /api/v2/users/create_or_update,
         # we need to save the Zendesk request data under the user ID
         # as there's no other way to map the latter to the former
