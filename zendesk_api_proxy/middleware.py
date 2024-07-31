@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import sys
+import traceback
 from http import HTTPStatus
 
 import requests
@@ -380,3 +381,15 @@ class ZendeskAPIProxyMiddleware:
         )
 
         return zendesk_response
+
+    def process_exception(self, request, exception):
+        response_content = {
+            "error": f"{type(exception)}: {exception}",
+        }
+        exc_info = sys.exc_info()
+        stack_trace = traceback.format_exception(*exc_info)
+        debug_content = {
+            "traceback": stack_trace,
+        }
+        response_content.update(**debug_content)
+        return JsonResponse(response_content, status=HTTPStatus.INTERNAL_SERVER_ERROR)
