@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.urls import ResolverMatch, resolve
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
 from rest_framework.views import APIView
@@ -382,7 +382,9 @@ class ZendeskAPIProxyMiddleware:
 
         return zendesk_response
 
-    def process_exception(self, request, exception):
+    def process_exception(self, request: HttpRequest, exception):
+        if request.content_type != "application/json":
+            return None
         response_content = {
             "error": f"{type(exception)}: {exception}",
         }
