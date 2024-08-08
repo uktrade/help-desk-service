@@ -8,7 +8,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.fields import empty
 
-from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
+from help_desk_api.models import CustomField
 from help_desk_api.utils.utils import apply_zendesk_automatic_html
 
 
@@ -346,13 +346,32 @@ class HaloTagsFromZendeskField(serializers.ListField):
 class HaloCustomFieldFromZendeskField(serializers.DictField):
     specially_excluded_field_values = {"1900000265733": "-", "11013312910749": "-"}
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.halo_mappings_by_zendesk_id = CustomField.objects.all().values(
+            "zendesk_id", "halo_id", "values"
+        )
+
     def halo_mapping_by_zendesk_id(self, field_id):
-        field_id = str(field_id)
-        mapping = halo_mappings_by_zendesk_id.get(field_id, None)
-        if mapping is None:
+        # Some forms send Zendesk field IDs as strings
+        if isinstance(field_id, str):
+            field_id = int(field_id)
+        try:
+            field = CustomField.objects.get(zendesk_id=field_id)
+        except CustomField.DoesNotExist:
             raise ZendeskFieldsNotSupportedException(
                 f"Zendesk field id {field_id} not found in Halo mappings"  # noqa: E713
             )
+        mapping = {
+            "zendesk_id": field.zendesk_id,
+            "halo_id": field.halo_id,
+            "is_multiselect": field.is_multiselect,
+        }
+        if field.values.exists():
+            mapping["value_mappings"] = {
+                value["zendesk_value"]: value["halo_id"]
+                for value in field.values.values("zendesk_value", "halo_id")
+            }
         return mapping
 
     def fix_special_cases(self, field_id, field_value):
@@ -380,14 +399,16 @@ class HaloCustomFieldFromZendeskField(serializers.DictField):
         field_id, field_value = self.fix_special_cases(field_id, field_value)
         mapping = self.halo_mapping_by_zendesk_id(field_id)
         try:
-            if mapping.value_mappings:
-                if mapping.is_multiselect:
+            if "value_mappings" in mapping:
+                if mapping["is_multiselect"]:
                     if not isinstance(field_value, list):
                         field_value = [field_value]
-                    field_value = [{"id": mapping.value_mappings[value]} for value in field_value]
+                    field_value = [
+                        {"id": mapping["value_mappings"][value]} for value in field_value
+                    ]
                 else:
-                    field_value = mapping.value_mappings[field_value]
-            return {"name": mapping.halo_title, "value": field_value}
+                    field_value = mapping["value_mappings"][field_value]
+            return {"id": mapping["halo_id"], "value": field_value}
         except KeyError as e:
             raise ZendeskFieldsNotSupportedException() from e
 
@@ -470,7 +491,6 @@ class ZendeskToHaloCreateTicketSerializer(serializers.Serializer):
     customfields = HaloCustomFieldsSerializer(source="custom_fields", required=False)
     users_name = HaloUserNameFromZendeskRequesterField(required=False)
     reportedby = HaloUserEmailFromZendeskRequesterField(required=False)
-    userdef5 = HaloCopyOfZendeskTicketIdField(required=False)
     attachments = HaloAttachmentsFromZendeskUploadsSerializer(source="uploads", required=False)
     tickettype_id = serializers.IntegerField(default=settings.HALO_DEFAULT_TICKET_TYPE_ID)
     # The dont_do_rules field is a Halo API thing

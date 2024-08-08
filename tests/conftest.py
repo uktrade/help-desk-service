@@ -176,6 +176,44 @@ def new_zendesk_ticket_with_comment():
     }
 
 
+@pytest.fixture(scope="function")
+def minimal_new_zendesk_ticket():
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
+        "comment": {
+            "body": "Minimal ticket creation request data.",
+        },
+        "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
+    }
+
+
+@pytest.fixture()
+def service_custom_field():
+    return {"id": 31281329, "value": "data_workspace"}
+
+
+@pytest.fixture(scope="function")
+def minimal_new_zendesk_ticket_with_service_custom_field(service_custom_field):
+    """
+    This is an example of the ticket submission for a
+    new dataset request
+    on Data Workspace  /PS-IGNORE
+    """
+    return {
+        "comment": {
+            "body": "Minimal ticket creation request data.",
+        },
+        "requester": {"name": "Some Body", "email": "somebody@example.com"},  # /PS-IGNORE
+        "custom_fields": [
+            service_custom_field,
+        ],
+    }
+
+
 @pytest.fixture()
 def new_zendesk_ticket_with_unknown_field():
     """

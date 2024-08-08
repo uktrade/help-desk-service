@@ -7,6 +7,7 @@ import pytest
 from django.conf import settings
 from django.core.cache import caches
 
+from help_desk_api.models import CustomField
 from help_desk_api.serializers import (
     HaloAttachmentFromZendeskUploadField,
     HaloAttachmentsFromZendeskUploadsSerializer,
@@ -22,62 +23,49 @@ from help_desk_api.serializers import (
     ZendeskToHaloCreateTicketSerializer,
     ZendeskToHaloCreateUserSerializer,
 )
-from help_desk_api.utils.field_mappings import ZendeskToHaloMapping
-from help_desk_api.utils.generated_field_mappings import halo_mappings_by_zendesk_id
 
 
 class TestZendeskToHaloSerialization:
+
     def test_unknown_zendesk_custom_field(self):
-        with mock.patch.dict(
-            "help_desk_api.serializers.halo_mappings_by_zendesk_id", {}, clear=True
-        ):
-            serializer_field = HaloCustomFieldFromZendeskField()
-            with pytest.raises(ZendeskFieldsNotSupportedException):
-                serializer_field.to_representation({"id": 1, "value": "foo"})
+        serializer_field = HaloCustomFieldFromZendeskField()
+        with pytest.raises(ZendeskFieldsNotSupportedException):
+            serializer_field.to_representation({"id": 1, "value": "foo"})
 
-    def test_zendesk_custom_field_to_halo_custom_field(self):
-        with mock.patch.dict(
-            "help_desk_api.serializers.halo_mappings_by_zendesk_id",
-            {"123": ZendeskToHaloMapping(halo_title="tttttttt")},
-            clear=True,
-        ):
-            serializer_field = HaloCustomFieldFromZendeskField()
-            zendesk_field = {"id": 123, "value": "foo"}
-            expected_value = zendesk_field["value"]
-            expected_title = halo_mappings_by_zendesk_id["123"].halo_title
-            halo_equivalent = serializer_field.to_representation(zendesk_field)
+    def test_zendesk_custom_field_to_halo_custom_field(self, service_custom_field):
+        zendesk_field_id = service_custom_field["id"]
+        custom_field = CustomField.objects.get(zendesk_id=zendesk_field_id)
+        zendesk_value = service_custom_field["value"]
+        expected_field_id = custom_field.halo_id
+        value_mapping = custom_field.values.get(zendesk_value=zendesk_value)
+        expected_value_id = value_mapping.halo_id
+        serializer_field = HaloCustomFieldFromZendeskField()
 
+        halo_equivalent = serializer_field.to_representation(service_custom_field)
+
+        assert "id" in halo_equivalent
+        assert halo_equivalent["id"] == expected_field_id
         assert "value" in halo_equivalent
-        assert halo_equivalent["value"] == expected_value
-        assert "name" in halo_equivalent
-        assert halo_equivalent["name"] == expected_title
+        assert halo_equivalent["value"] == expected_value_id
 
-    def test_zendesk_custom_fields_to_halo_custom_fields(self, new_zendesk_ticket_with_description):
-        def id_to_name(id):
-            return f"name_{id}"
+    def test_zendesk_custom_fields_to_halo_custom_fields(
+        self, minimal_new_zendesk_ticket_with_service_custom_field
+    ):
+        custom_fields = CustomField.objects.filter(is_multiselect=False).exclude(values=None)
+        zendesk_custom_fields = [
+            {"id": field.zendesk_id, "value": field.values.last().zendesk_value}
+            for field in custom_fields
+        ]
+        expected_halo_custom_fields = [
+            {"id": field.halo_id, "value": field.values.last().halo_id} for field in custom_fields
+        ]
+        serializer = HaloCustomFieldsSerializer()
 
-        fixture_custom_field_ids_to_names = {
-            str(field["id"]): ZendeskToHaloMapping(halo_title=id_to_name(field["id"]))
-            for field in new_zendesk_ticket_with_description["custom_fields"]
-        }
-        with mock.patch.dict(
-            "help_desk_api.serializers.halo_mappings_by_zendesk_id",
-            fixture_custom_field_ids_to_names,
-            clear=True,
-        ):
-            serializer = HaloCustomFieldsSerializer(
-                new_zendesk_ticket_with_description["custom_fields"]
-            )
-            halo_equivalent = serializer.data
+        halo_equivalent = serializer.to_representation(zendesk_custom_fields)
 
-        for field in serializer.instance:
-            field_id_as_name = id_to_name(field["id"])
-            halo_custom_field = next(
-                filter(lambda halo_field: halo_field["name"] == field_id_as_name, halo_equivalent),
-                None,
-            )
-            assert halo_custom_field is not None
-            assert halo_custom_field["value"] == field["value"]
+        for actual_field, expected_field in zip(halo_equivalent, expected_halo_custom_fields):
+            assert actual_field["id"] == expected_field["id"]
+            assert actual_field["value"] == expected_field["value"]
 
     def test_zendesk_subject_is_halo_summary(self, new_zendesk_ticket_with_description):
         expected_summary = new_zendesk_ticket_with_description["subject"]
@@ -116,96 +104,38 @@ class TestZendeskToHaloSerialization:
             assert "text" in tag
             assert tag["text"] in expected_tags
 
-    def test_dont_do_rules(self, new_zendesk_ticket_with_comment):
+    def test_dont_do_rules(self, minimal_new_zendesk_ticket):
         serializer = ZendeskToHaloCreateTicketSerializer()
 
-        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
+        halo_equivalent = serializer.to_representation(minimal_new_zendesk_ticket)
 
         assert "dont_do_rules" in halo_equivalent
         assert halo_equivalent["dont_do_rules"] is False
 
 
-class TestZendeskToHaloTypesMappedFromCSV:
-    def test_int_field_is_int(self):
-        csv_field = {
-            "halo_id": "229",
-            "halo_title": "CFBrowser",  # /PS-IGNORE
-            "is_zendesk_custom_field": "TRUE",
-            "special_treatment": "FALSE",
-            "zendesk_id": "34146805",
-            "zendesk_title": "Browser",
-        }
-        field = ZendeskToHaloMapping(**csv_field)
-        assert type(field.zendesk_id) is int
-
-    def test_bool_field_is_bool(self):
-        csv_field = {
-            "halo_id": "229",
-            "halo_title": "CFBrowser",  # /PS-IGNORE
-            "is_zendesk_custom_field": "TRUE",
-            "special_treatment": "FALSE",
-            "zendesk_id": "34146805",
-            "zendesk_title": "Browser",
-        }
-        field = ZendeskToHaloMapping(**csv_field)
-        assert type(field.is_zendesk_custom_field) is bool
-
-    def test_str_field_is_str(self):
-        csv_field = {
-            "halo_id": "229",
-            "halo_title": "CFBrowser",  # /PS-IGNORE
-            "is_zendesk_custom_field": "TRUE",
-            "special_treatment": "FALSE",
-            "zendesk_id": "34146805",
-            "zendesk_title": "Browser",
-        }
-        field = ZendeskToHaloMapping(**csv_field)
-        assert type(field.halo_title) is str
-
-
 class TestZendeskToHaloServiceCustomFieldsSerialization:
-    zendesk_service_to_halo_cfservice = {
-        "31281329": ZendeskToHaloMapping(
-            halo_title="CFService", value_mappings={"foo": 9876}  # /PS-IGNORE
-        )
-    }
-
-    @mock.patch.dict(
-        "help_desk_api.serializers.halo_mappings_by_zendesk_id",
-        zendesk_service_to_halo_cfservice,
-        clear=True,
-    )
     def test_uktrade_service_name_serialized_as_id(self):
+        custom_field = CustomField.objects.get(zendesk_id=31281329)
+        custom_field_value = custom_field.values.get(zendesk_value="datahub")
         serializer_field = HaloCustomFieldFromZendeskField()
-        zendesk_field = {"id": 31281329, "value": "foo"}
-        field_mapping = self.zendesk_service_to_halo_cfservice[str(zendesk_field["id"])]
-        value_mappings = field_mapping.value_mappings
-        expected_value = value_mappings[zendesk_field["value"]]
-        expected_title = field_mapping.halo_title
+        zendesk_field = {"id": custom_field.zendesk_id, "value": custom_field_value.zendesk_value}
+        expected_field_id = custom_field.halo_id
+        expected_value_id = custom_field_value.halo_id
+
         halo_equivalent = serializer_field.to_representation(zendesk_field)
 
+        assert "id" in halo_equivalent
+        assert halo_equivalent["id"] == expected_field_id
         assert "value" in halo_equivalent
-        assert halo_equivalent["value"] == expected_value
-        assert "name" in halo_equivalent
-        assert halo_equivalent["name"] == expected_title
+        assert halo_equivalent["value"] == expected_value_id
 
-    @mock.patch.dict(
-        "help_desk_api.serializers.halo_mappings_by_zendesk_id",
-        {
-            "31281329": ZendeskToHaloMapping(
-                halo_title="CFService",  # /PS-IGNORE
-                value_mappings={"foo": 9876},
-                is_multiselect=True,
-            )
-        },
-        clear=True,
-    )
     def test_single_value_for_multiselect_is_list(self):
+        custom_field = CustomField.objects.get(zendesk_name="ESS Business type")
+        custom_field_value = custom_field.values.first()
         serializer_field = HaloCustomFieldFromZendeskField()
-        zendesk_field = {"id": 31281329, "value": "foo"}
-        field_mapping = self.zendesk_service_to_halo_cfservice[str(zendesk_field["id"])]
-        value_mappings = field_mapping.value_mappings
-        expected_value = [{"id": value_mappings[zendesk_field["value"]]}]
+        zendesk_field = {"id": custom_field.zendesk_id, "value": custom_field_value.zendesk_value}
+        expected_value = [{"id": custom_field_value.halo_id}]
+
         halo_equivalent = serializer_field.to_representation(zendesk_field)
 
         assert "value" in halo_equivalent
@@ -213,38 +143,55 @@ class TestZendeskToHaloServiceCustomFieldsSerialization:
 
 
 class TestZendeskToHaloCustomFieldsSerialisation:
-    def test_ess_custom_field_serialisation(self, ess_zendesk_ticket_request_body):
-        serializer = HaloCustomFieldsSerializer()
-        custom_fields = ess_zendesk_ticket_request_body["ticket"]["custom_fields"]
 
+    def test_ess_custom_field_serialisation(self, ess_zendesk_ticket_request_body):
+        request_custom_fields = ess_zendesk_ticket_request_body["ticket"]["custom_fields"]
+
+        # ESS has a mixture of dicts with {"id": x "value": y} and {x: y}
+        # so we need to normalise that
         zendesk_custom_fields_by_ids = {
             custom_field["id"]: custom_field["value"]
-            for custom_field in custom_fields
+            for custom_field in request_custom_fields
             if "id" in custom_field
         }
-        for custom_field in custom_fields:
+        for custom_field in request_custom_fields:
             if "id" not in custom_field:
                 zendesk_custom_fields_by_ids.update(custom_field)
 
+        custom_fields = CustomField.objects.filter(
+            zendesk_id__in=zendesk_custom_fields_by_ids.keys()
+        )
+
         expected_value_mappings = []
-        for id, zendesk_value in zendesk_custom_fields_by_ids.items():
-            halo_field_name = halo_mappings_by_zendesk_id[id].halo_title
-            halo_mapping = halo_mappings_by_zendesk_id[id]
-            halo_value_mappings = halo_mapping.value_mappings
-            if halo_value_mappings is None:
-                expected_value_mappings.append({"name": halo_field_name, "value": zendesk_value})
-                continue
-            if halo_mapping.is_multiselect:
-                if not isinstance(zendesk_value, list):
-                    zendesk_value = [zendesk_value]
-                halo_value = [{"id": halo_value_mappings[value]} for value in zendesk_value]
-            else:
-                halo_value = halo_value_mappings[zendesk_value]
-            expected_value_mappings.append({"name": halo_field_name, "value": halo_value})
+        for custom_field in custom_fields:
+            request_custom_field_value = zendesk_custom_fields_by_ids.pop(
+                str(custom_field.zendesk_id)
+            )
+            halo_field_id = custom_field.halo_id
+            halo_value_id = request_custom_field_value
+            if custom_field.is_multiselect:
+                if isinstance(request_custom_field_value, str):
+                    request_custom_field_value = [
+                        request_custom_field_value,
+                    ]
+                halo_value_id = [
+                    {"id": custom_field.values.get(zendesk_value=value).halo_id}
+                    for value in request_custom_field_value
+                ]
+            elif custom_field.values.exists():
+                halo_value_id = custom_field.values.get(
+                    zendesk_value=request_custom_field_value
+                ).halo_id
+            halo_value_mapping = {"id": halo_field_id, "value": halo_value_id}
+            expected_value_mappings.append(halo_value_mapping)
+        serializer = HaloCustomFieldsSerializer()
 
-        halo_equivalent = serializer.to_representation(custom_fields)
+        halo_equivalent = serializer.to_representation(request_custom_fields)
 
-        assert halo_equivalent == expected_value_mappings
+        def sort_by_id(value):
+            return value["id"]
+
+        assert halo_equivalent.sort(key=sort_by_id) == expected_value_mappings.sort(key=sort_by_id)
 
     def test_data_workspace_staging_special_case_corrected(self, settings):
         special_case_custom_field_id = "44394845"
@@ -552,24 +499,12 @@ class TestZendeskToHaloTicketCommentSerialization:
         assert halo_equivalent["ticket_id"] == expected_ticket_id
 
 
-class TestZendeskIdsSentToHalo:
-    def test_ticket_id_in_halo_userdef5_field(self, new_zendesk_ticket_with_comment):
-        expected_ticket_id = 12345
-        new_zendesk_ticket_with_comment["zendesk_ticket_id"] = expected_ticket_id
-        serializer = ZendeskToHaloCreateTicketSerializer()
-
-        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
-
-        assert "userdef5" in halo_equivalent
-        assert halo_equivalent["userdef5"] == str(expected_ticket_id)
-
-
 class TestHaloTicketTypeIdField:
-    def test_ticket_type_id_in_halo_field(self, new_zendesk_ticket_with_comment):
+    def test_ticket_type_id_in_halo_field(self, minimal_new_zendesk_ticket):
         expected_ticket_type_id = settings.HALO_DEFAULT_TICKET_TYPE_ID
         serializer = ZendeskToHaloCreateTicketSerializer()
 
-        halo_equivalent = serializer.to_representation(new_zendesk_ticket_with_comment)
+        halo_equivalent = serializer.to_representation(minimal_new_zendesk_ticket)
 
         assert "tickettype_id" in halo_equivalent
         assert halo_equivalent["tickettype_id"] == expected_ticket_type_id

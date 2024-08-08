@@ -104,3 +104,31 @@ class HelpDeskCreds(models.Model):
 
     def __str__(self):
         return f"{self.zendesk_email}"
+
+
+class Value(models.Model):
+    zendesk_value = models.CharField()
+    halo_id = models.BigIntegerField(null=True)
+
+    def zendesk_field_name_display(self):
+        return ", ".join(list(self.field.all().values_list("zendesk_name", flat=True)))
+
+    def __str__(self):
+        return f"{self.zendesk_value} -> {self.halo_id}"
+
+
+class CustomField(models.Model):
+    zendesk_name = models.CharField(verbose_name="Zendesk name", default="")
+    halo_name = models.CharField(verbose_name="Halo name", default="")
+    zendesk_id = models.BigIntegerField(verbose_name="Zendesk ID")
+    halo_id = models.BigIntegerField(verbose_name="Halo ID")
+    is_multiselect = models.BooleanField(default=False, verbose_name="Is multiselect?")
+    values = models.ManyToManyField(
+        to=Value, blank=True, related_name="field", verbose_name="Value mappings"
+    )
+
+    def is_selection(self):
+        return self.values.exists()
+
+    def __str__(self):
+        return f"{self.zendesk_name} -> {self.halo_name}"

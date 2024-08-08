@@ -67,7 +67,7 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
         assert "customfields" in halo_equivalent
         halo_equivalent = next(
             filter(
-                lambda custom_field: custom_field["name"] == "CFService",  # /PS-IGNORE
+                lambda custom_field: custom_field["id"] == 206,  # /PS-IGNORE
                 halo_equivalent["customfields"],
             ),
             None,
@@ -89,7 +89,7 @@ class TestDatahubFrontendZendeskToHaloSerialisations:
         assert "customfields" in halo_equivalent
         halo_equivalent = next(
             filter(
-                lambda custom_field: custom_field["name"] == "CFBrowser",  # /PS-IGNORE
+                lambda custom_field: custom_field["id"] == 229,  # /PS-IGNORE
                 halo_equivalent["customfields"],
             ),
             None,
