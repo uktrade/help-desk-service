@@ -522,3 +522,14 @@ the Zendesk API's
 POST User
 Django 4.2.14
 Test Halo
+Burma
+Netherland
+SU
+CS
+missing_zendesk_fields
+fields[field_id]['zendesk_name
+KeyError
+Uktrade Zendesk Service
+DIT Zendesk Service
+Check International Trade Barrier
+Check International Trade Barriers
