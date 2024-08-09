@@ -97,9 +97,9 @@ class HaloAPIClient:
             logger.error(f"{response.status_code} response from POST endpoint")
             logger.error(response.json())
             if response.status_code == HTTPStatus.BAD_REQUEST:
-                e = HaloClientBadRequestException()
+                e = HaloClientBadRequestException(f"Bad request to Halo: {response.text}")
             else:
-                e = HaloClientNotFoundException()
+                e = HaloClientNotFoundException(f"Halo not found: {response.status_code}")
             sentry_sdk.set_context("Halo response body", value=response.json())
             raise e
         return response.json()

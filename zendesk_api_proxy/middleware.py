@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import sys
+import traceback
 from http import HTTPStatus
 
 import requests
@@ -11,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.cache import caches
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.urls import ResolverMatch, resolve
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
 from rest_framework.views import APIView
@@ -380,3 +381,17 @@ class ZendeskAPIProxyMiddleware:
         )
 
         return zendesk_response
+
+    def process_exception(self, request: HttpRequest, exception):
+        if request.content_type != "application/json":
+            return None
+        response_content = {
+            "error": f"{type(exception)}: {exception}",
+        }
+        exc_info = sys.exc_info()
+        stack_trace = traceback.format_exception(*exc_info)
+        debug_content = {
+            "traceback": stack_trace,
+        }
+        response_content.update(**debug_content)
+        return JsonResponse(response_content, status=HTTPStatus.INTERNAL_SERVER_ERROR)

@@ -35,11 +35,11 @@ class TestExportSupportServiceTicket:
 
         business_type_fields = list(
             filter(
-                lambda field: "name" in field and field["name"] == "CFESSBusinessType",
+                lambda field: "id" in field and field["id"] == 360,
                 halo_equivalent,
             )
         )
 
         assert business_type_fields is not None
         assert len(business_type_fields) == 1
-        assert business_type_fields[0]["value"] == [{"id": 46}]
+        assert business_type_fields[0]["value"] == [{"id": 1304}]

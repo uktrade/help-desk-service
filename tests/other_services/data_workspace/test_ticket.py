@@ -1,5 +1,4 @@
 import json
-from collections import OrderedDict
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -50,7 +49,7 @@ class TestDataWorkspaceUsingHaloApi:
 
         request_content = halo_put_ticket_comment_request.body.decode("utf-8")
         request_data = json.loads(request_content)
-        expected_payload = OrderedDict()
+        expected_payload = {}
         expected_payload["ticket_id"] = request_data["ticket"]["id"]
         expected_payload["note_html"] = markdown.markdown(request_data["ticket"]["comment"]["body"])
         expected_payload["hiddenfromuser"] = not request_data["ticket"]["comment"]["public"]

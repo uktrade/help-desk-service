@@ -1,0 +1,50 @@
+{
+  "custom_fields": [
+    {
+      "zendesk_name": "Service",
+      "zendesk_id": 31281329,
+      "halo_name": "CFService",
+      "halo_id": 206,
+      "values": {
+        "auth_broker": 0,
+        "citb": 0,
+        "content_delivery": 0,
+        "data_hub_crm": 0,
+        "data_hub_mi": 0,
+        "data_hub_omis": 0,
+        "data_protection": 0,
+        "data_workspace": 0,
+        "datahub": 0,
+        "digital_workspace": 0,
+        "directory": 0,
+        "soo": 0,
+        "eig": 0,
+        "export_ops": 0,
+        "export_vouchers": 0,
+        "find_a_supplier": 0,
+        "great": 0,
+        "invest_in_gb": 0,
+        "it_operations_support": 0,
+        "it_ops_support": 0,
+        "jupyterhub": 0,
+        "l__letters": 0,
+        "market_access": 0,
+        "microsoft_teams": 0,
+        "return_to_office": 0,
+        "selling_online_overseas": 0,
+        "single_sign_on": 0,
+        "trade_remedy": 0,
+        "uk_global_tariff": 0,
+        "technology_service_solutions": 0,
+        "check_export_duties": 0,
+        "eu_exit": 0,
+        "exceptional_review_process": 0,
+        "twuk": 0,
+        "export_support_service": 0,
+        "ess_im_europe": 0,
+        "im_eecan": 0,
+        "im_south_asia": 0
+      }
+    }
+  ]
+}
