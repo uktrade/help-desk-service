@@ -747,20 +747,6 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
     """
 
     id = serializers.IntegerField()
-    subject = ZendeskSubjectFromHaloField()
-    description = ZendeskDescriptionFromHaloField()
-    user = HaloToZendeskUserSerializer()
-    group_id = ZendeskGroupFromHaloField()
-    # external_id = serializers.CharField() # TODO: fix when getting zenslackchat working
-    tags = ZendeskTagsFromHaloField()
-    # custom_fields = ZendeskCustomFieldsFromHaloField()  /PS-IGNORE
-    recipient = ZendeskRecipientFromHaloField()
-    created_at = ZendeskCreatedAtFromHaloField()
-    updated_at = ZendeskUpdatedAtFromHaloField()
-    due_at = ZendeskDueAtFromHaloField()
-    status = ZendeskStatusFromHaloField()
-    priority = ZendeskPriorityFromHaloField()
-    assignee_id = ZendeskAssigneeFromHaloField()
 
     def validate(self, data):
         return data
