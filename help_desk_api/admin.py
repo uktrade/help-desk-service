@@ -35,8 +35,15 @@ class CustomFieldAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": [
-                    ("zendesk_name", "halo_name"),
-                    ("zendesk_id", "halo_id"),
+                    (
+                        "zendesk_name",
+                        "halo_name",
+                    ),
+                    (
+                        "zendesk_id",
+                        "halo_id",
+                        "is_multiselect",
+                    ),
                 ],
             },
         ),
