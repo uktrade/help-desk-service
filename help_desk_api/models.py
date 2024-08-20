@@ -114,7 +114,7 @@ class Value(models.Model):
         return ", ".join(list(self.field.all().values_list("zendesk_name", flat=True)))
 
     def __str__(self):
-        return f"{self.zendesk_value} -> {self.halo_id}"
+        return f"{self.halo_id}: {self.zendesk_value}"
 
 
 class CustomField(models.Model):

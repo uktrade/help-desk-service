@@ -10,10 +10,10 @@ class HelpDeskCredsAdmin(admin.ModelAdmin):
     form = HelpDeskCredsChangeForm
     add_form = HelpDeskCredsCreationForm
     list_display = [
+        "note",
         "zendesk_email",
         "zendesk_subdomain",
         "help_desk",
-        "note",
     ]
 
     def get_form(self, request, obj=None, **kwargs):
@@ -35,8 +35,15 @@ class CustomFieldAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": [
-                    ("zendesk_name", "halo_name"),
-                    ("zendesk_id", "halo_id"),
+                    (
+                        "zendesk_name",
+                        "halo_name",
+                    ),
+                    (
+                        "zendesk_id",
+                        "halo_id",
+                        "is_multiselect",
+                    ),
                 ],
             },
         ),
@@ -50,14 +57,24 @@ class CustomFieldAdmin(admin.ModelAdmin):
     ordering = (
         "zendesk_name",
         "zendesk_id",
+        "halo_name",
+        "halo_id",
+        "is_multiselect",
     )
     list_display = [
+        "pk",
         "zendesk_name",
         "zendesk_id",
         "halo_name",
         "halo_id",
         "is_multiselect",
         "is_selection",
+    ]
+    list_display_links = [
+        "zendesk_name",
+        "zendesk_id",
+        "halo_name",
+        "halo_id",
     ]
     list_filter = [
         "is_multiselect",
@@ -74,13 +91,15 @@ class CustomFieldAdmin(admin.ModelAdmin):
 
 @admin.register(Value)
 class ValueAdmin(admin.ModelAdmin):
-    list_display = ["zendesk_field_name_display", "zendesk_value", "halo_id"]
+    list_display = ["pk", "zendesk_field_name_display", "zendesk_value", "halo_id"]
+    list_display_links = ["zendesk_field_name_display", "zendesk_value", "halo_id"]
     ordering = [
         "halo_id",
         "field__zendesk_name",
         "zendesk_value",
     ]
     search_fields = [
+        "halo_id",
         "field__zendesk_name",
         "zendesk_value",
     ]
