@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 
@@ -109,3 +112,13 @@ def ess_emergency_form_dummy_custom_fields():
         {"1900000265733": "-"},
         {"11013312910749": "-"},
     ]
+
+
+@pytest.fixture(scope="session")
+def edes_halo_response():
+    fixture_path = Path(
+        "tests/other_services/directory_forms_api/ess/fixture_data/edes-halo-response.json"
+    )
+    with open(fixture_path, "r", encoding="utf-8-sig") as fp:
+        ess_zendesk_response = json.load(fp)
+    return ess_zendesk_response

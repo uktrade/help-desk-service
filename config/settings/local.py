@@ -10,3 +10,5 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
 ]
 REST_FRAMEWORK["DEFAULT_PAGINATION_CLASS"] = "help_desk_api.pagination.CustomPagination"
 REST_FRAMEWORK["PAGE_SIZE"] = 100
+
+LOGGING["loggers"]["django"]["level"] = "DEBUG"
