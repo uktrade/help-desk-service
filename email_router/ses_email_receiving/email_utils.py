@@ -380,6 +380,12 @@ class HaloAPIClient(BaseAPIClient):
         return response.json()
 
     def post_halo_ticket(self, request_data):
+        logger.info(
+            "Creating ticket",
+            extra={
+                "request_data": request_data,
+            },
+        )
         response = requests.post(
             f"https://{self.halo_subdomain}.haloitsm.com/api/Tickets",  # /PS-IGNORE
             data=json.dumps(request_data),
