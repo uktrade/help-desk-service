@@ -48,7 +48,7 @@ MIME-Version: 1.0
 From: "Some Body" <some.body@example.com>
 Date: Fri, 1 Mar 2024 15:58:47 +0000
 Message-ID: <CAO5FF6bizsLr_ct1MBQ9HDBmd5Sei8yH_mGv9gQmoJKAb7NUjw@mail.gmail.com>
-Subject: Test plain text email [ID-001234] [QK-04925]
+Subject: Test plain text email [QK:04925] [ID-001234]
 To: test@support.businessandtrade.gov.uk
 Content-Type: text/plain; charset="UTF-8"
 

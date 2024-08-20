@@ -31,7 +31,7 @@ class ParsedEmail:
 
     message: EmailMessage
     ticket_id_matcher: str = r"\[[[A-Z]{2}-0*(\d+)]"
-    supplier_id_matcher: str = r"\[QK-0*(\d+)]"
+    supplier_id_matcher: str = r"\[QK:0*(\d+)]"
 
     def __init__(self, raw_bytes):
         # Parse the email from raw bytes
