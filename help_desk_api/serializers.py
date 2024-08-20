@@ -748,9 +748,6 @@ class HaloToZendeskTicketSerializer(serializers.Serializer):
 
     id = serializers.IntegerField()
 
-    def validate(self, data):
-        return data
-
 
 class HaloToZendeskTicketContainerSerializer(serializers.Serializer):
     """
