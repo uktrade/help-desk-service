@@ -31,6 +31,7 @@ class ParsedEmail:
 
     message: EmailMessage
     ticket_id_matcher: str = r"\[[[A-Z]{2}-0*(\d+)]"
+    supplier_id_matcher: str = r"\[QK-0*(\d+)]"
 
     def __init__(self, raw_bytes):
         # Parse the email from raw bytes
@@ -105,6 +106,12 @@ class ParsedEmail:
     @property
     def reply_to_ticket_id(self):
         if search_result := re.search(self.ticket_id_matcher, self.subject):
+            return search_result.group(1)
+        return None
+
+    @property
+    def supplier_id(self):
+        if search_result := re.search(self.supplier_id_matcher, self.subject):
             return search_result.group(1)
         return None
 
@@ -497,8 +504,8 @@ class HaloAPIClient(BaseAPIClient):
         request_data = {
             "ticket_id": ticket_id,
             "note_html": message.payload,
-            "hiddenfromuser": False,
-            "outcome": "Email Update",
+            "hiddenfromuser": True if message.supplier_id else False,
+            "outcome": "Supplier Update" if message.supplier_id else "Email Update",
             "emailfrom": message.sender_email,
             "who": message.sender_name,
             "customfields": [

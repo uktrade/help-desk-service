@@ -528,6 +528,44 @@ class TestHaloAPIClientUpdateTicket:
         assert "user_id" in action_data[0]
         assert action_data[0]["user_id"] == 38
 
+    def test_supplier_email_update_ticket_is_hidden(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        _mock_get: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_supplier_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        expected_ticket_id = parsed_supplier_email.reply_to_ticket_id
+
+        action_data = halo_api_client.halo_ticket_action_data_from_message(
+            parsed_supplier_email, ticket_id=expected_ticket_id
+        )
+
+        assert "hiddenfromuser" in action_data[0]
+        assert action_data[0]["hiddenfromuser"] is True
+
+    def test_supplier_email_update_ticket_is_supplier_update(
+        self,
+        _mock_authenticate: MagicMock,
+        mock_post: MagicMock,
+        _mock_get: MagicMock,
+        halo_create_ticket_response: Response,
+        parsed_supplier_email: ParsedEmail,
+        halo_api_client: HaloAPIClient,
+    ):
+        mock_post.return_value = halo_create_ticket_response
+        expected_ticket_id = parsed_supplier_email.reply_to_ticket_id
+
+        action_data = halo_api_client.halo_ticket_action_data_from_message(
+            parsed_supplier_email, ticket_id=expected_ticket_id
+        )
+
+        assert "outcome" in action_data[0]
+        assert action_data[0]["outcome"] == "Supplier Update"
+
 
 @mock.patch("email_router.ses_email_receiving.email_utils.requests.get")
 class TestHaloAPIClientGetUser:

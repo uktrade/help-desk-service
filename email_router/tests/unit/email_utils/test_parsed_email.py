@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from email.message import EmailMessage
 from unittest import mock
@@ -115,3 +116,17 @@ class TestEmailWithoutBody:
     ):
         with pytest.raises(AttributeError):
             _payload = google_email_without_body.payload  # noqa: F841
+
+
+class TestSupplierEmailIdentification:
+    def test_supplier_email_tag_found_in_subject(self, supplier_email_subject):
+        assert re.search(ParsedEmail.supplier_id_matcher, supplier_email_subject) is not None
+
+    def test_supplier_email_tag_not_found_if_not_in_subject(self, non_supplier_email_subject):
+        assert re.search(ParsedEmail.supplier_id_matcher, non_supplier_email_subject) is None
+
+    def test_supplier_id_returned_from_parsed_supplier_email(self, parsed_supplier_email):
+        assert parsed_supplier_email.supplier_id is not None
+
+    def test_no_supplier_id_from_parsed_non_supplier_email(self, parsed_reply_to_ticket_email):
+        assert parsed_reply_to_ticket_email.supplier_id is None
