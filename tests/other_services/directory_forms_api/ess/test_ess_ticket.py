@@ -1,4 +1,7 @@
-from help_desk_api.serializers import HaloCustomFieldsSerializer
+from help_desk_api.serializers import (
+    HaloCustomFieldsSerializer,
+    HaloToZendeskTicketContainerSerializer,
+)
 
 
 class TestExportSupportServiceTicket:
@@ -43,3 +46,12 @@ class TestExportSupportServiceTicket:
         assert business_type_fields is not None
         assert len(business_type_fields) == 1
         assert business_type_fields[0]["value"] == [{"id": 1304}]
+
+
+class TestEDESTicketResponse:
+    def test_edes_ticket_response_serialisation(self, edes_halo_response):
+        serialiser = HaloToZendeskTicketContainerSerializer(edes_halo_response)
+
+        zendesk_equivalent = serialiser.data
+
+        assert "ticket" in zendesk_equivalent

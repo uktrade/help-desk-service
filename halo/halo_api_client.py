@@ -81,8 +81,8 @@ class HaloAPIClient:
         return response.json()
 
     def post(self, path, payload):
-        logger.warning(json.dumps(payload))
         logger.warning(f"Halo POST: https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}")
+        logger.warning(json.dumps(payload))
         response = requests.post(
             f"https://{settings.HALO_SUBDOMAIN}.haloitsm.com/api/{path}",
             data=json.dumps(payload),
