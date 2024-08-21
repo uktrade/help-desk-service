@@ -13,7 +13,6 @@ from http import HTTPStatus
 
 import requests
 from aws_lambda_powertools.logging.logger import Logger
-from django.conf import settings
 from markdown import markdown
 from requests import HTTPError, Response
 from zenpy import Zenpy
@@ -473,7 +472,7 @@ class HaloAPIClient(BaseAPIClient):
             "reportedby": message.sender_email,
             "user_email": message.sender_email,
             "outcome": "First User Email",
-            "tickettype_id": settings.HALO_DEFAULT_TICKET_TYPE_ID,
+            "tickettype_id": 43,  # TODO: put this in config somewhere
             "dont_do_rules": False,
             "customfields": [{"name": "CFEmailToAddress", "value": message.recipient}],
         }
