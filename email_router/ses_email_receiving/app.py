@@ -108,7 +108,9 @@ def lambda_handler(event: SQSEvent, context: LambdaContext):
 
     status = STATUS_OK
 
-    save_debug_data_to_s3(s3, bucket_name, emails, event, iso_utcnow, parameters, status)
+    logger.info("Processed event", extra=event)
+
+    # save_debug_data_to_s3(s3, bucket_name, emails, event, iso_utcnow, parameters, status)
     return status
 
 

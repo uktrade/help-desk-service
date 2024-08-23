@@ -101,6 +101,17 @@ def google_email_without_body(google_email_without_body_bytes):
 
 
 @pytest.fixture()
+def supplier_email_bytes():
+    with open("email_router/tests/unit/fixtures/emails/supplier-email.txt", "rb") as file:
+        yield file
+
+
+@pytest.fixture()
+def parsed_supplier_email(supplier_email_bytes):
+    return ParsedEmail(raw_bytes=supplier_email_bytes)
+
+
+@pytest.fixture()
 def halo_api_client():
     halo_subdomain = "foo"
     halo_client_id = "abcdef"  # /PS-IGNORE
@@ -227,3 +238,13 @@ def halo_user_search_result():
 def halo_user_search_response(halo_user_search_result):
     response = make_raw_halo_user_search_response(halo_user_search_result)
     return response
+
+
+@pytest.fixture(scope="session")
+def non_supplier_email_subject():
+    return "Re: Some enquiry [ID-012345]"
+
+
+@pytest.fixture(scope="session")
+def supplier_email_subject():
+    return "Re: Some enquiry [ID-012345] [QK-04925]"
