@@ -8,6 +8,7 @@ from drf_spectacular.views import (
 )
 
 from help_desk_api import urls as help_desk_api_urls
+from help_desk_api.views import DownloadView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -20,4 +21,5 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("openapi/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    path("dl/", DownloadView.as_view(), name="dl"),
 ]

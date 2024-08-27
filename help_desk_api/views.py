@@ -1,9 +1,13 @@
+import io
+import json
 import logging
 from http import HTTPStatus
 
 import sentry_sdk
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.management import call_command
 from django.http import JsonResponse
+from django.views import View
 from halo.data_class import ZendeskException
 from halo.halo_api_client import HaloClientNotFoundException
 from halo.halo_manager import HaloManager
@@ -362,3 +366,22 @@ class UploadsView(HaloBaseView):
                 "File upload failed",
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class DownloadView(View):
+
+    def get(self, request):
+        output = io.StringIO()
+
+        try:
+            call_command(
+                "dumpdata", "help_desk_api.Value", "help_desk_api.CustomField", stdout=output
+            )
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+        json_data = json.loads(output.getvalue())
+
+        response = JsonResponse(json_data, status=200, safe=False)
+        response.headers["Content-Disposition"] = "attachment; filename=custom_field_data.json"
+        return response
