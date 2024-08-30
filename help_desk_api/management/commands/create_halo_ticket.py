@@ -27,6 +27,14 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
+            "-i",
+            "--input",
+            type=pathlib.Path,
+            help="JSON request",
+            required=False,
+        )
+
+        parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
 
@@ -36,37 +44,30 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket_data = [
-            {
-                # "site_id": 18,
-                "summary": f"Halo via API at {datetime.utcnow().isoformat()}",  # /PS-IGNORE
-                "details": "Blah",
-                "tags": [{"text": "bug"}],
-                "customfields": [
-                    {"name": "CFBrowser", "value": "Safari 16.3, Macos 10.15.7"},  # /PS-IGNORE
-                    {"name": "CFService", "value": 35},
-                    {"name": "CFImpact", "value": 2},
-                    {
-                        "name": "CFEmailToAddress",
-                        "value": "recipient@example.com",  # /PS-IGNORE
-                    },
-                    # {"id": 206, "value": 9},
-                    # {"id": 165, "value": 2},
-                    # {
-                    #     "name": "CFESSBusinessType",
-                    #     "value": [
-                    #         {
-                    #             "id": "38",
-                    #         }
-                    #     ],
-                    # },
-                ],
-                "users_name": "Some Body",
-                "reportedby": "somebody@example.com",  # /PS-IGNORE
-                "tickettype_id": 36,
-                # "dont_do_rules": False,
-            }
-        ]
+        if (input_file := options["input"]) is not None:
+            with open(input_file, "r") as fp:
+                ticket_data = json.load(fp)
+        else:
+            ticket_data = [
+                {
+                    "summary": f"Halo via API at {datetime.utcnow().isoformat()}",  # /PS-IGNORE
+                    "details": "Blah",
+                    "tags": [{"text": "bug"}],
+                    "customfields": [
+                        {
+                            "id": "356",
+                            "value": [{"id": 1013}],
+                        },
+                        {
+                            "id": "360",
+                            "value": [{"id": 1306}],
+                        },
+                    ],
+                    "users_name": "Some Body",
+                    "reportedby": "some.body@example.com",  # /PS-IGNORE
+                    "tickettype_id": 28,
+                }
+            ]
 
         response = halo_client.post(
             "Tickets", payload=ticket_data

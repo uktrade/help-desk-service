@@ -26,31 +26,39 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
+        parser.add_argument(
+            "-t", "--tickettypeid", type=int, help="Halo ticket type ID", required=True
+        )
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
 
     def handle(self, *args, **options):
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
-        halo_client = HaloAPIClient(
+        self.halo_client = HaloAPIClient(
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
-        )
+        ticket_type_id = options["tickettypeid"]
+
+        ticket_type = self.get_halo_ticket_type(ticket_type_id)
 
         if options["output"]:
             output_path = options["output"].with_name(
                 options["output"].name.format(
-                    ticketid=options["ticketid"], timestamp=datetime.utcnow().isoformat()
+                    tickettypeid=ticket_type_id, timestamp=datetime.utcnow().isoformat()
                 )
             )
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
-                json.dump(ticket, output_file, indent=4)
+                json.dump(ticket_type, output_file, indent=4)
                 print(f"Output written to {output_path}")
         else:
-            json.dump(ticket, self.stdout, indent=4)
+            json.dump(ticket_type, self.stdout, indent=4)
+
+    def get_halo_ticket_type(self, ticket_type_id):
+        ticket_type = self.halo_client.get(
+            f"TicketType/{ticket_type_id}?includedetails=true&includelastaction=true"
+        )
+        return ticket_type

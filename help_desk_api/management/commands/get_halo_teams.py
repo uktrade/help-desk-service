@@ -10,7 +10,7 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class Command(BaseCommand):
-    help = "Get a ticket from Halo"  # /PS-IGNORE
+    help = "Get teams from Halo"  # /PS-IGNORE
 
     groups_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/groups.json"
     services_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/services_field_options.json"
@@ -26,7 +26,6 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
@@ -37,20 +36,15 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
-        )
+        teams = halo_client.get("Team?showall=1")
 
         if options["output"]:
             output_path = options["output"].with_name(
-                options["output"].name.format(
-                    ticketid=options["ticketid"], timestamp=datetime.utcnow().isoformat()
-                )
+                options["output"].name.format(timestamp=datetime.utcnow().isoformat())
             )
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
-                json.dump(ticket, output_file, indent=4)
-                print(f"Output written to {output_path}")
+                json.dump(teams, output_file, indent=4)
         else:
-            json.dump(ticket, self.stdout, indent=4)
+            json.dump(teams, self.stdout, indent=4)

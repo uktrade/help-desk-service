@@ -38,7 +38,7 @@ class Command(BaseCommand):
         )
 
         ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
+            f"Tickets?ticketids={options['ticketid']}&includestatus=true&includeagent=true"
         )
 
         if options["output"]:
@@ -51,6 +51,5 @@ class Command(BaseCommand):
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
                 json.dump(ticket, output_file, indent=4)
-                print(f"Output written to {output_path}")
         else:
             json.dump(ticket, self.stdout, indent=4)

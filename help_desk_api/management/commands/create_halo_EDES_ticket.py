@@ -10,13 +10,10 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class Command(BaseCommand):
-    help = "Get a ticket from Halo"  # /PS-IGNORE
+    help = "Create ticket on Halo using EDES Zendesk ticket data"  # /PS-IGNORE
 
     groups_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/groups.json"
     services_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/services_field_options.json"
-
-    def __init__(self, stdout=None, stderr=None, **kwargs):
-        super().__init__(stdout, stderr, **kwargs)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -26,7 +23,9 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
+        parser.add_argument(
+            "-i", "--input", type=pathlib.Path, required=True, help="Input file path"
+        )
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
@@ -37,20 +36,25 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
-        )
+        with open(options["input"], "r") as fp:
+            ticket_data = json.load(fp)
+
+        halo_ticket_data = ticket_data
+
+        response = halo_client.post(
+            "Tickets", payload=halo_ticket_data
+        )  # expects an array even for one ticket
 
         if options["output"]:
             output_path = options["output"].with_name(
                 options["output"].name.format(
-                    ticketid=options["ticketid"], timestamp=datetime.utcnow().isoformat()
+                    ticketid=response["id"], timestamp=datetime.utcnow().isoformat()
                 )
             )
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
-                json.dump(ticket, output_file, indent=4)
+                json.dump(response, output_file, indent=4)
                 print(f"Output written to {output_path}")
         else:
-            json.dump(ticket, self.stdout, indent=4)
+            json.dump(response, self.stdout, indent=4)

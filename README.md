@@ -1,8 +1,12 @@
 # Help Desk Service
 
+**This project was archived on 30 August 2024.**
+
 A service for interacting with help desks such as Zendesk and Halo ITSM.
 
 The service provides a subset of a Zendesk-compatible API that should be used for ticket management and creation.
+
+It also contains the Lambda function code for the email router.
 
 ## Initial setup
 

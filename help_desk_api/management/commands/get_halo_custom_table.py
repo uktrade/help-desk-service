@@ -10,10 +10,7 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class Command(BaseCommand):
-    help = "Get a ticket from Halo"  # /PS-IGNORE
-
-    groups_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/groups.json"
-    services_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/services_field_options.json"
+    help = "Get Halo field definitions"  # /PS-IGNORE
 
     def __init__(self, stdout=None, stderr=None, **kwargs):
         super().__init__(stdout, stderr, **kwargs)
@@ -26,31 +23,37 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
+        parser.add_argument("-t", "--tableid", type=int, help="ID of field")
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
 
     def handle(self, *args, **options):
         credentials = HelpDeskCreds.objects.get(zendesk_email=options["credentials"])
+
         halo_client = HaloAPIClient(
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
-        )
+        table_id = options["tableid"]
+
+        halo_fields_data = halo_client.get(
+            f"CustomTable/{table_id}?includedetails=true"
+        )  # /PS-IGNORE
+
+        output = halo_fields_data
 
         if options["output"]:
             output_path = options["output"].with_name(
                 options["output"].name.format(
-                    ticketid=options["ticketid"], timestamp=datetime.utcnow().isoformat()
+                    timestamp=datetime.utcnow().isoformat(),
+                    tableid=table_id,
                 )
             )
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, "w") as output_file:
-                json.dump(ticket, output_file, indent=4)
+            with open(output_path, "w", encoding="utf-8") as output_file:
+                json.dump(output, output_file, indent=4)
                 print(f"Output written to {output_path}")
         else:
-            json.dump(ticket, self.stdout, indent=4)
+            json.dump(output, self.stdout, indent=4)

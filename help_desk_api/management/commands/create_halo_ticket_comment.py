@@ -10,7 +10,7 @@ from help_desk_api.models import HelpDeskCreds
 
 
 class Command(BaseCommand):
-    help = "Get a ticket from Halo"  # /PS-IGNORE
+    help = "Create ticket on Halo"  # /PS-IGNORE
 
     groups_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/groups.json"
     services_path = settings.BASE_DIR / "scripts/zendesk/zendesk_json/services_field_options.json"
@@ -26,7 +26,6 @@ class Command(BaseCommand):
             help="Email address linked to Halo credentials",
             required=True,
         )
-        parser.add_argument("-t", "--ticketid", type=int, help="Halo ticket ID", required=True)
         parser.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path (default: stdout)"
         )
@@ -37,20 +36,40 @@ class Command(BaseCommand):
             client_id=credentials.halo_client_id, client_secret=credentials.halo_client_secret
         )
 
-        ticket = halo_client.get(
-            f"Tickets/{options['ticketid']}?includedetails=true&includelastaction=true"
-        )
+        search_term = "some.body@example.com"  # /PS-IGNORE
+
+        user_search_result = halo_client.get(f"users?search={search_term}")
+        user = user_search_result["users"][0]
+
+        user_id = user["id"]
+        user_name = user["name"]
+
+        halo_comment_data = {
+            "ticket_id": 9688,
+            "note_html": f"<div dir='ltr'>Supplier test reply via script "
+            f"at {datetime.utcnow().isoformat()}</div>",
+            "hiddenfromuser": True,
+            "user_id": user_id,
+            "emailfrom": search_term,
+            "who": user_name,
+            "supplier_id": 6,
+            "outcome_id": 79,
+        }
+
+        response = halo_client.post(
+            "Actions", payload=[halo_comment_data]
+        )  # expects an array even for one ticket
 
         if options["output"]:
             output_path = options["output"].with_name(
                 options["output"].name.format(
-                    ticketid=options["ticketid"], timestamp=datetime.utcnow().isoformat()
+                    ticketid=response["id"], timestamp=datetime.utcnow().isoformat()
                 )
             )
             output_path = settings.BASE_DIR / output_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as output_file:
-                json.dump(ticket, output_file, indent=4)
+                json.dump(response, output_file, indent=4)
                 print(f"Output written to {output_path}")
         else:
-            json.dump(ticket, self.stdout, indent=4)
+            json.dump(response, self.stdout, indent=4)
